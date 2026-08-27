@@ -48,7 +48,12 @@ const footCategories = usedCategories();
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {/* set:html does not escape and JSON.stringify leaves angle brackets alone, so a
+        listing field carrying a closing script tag would end this element early and run
+        whatever followed it. Escaping the opening bracket is enough, since every breakout
+        sequence starts with one, and the < escape is valid JSON so the structured
+        data still parses identically. Listing fields come from PR'd hooks/*.yml. */}
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, "\\u003c")} />}
     <script
       is:inline
       defer
