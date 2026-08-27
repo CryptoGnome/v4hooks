@@ -36,17 +36,22 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 
 ## Hooks
 - [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.
+- [BackGeoOracle](https://v4hooks.com/hooks/back-geo-oracle) (pattern): Geomean oracle that backruns its own pool so the recorded price is not stale.
 - [BaseDynamicFee](https://v4hooks.com/hooks/base-dynamic-fee) (pattern): Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
 - [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, gate callbacks with onlyPoolManager.
+- [BaseV4Hook](https://v4hooks.com/hooks/base-v4-hook) (pattern): Abstract base that re-implements v4 pool internals inside the hook for custom curves.
 - [Clanker](https://v4hooks.com/hooks/clanker) (product): Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
+- [Constant sum](https://v4hooks.com/hooks/constant-sum) (pattern): Replace xy=k with x+y=k so every swap fills exactly 1:1, using a NoOp beforeSwap.
 - [EulerSwap](https://v4hooks.com/hooks/eulerswap) (product): Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
 - [Flaunch](https://v4hooks.com/hooks/flaunch) (product): PositionManager hook: beforeSwap runs the internal swap pool; afterSwap distributes creator fees.
 - [Full range](https://v4hooks.com/hooks/full-range) (pattern): Force v2-style full-range LP: only the hook can modify liquidity, users mint a pool ERC20 instead.
 - [Geomean oracle](https://v4hooks.com/hooks/geomean-oracle) (pattern): Write a geometric-mean observation before any action that can move price or liquidity.
+- [Iceberg](https://v4hooks.com/hooks/iceberg-order) (pattern): Encrypted limit orders — size and direction stay hidden until the tick is crossed.
 - [Limit order](https://v4hooks.com/hooks/limit-order) (pattern): Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
 - [LimitOrderHook](https://v4hooks.com/hooks/limit-order-hook) (pattern): Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
 - [LiquidityPenaltyHook](https://v4hooks.com/hooks/liquidity-penalty) (pattern): Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
 - [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
+- [SlippageFeeHook](https://v4hooks.com/hooks/slippage-fee) (pattern): Simulate the swap, measure the tick it would move, then price the fee off that slippage.
 - [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
 - [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
@@ -54,4 +59,5 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [TWAMM](https://v4hooks.com/hooks/twamm) (pattern): Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
 - [V2 pair hook](https://v4hooks.com/hooks/v2-pair) (pattern): Run xy=k inside the hook: mint LP on the ERC20, NoOp the CLAMM swap with return-delta.
 - [veLP](https://v4hooks.com/hooks/velp) (pattern): Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
+- [VerifierHook](https://v4hooks.com/hooks/purefi-verifier) (product): Gate every pool action behind an off-chain AML proof checked in the callback.
 - [Volatility oracle](https://v4hooks.com/hooks/volatility-oracle) (pattern): Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.

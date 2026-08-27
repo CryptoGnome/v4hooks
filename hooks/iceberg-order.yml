@@ -1,0 +1,102 @@
+slug: iceberg-order
+name: Iceberg
+kind: pattern
+tagline: Encrypted limit orders — size and direction stay hidden until the tick is crossed.
+description: |
+  Iceberg is the familiar v4 tick-crossing limit order, with the order book held in
+  Fhenix CoFHE ciphertext instead of plaintext storage. Permissions are afterInitialize,
+  beforeSwap and afterSwap; every callback is gated by onlyByManager.
+
+  afterInitialize records the starting lower tick for the pool. afterSwap recomputes the
+  ticks crossed since the last swap and walks them, filling resting orders in the
+  direction opposite the swap — the file notes that a zeroForOne swap makes the pool gain
+  token0, so limit fills invert the swap direction. That part is the standard
+  LimitOrderHook shape.
+
+  The FHE part lives in beforeSwap. Order amounts are euint128 handles rather than
+  uint128, so a fill cannot settle until the coprocessor has decrypted the amount.
+  beforeSwap drains a per-pool decryption Queue, peeking each pending handle and
+  executing whatever has become available before the swap proceeds. Balances are held as
+  IFHERC20, an encrypted ERC-20, so a resting order's size is never readable on-chain.
+
+  Two consequences worth understanding before copying it. Fills are asynchronous: an
+  order becomes claimable a decryption round after the tick is crossed, not in the same
+  transaction. And beforeSwap does unbounded work proportional to queue depth, so a
+  congested pool pays for other people's pending decryptions — the same
+  tick-walk gas exposure the plaintext limit order hooks have, plus the queue.
+
+  Depends on Fhenix CoFHE, so it only runs where that coprocessor is deployed.
+  Experimental, unaudited.
+source:
+  repo: https://github.com/marronjo/iceberg-cofhe
+  path: src/Iceberg.sol
+  url: https://github.com/marronjo/iceberg-cofhe/blob/3dab6b2e1f12897d3b8c8edd93d369c9c46dfcd2/src/Iceberg.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // marronjo/iceberg-cofhe — excerpt. Full file: source.url
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeSwap(
+      address,
+      PoolKey calldata key,
+      SwapParams calldata,
+      bytes calldata
+  ) internal override onlyByManager returns (bytes4, BeforeSwapDelta, uint24) {
+
+      Queue queue = getPoolQueue(key);
+
+      //if nothing in decryption queue, continue
+      //otherwise try execute trades
+      while(!queue.isEmpty()){
+
+          euint128 liquidityHandle = queue.peek();
+          // ... drains handles that CoFHE has finished decrypting
+
+  function _afterSwap(
+      address,
+      PoolKey calldata key,
+      SwapParams calldata params,
+      BalanceDelta,
+      bytes calldata
+  ) internal override onlyByManager returns (bytes4, int128) {
+      (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);
+      if (lower > upper) return (BaseHook.afterSwap.selector, 0);
+
+      // note that a zeroForOne swap means that the pool is actually gaining token0, so limit
+      // order fills are the opposite of swap fills, hence the inversion below
+      bool zeroForOne = !params.zeroForOne;
+
+      for (; lower <= upper; lower += key.tickSpacing) {
+          // ... fills resting encrypted orders at each crossed tick
+categories:
+  - limit-orders
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+  - afterSwap
+properties:
+  - vanilla-swap
+website: https://www.fhenix.io/
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

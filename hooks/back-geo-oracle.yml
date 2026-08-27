@@ -1,0 +1,106 @@
+slug: back-geo-oracle
+name: BackGeoOracle
+kind: pattern
+tagline: Geomean oracle that backruns its own pool so the recorded price is not stale.
+description: |
+  A geometric-mean TWAP oracle that solves the usual problem with in-pool oracles: the
+  price you record is the price after someone traded against you, which is exactly the
+  price an attacker chose. BackGeoOracle answers that by backrunning the swap itself in
+  afterSwap and recording the corrected price, so the observation reflects a rebalanced
+  pool rather than the post-trade extreme.
+
+  Permissions are wide but each one is doing something specific. beforeInitialize is a
+  configuration gate: it reverts unless fee is 0 and tickSpacing is MAX_TICK_SPACING, so
+  only one oracle pool can exist per pair and liquidity cannot fragment.
+  afterInitialize seeds the observation array. beforeAddLiquidity rejects anything that
+  is not full range — minUsableTick to maxUsableTick — and updates the pool first;
+  beforeRemoveLiquidity updates too, so observations stay current across liquidity moves.
+
+  beforeSwap reverts on exact-output swaps (only exactIn is supported) and refreshes the
+  pool. The interesting one is afterSwap, which calls _backrun to compute a corrective
+  delta, then settles it with afterSwapReturnDelta — inverting zeroForOne and the sign of
+  amountSpecified while keeping the specified currency the same. The fee for that
+  correction is charged in the unspecified currency, the one the user is buying.
+
+  Every callback is onlyPoolManager. The full-range and zero-fee constraints mean this is
+  a purpose-built oracle pool, not a hook you bolt onto a trading pool.
+
+  RigoBlock has an audit for this one — linked below — which makes it unusual among
+  research-grade oracle hooks. Read the report, not just the excerpt.
+source:
+  repo: https://github.com/RigoBlock/back-geo-oracle
+  path: src/BackGeoOracle.sol
+  url: https://github.com/RigoBlock/back-geo-oracle/blob/548e6a643ebf8c1671d2aaa85c979e86bcac979e/src/BackGeoOracle.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // RigoBlock/back-geo-oracle — excerpt. Full file: source.url
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: true,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: true,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: true,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeInitialize(address, PoolKey calldata key, uint160)
+      internal view override onlyPoolManager returns (bytes4)
+  {
+      // This is to limit the fragmentation of pools using this oracle hook. In other words,
+      // there may only be one pool per pair of tokens that use this hook. The tick spacing is set to the maximum
+      // because we only allow max range liquidity in this pool.
+      if (key.fee != 0 || key.tickSpacing != TickMath.MAX_TICK_SPACING) {
+          revert OnlyOneOraclePoolAllowed();
+      }
+      return BaseHook.beforeInitialize.selector;
+  }
+
+  function _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+      internal override onlyPoolManager returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      // only exactIn swaps are supported
+      if (params.amountSpecified >= 0) {
+          revert NotExactIn();
+      }
+      _updatePool(key);
+      return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+  }
+
+  function _afterSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params,
+      BalanceDelta swapDelta, bytes calldata)
+      internal override onlyPoolManager returns (bytes4, int128)
+  {
+      // the unspecified currency is always the one user is buying, so we charge a fee to settle the backrun
+      (BalanceDelta hookDelta, bool isBackrun) = _backrun(key, params, swapDelta);
+      // ... settles the corrective delta via afterSwapReturnDelta
+categories:
+  - oracles
+  - mev-protection
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeInitialize
+  - afterInitialize
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+  - beforeSwap
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+audit_url: https://github.com/RigoBlock/back-geo-oracle/blob/main/audits/33Audits_audit_back_geo_oracle.pdf
+docs: https://mirror.xyz/rigoblock.eth/yKAD5uYyH0KwfdsOxzt0MyppkFJZzXkxAFeufPGVA2M
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

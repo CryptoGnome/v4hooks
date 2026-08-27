@@ -1,0 +1,100 @@
+slug: constant-sum
+name: Constant sum
+kind: pattern
+tagline: Replace xy=k with x+y=k so every swap fills exactly 1:1, using a NoOp beforeSwap.
+description: |
+  The cleanest example of a v4 custom curve. The pool's own math is never used — the hook
+  intercepts the swap in beforeSwap, returns a BeforeSwapDelta that fully accounts for
+  both sides, and the PoolManager skips its concentrated-liquidity swap entirely. That is
+  what beforeSwapReturnDelta buys you, and this is the smallest readable demonstration
+  of it.
+
+  The swap body is short. It picks input and output currency from zeroForOne, treats a
+  negative amountSpecified as exact-input, and — because the curve is x+y=k — uses the
+  same amount for both sides. It then calls poolManager.mint to take the input currency
+  as ERC-6909 into the hook's reserves and poolManager.burn to pay the output currency
+  out of them. The returned delta is the mirror of that: for exact input the specified
+  delta is positive and the unspecified negative, and for exact output the signs invert.
+  The comments in the file spell the sign convention out line by line, which is the part
+  worth reading twice — getting it backwards is the classic custom-curve bug.
+
+  beforeAddLiquidity reverts with "No v4 Liquidity allowed". That is deliberate, not an
+  oversight: reserves live in the hook as ERC-6909 claims, so ordinary v4 liquidity would
+  be stranded and unusable by the curve. Any custom-curve hook has to make the same
+  choice.
+
+  Note the file is named Counter.sol — leftover from the v4-template scaffold — even
+  though the contract does constant-sum swaps. Unaudited example code.
+source:
+  repo: https://github.com/saucepoint/v4-constant-sum
+  path: src/Counter.sol
+  url: https://github.com/saucepoint/v4-constant-sum/blob/cce8f6cfb614e19144b1858348b23f56c241f50d/src/Counter.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // saucepoint/v4-constant-sum — excerpt. Full file: source.url
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: true,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+      internal override returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      // determine inbound/outbound token based on 0->1 or 1->0 swap
+      (Currency inputCurrency, Currency outputCurrency) =
+          params.zeroForOne ? (key.currency0, key.currency1) : (key.currency1, key.currency0);
+
+      bool isExactInput = params.amountSpecified < 0;
+
+      // tokens are always swapped 1:1, so use amountSpecified to determine both input and output amounts
+      uint256 amount = isExactInput ? uint256(-params.amountSpecified) : uint256(params.amountSpecified);
+
+      // take the input token, as ERC6909, from the PoolManager
+      poolManager.mint(address(this), inputCurrency.toId(), amount);
+
+      // pay the output token, as ERC6909, to the PoolManager
+      poolManager.burn(address(this), outputCurrency.toId(), amount);
+
+      int128 tokenAmount = amount.toInt128();
+      // exact input:  specifiedDelta positive, unspecifiedDelta negative
+      // exact output: specifiedDelta negative, unspecifiedDelta positive
+      BeforeSwapDelta returnDelta =
+          isExactInput ? toBeforeSwapDelta(tokenAmount, -tokenAmount) : toBeforeSwapDelta(-tokenAmount, tokenAmount);
+
+      return (BaseHook.beforeSwap.selector, returnDelta, 0);
+  }
+
+  /// @notice No liquidity will be managed by v4 PoolManager
+  function _beforeAddLiquidity(address, PoolKey calldata, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+      internal pure override returns (bytes4)
+  {
+      revert("No v4 Liquidity allowed");
+  }
+categories:
+  - wrappers
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeAddLiquidity
+  - beforeSwap
+  - beforeSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

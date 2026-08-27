@@ -1,0 +1,118 @@
+slug: slippage-fee
+name: SlippageFeeHook
+kind: pattern
+tagline: Simulate the swap, measure the tick it would move, then price the fee off that slippage.
+description: |
+  A dynamic fee that reacts to the size of the swap in front of it rather than to
+  historical volatility. Before the real swap runs, the hook simulates it, reads how far
+  the tick would move, and charges accordingly — so a swap that walks the pool pays more
+  than one that barely moves the price.
+
+  The mechanism is the part worth studying. Solidity has no way to ask "what would this
+  swap do" without doing it, so _getExactSingleFee reads the current tick from
+  poolManager.getSlot0, then calls this._getTickAfterExactSingle in a try/catch. That
+  inner call performs the swap and deliberately reverts with SlippageFeeHook__RevertWithTick,
+  packing the resulting tick into the revert reason. The catch block pulls the selector
+  and the tick straight out of the returndata with assembly, and anything other than the
+  expected selector is rethrown as SlippageFeeHook__UnexpectedRevert. Reverting unwinds
+  the simulated swap; the tick delta survives in memory. That is the whole trick.
+
+  Re-entrancy is handled by identity, not a lock: _beforeSwap checks whether sender is
+  the hook itself and charges zero fee if so, which is what keeps the simulation from
+  recursing into another simulation. Worth understanding before adapting it — the guard
+  is that one comparison.
+
+  afterInitialize refuses to attach to a pool whose key.fee is not dynamic, which is the
+  correct place for that check. The fee returned from beforeSwap is OR'd with
+  LPFeeLibrary.OVERRIDE_FEE_FLAG, the 23rd-bit flag v4 requires for a per-swap override.
+
+  Note the simulate-then-revert pattern doubles the swap work, so gas is roughly twice a
+  plain swap. Single-file, unaudited example.
+source:
+  repo: https://github.com/dennnis0204/slippage-fee-hook
+  path: src/SlippageFeeHook.sol
+  url: https://github.com/dennnis0204/slippage-fee-hook/blob/a6764f52a0b92b1f17c40fd918d3caf86ba1dded/src/SlippageFeeHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // dennnis0204/slippage-fee-hook — excerpt. Full file: source.url
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _getExactSingleFee(ExactSingleParams memory params) internal returns (uint24 fee) {
+      (, int24 currentTick,,) = poolManager.getSlot0(params.poolKey.toId());
+
+      bytes4 selector;
+      int24 tickAfter;
+
+      // simulate the swap; it reverts with the resulting tick packed into the reason
+      try this._getTickAfterExactSingle(params) {}
+      catch (bytes memory reason) {
+          assembly ("memory-safe") {
+              selector := mload(add(reason, 0x20))
+              tickAfter := mload(add(reason, 0x24))
+          }
+      }
+
+      if (selector != SlippageFeeHook__RevertWithTick.selector) {
+          revert SlippageFeeHook__UnexpectedRevert();
+      }
+
+      fee = _calculateFee(currentTick, tickAfter, params.zeroForOne);
+  }
+
+  function _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+      internal override returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      uint24 fee;
+      /// @dev Sets the fee for the swap simulation via this hook
+      if (sender == address(this)) {
+          fee = 0;
+      } else {
+          ExactSingleParams memory exactSingleParams = ExactSingleParams({
+              poolKey: key,
+              zeroForOne: params.zeroForOne,
+              amountSpecified: params.amountSpecified
+          });
+          fee = _getExactSingleFee(exactSingleParams);
+      }
+      return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+  }
+
+  /**
+   * @dev Check that the pool key has a dynamic fee.
+   */
+  function _afterInitialize(address, PoolKey calldata key, uint160, int24) internal pure override returns (bytes4) {
+      if (!key.fee.isDynamicFee()) revert SlippageFeeHook__NotDynamicFee();
+      return this.afterInitialize.selector;
+  }
+categories:
+  - dynamic-fees
+  - mev-protection
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

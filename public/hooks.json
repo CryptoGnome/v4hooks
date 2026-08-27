@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T14:02:04.068Z",
+  "generated": "2026-08-27T14:20:28.061Z",
   "hooks": [
     {
       "slug": "anti-sandwich",
@@ -30,6 +30,44 @@
       ],
       "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
       "website": "https://v4hooks.com/learn/openzeppelin-hooks",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "back-geo-oracle",
+      "name": "BackGeoOracle",
+      "kind": "pattern",
+      "tagline": "Geomean oracle that backruns its own pool so the recorded price is not stale.",
+      "description": "A geometric-mean TWAP oracle that solves the usual problem with in-pool oracles: the\nprice you record is the price after someone traded against you, which is exactly the\nprice an attacker chose. BackGeoOracle answers that by backrunning the swap itself in\nafterSwap and recording the corrected price, so the observation reflects a rebalanced\npool rather than the post-trade extreme.\n\nPermissions are wide but each one is doing something specific. beforeInitialize is a\nconfiguration gate: it reverts unless fee is 0 and tickSpacing is MAX_TICK_SPACING, so\nonly one oracle pool can exist per pair and liquidity cannot fragment.\nafterInitialize seeds the observation array. beforeAddLiquidity rejects anything that\nis not full range — minUsableTick to maxUsableTick — and updates the pool first;\nbeforeRemoveLiquidity updates too, so observations stay current across liquidity moves.\n\nbeforeSwap reverts on exact-output swaps (only exactIn is supported) and refreshes the\npool. The interesting one is afterSwap, which calls _backrun to compute a corrective\ndelta, then settles it with afterSwapReturnDelta — inverting zeroForOne and the sign of\namountSpecified while keeping the specified currency the same. The fee for that\ncorrection is charged in the unspecified currency, the one the user is buying.\n\nEvery callback is onlyPoolManager. The full-range and zero-fee constraints mean this is\na purpose-built oracle pool, not a hook you bolt onto a trading pool.\n\nRigoBlock has an audit for this one — linked below — which makes it unusual among\nresearch-grade oracle hooks. Read the report, not just the excerpt.\n",
+      "source": {
+        "repo": "https://github.com/RigoBlock/back-geo-oracle",
+        "path": "src/BackGeoOracle.sol",
+        "url": "https://github.com/RigoBlock/back-geo-oracle/blob/548e6a643ebf8c1671d2aaa85c979e86bcac979e/src/BackGeoOracle.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// RigoBlock/back-geo-oracle — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: true,\n        afterInitialize: true,\n        beforeAddLiquidity: true,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: true,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: true,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeInitialize(address, PoolKey calldata key, uint160)\n    internal view override onlyPoolManager returns (bytes4)\n{\n    // This is to limit the fragmentation of pools using this oracle hook. In other words,\n    // there may only be one pool per pair of tokens that use this hook. The tick spacing is set to the maximum\n    // because we only allow max range liquidity in this pool.\n    if (key.fee != 0 || key.tickSpacing != TickMath.MAX_TICK_SPACING) {\n        revert OnlyOneOraclePoolAllowed();\n    }\n    return BaseHook.beforeInitialize.selector;\n}\n\nfunction _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)\n    internal override onlyPoolManager returns (bytes4, BeforeSwapDelta, uint24)\n{\n    // only exactIn swaps are supported\n    if (params.amountSpecified >= 0) {\n        revert NotExactIn();\n    }\n    _updatePool(key);\n    return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);\n}\n\nfunction _afterSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params,\n    BalanceDelta swapDelta, bytes calldata)\n    internal override onlyPoolManager returns (bytes4, int128)\n{\n    // the unspecified currency is always the one user is buying, so we charge a fee to settle the backrun\n    (BalanceDelta hookDelta, bool isBackrun) = _backrun(key, params, swapDelta);\n    // ... settles the corrective delta via afterSwapReturnDelta\n",
+      "categories": [
+        "oracles",
+        "mev-protection"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeInitialize",
+        "afterInitialize",
+        "beforeAddLiquidity",
+        "beforeRemoveLiquidity",
+        "beforeSwap",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "audit_url": "https://github.com/RigoBlock/back-geo-oracle/blob/main/audits/33Audits_audit_back_geo_oracle.pdf",
+      "docs": "https://mirror.xyz/rigoblock.eth/yKAD5uYyH0KwfdsOxzt0MyppkFJZzXkxAFeufPGVA2M",
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
@@ -98,6 +136,38 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "base-v4-hook",
+      "name": "BaseV4Hook",
+      "kind": "pattern",
+      "tagline": "Abstract base that re-implements v4 pool internals inside the hook for custom curves.",
+      "description": "Most custom-curve hooks bolt a NoOp beforeSwap onto a normal hook and manage reserves\nby hand. BaseV4Hook takes the other route: it inherits the PoolManager's own machinery —\nProtocolFees, NoDelegateCall, ERC6909Claims, Extsload and Exttload — and runs v4-like\nliquidity logic inside the hook, using Pool, Position, CurrencyDelta and CurrencyReserves\ndirectly. If you want a pool that behaves like v4 but on a different curve, this is the\nscaffold that gives you the accounting for free.\n\nIt is abstract on purpose. The external beforeSwap is implemented, gated by\nonlyByPoolManager, and its job is to repackage IPoolManager.SwapParams into a\nPool.SwapParams struct — adding tickSpacing from the key and an lpFeeOverride of 0 —\nbefore delegating to an internal _beforeSwap that you must implement. Your curve goes\nthere and returns the BeforeSwapDelta.\n\nPermissions are the three a custom curve needs, and the file annotates each one:\nbeforeAddLiquidity because liquidity must be deposited into the hook directly rather\nthan the PoolManager, beforeSwap as the custom curve handler, and beforeSwapReturnDelta\nto skip the PoolManager swap. Nothing else is claimed.\n\nRead the NatSpec on beforeSwap before you use it. It states the delta sign convention —\npositive means the hook is owed or took currency, negative means it owes or sent — and\nthe three conditions an lp fee override must satisfy: dynamic fee pool, the 23rd bit\n(0x400000) set, and a value at or below 1,000,000. Those are the rules people get wrong.\n\nUnaudited. Inheriting core internals means you inherit their invariants too.\n",
+      "source": {
+        "repo": "https://github.com/cairoeth/base-v4-hook",
+        "path": "src/BaseV4Hook.sol",
+        "url": "https://github.com/cairoeth/base-v4-hook/blob/a784e215a4fc1ff1d0f3e4697b764ab035c121b8/src/BaseV4Hook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// cairoeth/base-v4-hook — excerpt. Full file: source.url\nabstract contract BaseV4Hook is BaseHook, ProtocolFees, NoDelegateCall, ERC6909Claims, Extsload, Exttload {\n    using PoolIdLibrary for PoolKey;\n    using Pool for *;\n    using Position for mapping(bytes32 => Position.Info);\n    using CurrencyDelta for Currency;\n    using CurrencyReserves for Currency;\n    using LPFeeLibrary for uint24;\n\n/// @return BeforeSwapDelta The hook's delta in specified and unspecified currencies.\n///         Positive: the hook is owed/took currency, negative: the hook owes/sent currency\n/// @return uint24 Optionally override the lp fee, only used if three conditions are met:\n///         1. the Pool has a dynamic fee, 2. the value's 2nd highest bit is set\n///         (23rd bit, 0x400000), and 3. the value is less than or equal to the maximum fee (1 million)\nfunction beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)\n    external virtual override onlyByPoolManager returns (bytes4, BeforeSwapDelta, uint24)\n{\n    return _beforeSwap(\n        sender,\n        key,\n        Pool.SwapParams({\n            tickSpacing: key.tickSpacing,\n            zeroForOne: params.zeroForOne,\n            amountSpecified: params.amountSpecified,\n            sqrtPriceLimitX96: params.sqrtPriceLimitX96,\n            lpFeeOverride: 0\n        })\n    );\n}\n\n/// @dev Execute swap with custom logic — implement this in your subclass\nfunction _beforeSwap(address sender, PoolKey calldata key, Pool.SwapParams memory params)\n    internal virtual returns (bytes4, BeforeSwapDelta, uint24);\n\nfunction getHookPermissions() public pure virtual override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: false,\n        beforeAddLiquidity: true, // -- liquidity must be deposited here directly -- //\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true, // -- custom curve handler -- //\n        afterSwap: false,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: true, // -- enable custom curve by skipping poolmanager swap -- //\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n",
+      "categories": [
+        "wrappers",
+        "lp-management"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeAddLiquidity",
+        "beforeSwap",
+        "beforeSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "clanker",
       "name": "Clanker",
       "kind": "product",
@@ -133,6 +203,37 @@
       "website": "https://www.clanker.world/",
       "docs": "https://clanker.gitbook.io/documentation/references/core-contracts/v4",
       "status": "production",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "constant-sum",
+      "name": "Constant sum",
+      "kind": "pattern",
+      "tagline": "Replace xy=k with x+y=k so every swap fills exactly 1:1, using a NoOp beforeSwap.",
+      "description": "The cleanest example of a v4 custom curve. The pool's own math is never used — the hook\nintercepts the swap in beforeSwap, returns a BeforeSwapDelta that fully accounts for\nboth sides, and the PoolManager skips its concentrated-liquidity swap entirely. That is\nwhat beforeSwapReturnDelta buys you, and this is the smallest readable demonstration\nof it.\n\nThe swap body is short. It picks input and output currency from zeroForOne, treats a\nnegative amountSpecified as exact-input, and — because the curve is x+y=k — uses the\nsame amount for both sides. It then calls poolManager.mint to take the input currency\nas ERC-6909 into the hook's reserves and poolManager.burn to pay the output currency\nout of them. The returned delta is the mirror of that: for exact input the specified\ndelta is positive and the unspecified negative, and for exact output the signs invert.\nThe comments in the file spell the sign convention out line by line, which is the part\nworth reading twice — getting it backwards is the classic custom-curve bug.\n\nbeforeAddLiquidity reverts with \"No v4 Liquidity allowed\". That is deliberate, not an\noversight: reserves live in the hook as ERC-6909 claims, so ordinary v4 liquidity would\nbe stranded and unusable by the curve. Any custom-curve hook has to make the same\nchoice.\n\nNote the file is named Counter.sol — leftover from the v4-template scaffold — even\nthough the contract does constant-sum swaps. Unaudited example code.\n",
+      "source": {
+        "repo": "https://github.com/saucepoint/v4-constant-sum",
+        "path": "src/Counter.sol",
+        "url": "https://github.com/saucepoint/v4-constant-sum/blob/cce8f6cfb614e19144b1858348b23f56c241f50d/src/Counter.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// saucepoint/v4-constant-sum — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: false,\n        beforeAddLiquidity: true,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: false,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: true,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)\n    internal override returns (bytes4, BeforeSwapDelta, uint24)\n{\n    // determine inbound/outbound token based on 0->1 or 1->0 swap\n    (Currency inputCurrency, Currency outputCurrency) =\n        params.zeroForOne ? (key.currency0, key.currency1) : (key.currency1, key.currency0);\n\n    bool isExactInput = params.amountSpecified < 0;\n\n    // tokens are always swapped 1:1, so use amountSpecified to determine both input and output amounts\n    uint256 amount = isExactInput ? uint256(-params.amountSpecified) : uint256(params.amountSpecified);\n\n    // take the input token, as ERC6909, from the PoolManager\n    poolManager.mint(address(this), inputCurrency.toId(), amount);\n\n    // pay the output token, as ERC6909, to the PoolManager\n    poolManager.burn(address(this), outputCurrency.toId(), amount);\n\n    int128 tokenAmount = amount.toInt128();\n    // exact input:  specifiedDelta positive, unspecifiedDelta negative\n    // exact output: specifiedDelta negative, unspecifiedDelta positive\n    BeforeSwapDelta returnDelta =\n        isExactInput ? toBeforeSwapDelta(tokenAmount, -tokenAmount) : toBeforeSwapDelta(-tokenAmount, tokenAmount);\n\n    return (BaseHook.beforeSwap.selector, returnDelta, 0);\n}\n\n/// @notice No liquidity will be managed by v4 PoolManager\nfunction _beforeAddLiquidity(address, PoolKey calldata, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)\n    internal pure override returns (bytes4)\n{\n    revert(\"No v4 Liquidity allowed\");\n}\n",
+      "categories": [
+        "wrappers"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeAddLiquidity",
+        "beforeSwap",
+        "beforeSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
     },
@@ -276,6 +377,38 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "iceberg-order",
+      "name": "Iceberg",
+      "kind": "pattern",
+      "tagline": "Encrypted limit orders — size and direction stay hidden until the tick is crossed.",
+      "description": "Iceberg is the familiar v4 tick-crossing limit order, with the order book held in\nFhenix CoFHE ciphertext instead of plaintext storage. Permissions are afterInitialize,\nbeforeSwap and afterSwap; every callback is gated by onlyByManager.\n\nafterInitialize records the starting lower tick for the pool. afterSwap recomputes the\nticks crossed since the last swap and walks them, filling resting orders in the\ndirection opposite the swap — the file notes that a zeroForOne swap makes the pool gain\ntoken0, so limit fills invert the swap direction. That part is the standard\nLimitOrderHook shape.\n\nThe FHE part lives in beforeSwap. Order amounts are euint128 handles rather than\nuint128, so a fill cannot settle until the coprocessor has decrypted the amount.\nbeforeSwap drains a per-pool decryption Queue, peeking each pending handle and\nexecuting whatever has become available before the swap proceeds. Balances are held as\nIFHERC20, an encrypted ERC-20, so a resting order's size is never readable on-chain.\n\nTwo consequences worth understanding before copying it. Fills are asynchronous: an\norder becomes claimable a decryption round after the tick is crossed, not in the same\ntransaction. And beforeSwap does unbounded work proportional to queue depth, so a\ncongested pool pays for other people's pending decryptions — the same\ntick-walk gas exposure the plaintext limit order hooks have, plus the queue.\n\nDepends on Fhenix CoFHE, so it only runs where that coprocessor is deployed.\nExperimental, unaudited.\n",
+      "source": {
+        "repo": "https://github.com/marronjo/iceberg-cofhe",
+        "path": "src/Iceberg.sol",
+        "url": "https://github.com/marronjo/iceberg-cofhe/blob/3dab6b2e1f12897d3b8c8edd93d369c9c46dfcd2/src/Iceberg.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// marronjo/iceberg-cofhe — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: true,\n        beforeAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterAddLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeSwap(\n    address,\n    PoolKey calldata key,\n    SwapParams calldata,\n    bytes calldata\n) internal override onlyByManager returns (bytes4, BeforeSwapDelta, uint24) {\n\n    Queue queue = getPoolQueue(key);\n\n    //if nothing in decryption queue, continue\n    //otherwise try execute trades\n    while(!queue.isEmpty()){\n\n        euint128 liquidityHandle = queue.peek();\n        // ... drains handles that CoFHE has finished decrypting\n\nfunction _afterSwap(\n    address,\n    PoolKey calldata key,\n    SwapParams calldata params,\n    BalanceDelta,\n    bytes calldata\n) internal override onlyByManager returns (bytes4, int128) {\n    (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);\n    if (lower > upper) return (BaseHook.afterSwap.selector, 0);\n\n    // note that a zeroForOne swap means that the pool is actually gaining token0, so limit\n    // order fills are the opposite of swap fills, hence the inversion below\n    bool zeroForOne = !params.zeroForOne;\n\n    for (; lower <= upper; lower += key.tickSpacing) {\n        // ... fills resting encrypted orders at each crossed tick\n",
+      "categories": [
+        "limit-orders"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "website": "https://www.fhenix.io/",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "limit-order",
       "name": "Limit order",
       "kind": "pattern",
@@ -403,6 +536,38 @@
       ],
       "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
       "website": "https://v4hooks.com/learn/openzeppelin-hooks",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "slippage-fee",
+      "name": "SlippageFeeHook",
+      "kind": "pattern",
+      "tagline": "Simulate the swap, measure the tick it would move, then price the fee off that slippage.",
+      "description": "A dynamic fee that reacts to the size of the swap in front of it rather than to\nhistorical volatility. Before the real swap runs, the hook simulates it, reads how far\nthe tick would move, and charges accordingly — so a swap that walks the pool pays more\nthan one that barely moves the price.\n\nThe mechanism is the part worth studying. Solidity has no way to ask \"what would this\nswap do\" without doing it, so _getExactSingleFee reads the current tick from\npoolManager.getSlot0, then calls this._getTickAfterExactSingle in a try/catch. That\ninner call performs the swap and deliberately reverts with SlippageFeeHook__RevertWithTick,\npacking the resulting tick into the revert reason. The catch block pulls the selector\nand the tick straight out of the returndata with assembly, and anything other than the\nexpected selector is rethrown as SlippageFeeHook__UnexpectedRevert. Reverting unwinds\nthe simulated swap; the tick delta survives in memory. That is the whole trick.\n\nRe-entrancy is handled by identity, not a lock: _beforeSwap checks whether sender is\nthe hook itself and charges zero fee if so, which is what keeps the simulation from\nrecursing into another simulation. Worth understanding before adapting it — the guard\nis that one comparison.\n\nafterInitialize refuses to attach to a pool whose key.fee is not dynamic, which is the\ncorrect place for that check. The fee returned from beforeSwap is OR'd with\nLPFeeLibrary.OVERRIDE_FEE_FLAG, the 23rd-bit flag v4 requires for a per-swap override.\n\nNote the simulate-then-revert pattern doubles the swap work, so gas is roughly twice a\nplain swap. Single-file, unaudited example.\n",
+      "source": {
+        "repo": "https://github.com/dennnis0204/slippage-fee-hook",
+        "path": "src/SlippageFeeHook.sol",
+        "url": "https://github.com/dennnis0204/slippage-fee-hook/blob/a6764f52a0b92b1f17c40fd918d3caf86ba1dded/src/SlippageFeeHook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// dennnis0204/slippage-fee-hook — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory permissions) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: true,\n        beforeAddLiquidity: false,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: false,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _getExactSingleFee(ExactSingleParams memory params) internal returns (uint24 fee) {\n    (, int24 currentTick,,) = poolManager.getSlot0(params.poolKey.toId());\n\n    bytes4 selector;\n    int24 tickAfter;\n\n    // simulate the swap; it reverts with the resulting tick packed into the reason\n    try this._getTickAfterExactSingle(params) {}\n    catch (bytes memory reason) {\n        assembly (\"memory-safe\") {\n            selector := mload(add(reason, 0x20))\n            tickAfter := mload(add(reason, 0x24))\n        }\n    }\n\n    if (selector != SlippageFeeHook__RevertWithTick.selector) {\n        revert SlippageFeeHook__UnexpectedRevert();\n    }\n\n    fee = _calculateFee(currentTick, tickAfter, params.zeroForOne);\n}\n\nfunction _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)\n    internal override returns (bytes4, BeforeSwapDelta, uint24)\n{\n    uint24 fee;\n    /// @dev Sets the fee for the swap simulation via this hook\n    if (sender == address(this)) {\n        fee = 0;\n    } else {\n        ExactSingleParams memory exactSingleParams = ExactSingleParams({\n            poolKey: key,\n            zeroForOne: params.zeroForOne,\n            amountSpecified: params.amountSpecified\n        });\n        fee = _getExactSingleFee(exactSingleParams);\n    }\n    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);\n}\n\n/**\n * @dev Check that the pool key has a dynamic fee.\n */\nfunction _afterInitialize(address, PoolKey calldata key, uint160, int24) internal pure override returns (bytes4) {\n    if (!key.fee.isDynamicFee()) revert SlippageFeeHook__NotDynamicFee();\n    return this.afterInitialize.selector;\n}\n",
+      "categories": [
+        "dynamic-fees",
+        "mev-protection"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
@@ -633,6 +798,42 @@
       "properties": [
         "vanilla-swap"
       ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "purefi-verifier",
+      "name": "VerifierHook",
+      "kind": "product",
+      "tagline": "Gate every pool action behind an off-chain AML proof checked in the callback.",
+      "description": "PureFi's VerifierHook is a compliance gate wired into almost every callback v4 offers:\nbeforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity,\nbeforeSwap, afterSwap and beforeDonate. Seven bits is a lot of surface, and the reason\nis that a compliance rule which only covers swaps is trivially sidestepped by moving\nliquidity instead.\n\nThe hook holds an immutable IPureFiVerifier and a PureFiHookWhitelist. Callers hand it\na signed PureFi package — an off-chain AML/KYC attestation — which the callback decodes\nthrough PureFiDataLibrary and checks against a ruleId mapping before letting the action\nthrough. Roles are OpenZeppelin AccessControl: ISSUER, MARKET_MAKER, ROUTER and QUOTER,\nplus a routersWhitelist so only sanctioned routers can reach the pool at all.\n\nThat last part is the important structural detail. The proof travels as hookData, and\nthe repo ships its own PureFiSwapRouter and PureFiModifyLiquidityRouter to carry it, so\nthis is not a pool you can trade against with a stock router — the swap path is part of\nthe product. Read the routers alongside the hook; the hook alone will not tell you how\nthe proof gets there.\n\nTreat this as a reference for how a permissioned pool is actually assembled — the\nverifier is PureFi's own service, so the pattern is portable but the dependency is not.\nGating all four liquidity callbacks and both swap callbacks is the transferable idea.\n\nUnaudited in this repository.\n",
+      "source": {
+        "repo": "https://github.com/purefiprotocol/purefi-verifier-hook",
+        "path": "src/VerifierHook.sol",
+        "url": "https://github.com/purefiprotocol/purefi-verifier-hook/blob/1efdca6703a473942a02d4a166f0f5292bcecf5b/src/VerifierHook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// purefiprotocol/purefi-verifier-hook — excerpt. Full file: source.url\ncontract VerifierHook is BaseHook, AccessControl {\n    IPureFiVerifier public immutable verifier;\n    PureFiHookWhitelist public immutable whitelist;\n\n    mapping(address => bool) private routersWhitelist;\n    mapping(uint32 => bool) public ruleId;\n\n    bytes32 public constant ISSUER = keccak256('ISSUER');\n    bytes32 public constant MARKET_MAKER = keccak256('MARKET_MAKER');\n    bytes32 public constant ROUTER = keccak256('ROUTER');\n    bytes32 public constant QUOTER = keccak256('QUOTER');\n\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: false,\n        beforeAddLiquidity: true,\n        afterAddLiquidity: true,\n        beforeRemoveLiquidity: true,\n        afterRemoveLiquidity: true,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: true,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\n// Every gated callback decodes a signed PureFi package out of hookData via\n// PureFiDataLibrary and checks it against ruleId before allowing the action.\n// The proof is delivered by the repo's own PureFiSwapRouter /\n// PureFiModifyLiquidityRouter — a stock router cannot reach this pool.\n",
+      "categories": [
+        "compliance"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeAddLiquidity",
+        "afterAddLiquidity",
+        "beforeRemoveLiquidity",
+        "afterRemoveLiquidity",
+        "beforeSwap",
+        "afterSwap",
+        "beforeDonate"
+      ],
+      "properties": [
+        "custom-swap-data"
+      ],
+      "website": "https://purefi.io/",
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"

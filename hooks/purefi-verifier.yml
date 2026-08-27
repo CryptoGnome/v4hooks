@@ -1,0 +1,89 @@
+slug: purefi-verifier
+name: VerifierHook
+kind: product
+tagline: Gate every pool action behind an off-chain AML proof checked in the callback.
+description: |
+  PureFi's VerifierHook is a compliance gate wired into almost every callback v4 offers:
+  beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity,
+  beforeSwap, afterSwap and beforeDonate. Seven bits is a lot of surface, and the reason
+  is that a compliance rule which only covers swaps is trivially sidestepped by moving
+  liquidity instead.
+
+  The hook holds an immutable IPureFiVerifier and a PureFiHookWhitelist. Callers hand it
+  a signed PureFi package — an off-chain AML/KYC attestation — which the callback decodes
+  through PureFiDataLibrary and checks against a ruleId mapping before letting the action
+  through. Roles are OpenZeppelin AccessControl: ISSUER, MARKET_MAKER, ROUTER and QUOTER,
+  plus a routersWhitelist so only sanctioned routers can reach the pool at all.
+
+  That last part is the important structural detail. The proof travels as hookData, and
+  the repo ships its own PureFiSwapRouter and PureFiModifyLiquidityRouter to carry it, so
+  this is not a pool you can trade against with a stock router — the swap path is part of
+  the product. Read the routers alongside the hook; the hook alone will not tell you how
+  the proof gets there.
+
+  Treat this as a reference for how a permissioned pool is actually assembled — the
+  verifier is PureFi's own service, so the pattern is portable but the dependency is not.
+  Gating all four liquidity callbacks and both swap callbacks is the transferable idea.
+
+  Unaudited in this repository.
+source:
+  repo: https://github.com/purefiprotocol/purefi-verifier-hook
+  path: src/VerifierHook.sol
+  url: https://github.com/purefiprotocol/purefi-verifier-hook/blob/1efdca6703a473942a02d4a166f0f5292bcecf5b/src/VerifierHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // purefiprotocol/purefi-verifier-hook — excerpt. Full file: source.url
+  contract VerifierHook is BaseHook, AccessControl {
+      IPureFiVerifier public immutable verifier;
+      PureFiHookWhitelist public immutable whitelist;
+
+      mapping(address => bool) private routersWhitelist;
+      mapping(uint32 => bool) public ruleId;
+
+      bytes32 public constant ISSUER = keccak256('ISSUER');
+      bytes32 public constant MARKET_MAKER = keccak256('MARKET_MAKER');
+      bytes32 public constant ROUTER = keccak256('ROUTER');
+      bytes32 public constant QUOTER = keccak256('QUOTER');
+
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: true,
+          beforeRemoveLiquidity: true,
+          afterRemoveLiquidity: true,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: true,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  // Every gated callback decodes a signed PureFi package out of hookData via
+  // PureFiDataLibrary and checks it against ruleId before allowing the action.
+  // The proof is delivered by the repo's own PureFiSwapRouter /
+  // PureFiModifyLiquidityRouter — a stock router cannot reach this pool.
+categories:
+  - compliance
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeAddLiquidity
+  - afterAddLiquidity
+  - beforeRemoveLiquidity
+  - afterRemoveLiquidity
+  - beforeSwap
+  - afterSwap
+  - beforeDonate
+properties:
+  - custom-swap-data
+website: https://purefi.io/
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

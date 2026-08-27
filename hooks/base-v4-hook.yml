@@ -1,0 +1,102 @@
+slug: base-v4-hook
+name: BaseV4Hook
+kind: pattern
+tagline: Abstract base that re-implements v4 pool internals inside the hook for custom curves.
+description: |
+  Most custom-curve hooks bolt a NoOp beforeSwap onto a normal hook and manage reserves
+  by hand. BaseV4Hook takes the other route: it inherits the PoolManager's own machinery —
+  ProtocolFees, NoDelegateCall, ERC6909Claims, Extsload and Exttload — and runs v4-like
+  liquidity logic inside the hook, using Pool, Position, CurrencyDelta and CurrencyReserves
+  directly. If you want a pool that behaves like v4 but on a different curve, this is the
+  scaffold that gives you the accounting for free.
+
+  It is abstract on purpose. The external beforeSwap is implemented, gated by
+  onlyByPoolManager, and its job is to repackage IPoolManager.SwapParams into a
+  Pool.SwapParams struct — adding tickSpacing from the key and an lpFeeOverride of 0 —
+  before delegating to an internal _beforeSwap that you must implement. Your curve goes
+  there and returns the BeforeSwapDelta.
+
+  Permissions are the three a custom curve needs, and the file annotates each one:
+  beforeAddLiquidity because liquidity must be deposited into the hook directly rather
+  than the PoolManager, beforeSwap as the custom curve handler, and beforeSwapReturnDelta
+  to skip the PoolManager swap. Nothing else is claimed.
+
+  Read the NatSpec on beforeSwap before you use it. It states the delta sign convention —
+  positive means the hook is owed or took currency, negative means it owes or sent — and
+  the three conditions an lp fee override must satisfy: dynamic fee pool, the 23rd bit
+  (0x400000) set, and a value at or below 1,000,000. Those are the rules people get wrong.
+
+  Unaudited. Inheriting core internals means you inherit their invariants too.
+source:
+  repo: https://github.com/cairoeth/base-v4-hook
+  path: src/BaseV4Hook.sol
+  url: https://github.com/cairoeth/base-v4-hook/blob/a784e215a4fc1ff1d0f3e4697b764ab035c121b8/src/BaseV4Hook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // cairoeth/base-v4-hook — excerpt. Full file: source.url
+  abstract contract BaseV4Hook is BaseHook, ProtocolFees, NoDelegateCall, ERC6909Claims, Extsload, Exttload {
+      using PoolIdLibrary for PoolKey;
+      using Pool for *;
+      using Position for mapping(bytes32 => Position.Info);
+      using CurrencyDelta for Currency;
+      using CurrencyReserves for Currency;
+      using LPFeeLibrary for uint24;
+
+  /// @return BeforeSwapDelta The hook's delta in specified and unspecified currencies.
+  ///         Positive: the hook is owed/took currency, negative: the hook owes/sent currency
+  /// @return uint24 Optionally override the lp fee, only used if three conditions are met:
+  ///         1. the Pool has a dynamic fee, 2. the value's 2nd highest bit is set
+  ///         (23rd bit, 0x400000), and 3. the value is less than or equal to the maximum fee (1 million)
+  function beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+      external virtual override onlyByPoolManager returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      return _beforeSwap(
+          sender,
+          key,
+          Pool.SwapParams({
+              tickSpacing: key.tickSpacing,
+              zeroForOne: params.zeroForOne,
+              amountSpecified: params.amountSpecified,
+              sqrtPriceLimitX96: params.sqrtPriceLimitX96,
+              lpFeeOverride: 0
+          })
+      );
+  }
+
+  /// @dev Execute swap with custom logic — implement this in your subclass
+  function _beforeSwap(address sender, PoolKey calldata key, Pool.SwapParams memory params)
+      internal virtual returns (bytes4, BeforeSwapDelta, uint24);
+
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: true, // -- liquidity must be deposited here directly -- //
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true, // -- custom curve handler -- //
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: true, // -- enable custom curve by skipping poolmanager swap -- //
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+categories:
+  - wrappers
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeAddLiquidity
+  - beforeSwap
+  - beforeSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27
