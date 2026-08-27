@@ -24,6 +24,40 @@ const { compact = false } = Astro.props;
   </aside>
 </details>
 <script is:inline>
+  // Everything below is built with DOM APIs and textContent, never innerHTML. name, tagline
+  // and url reach us from D1 via /api/ads, written by an endpoint with no authentication, so
+  // they are untrusted strings. Interpolating them into innerHTML made a single listing a
+  // stored XSS on every page that carries the rail.
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function note(text) {
+    return el("li", "note", text);
+  }
+
+  function sponsorRow(row) {
+    const li = document.createElement("li");
+
+    const rank = el("div", "rank");
+    rank.append(el("span", null, `#${row.rank}`), el("span", "bid", `${Number(row.bid_usdc).toFixed(0)} USDC`));
+
+    const name = el("a", "name", row.name);
+    name.rel = "noopener sponsored";
+    // cleanUrl() in the Worker already rejects anything but https, but this is the sink, so
+    // re-check rather than trust the row. A bad value renders as plain text, not a link.
+    try {
+      const u = new URL(row.url);
+      if (u.protocol === "https:") name.href = u.href;
+    } catch { /* unparseable url -- leave the anchor without an href */ }
+
+    li.append(rank, name, el("p", "why", row.tagline));
+    return li;
+  }
+
   async function load() {
     const list = document.getElementById("sponsor-list");
     const rail = list?.closest(".rail");
@@ -34,21 +68,13 @@ const { compact = false } = Astro.props;
       const rows = data.listings ?? [];
       rail?.classList.toggle("empty", rows.length === 0);
       if (!rows.length) {
-        list.innerHTML = "<li class=\"note\">No live bids. First slot is 5 USDC.</li>";
+        list.replaceChildren(note("No live bids. First slot is 5 USDC."));
         return;
       }
-      list.innerHTML = rows
-        .map(
-          (row) => `<li>
-            <div class="rank"><span>#${row.rank}</span><span class="bid">${row.bid_usdc.toFixed(0)} USDC</span></div>
-            <a class="name" href="${row.url}" rel="noopener sponsored">${row.name}</a>
-            <p class="why">${row.tagline}</p>
-          </li>`,
-        )
-        .join("");
+      list.replaceChildren(...rows.map(sponsorRow));
     } catch {
       rail?.classList.add("empty");
-      list.innerHTML = "<li class=\"note\">Bid board wakes once the Worker API is deployed.</li>";
+      list.replaceChildren(note("Bid board wakes once the Worker API is deployed."));
     }
   }
   load();
