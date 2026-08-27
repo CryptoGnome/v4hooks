@@ -1,10 +1,50 @@
 slug: super-dca
 name: Super DCA
-tagline: TWAMM-style DCA with dynamic fees and a Curve-like gauge for rewards.
+kind: product
+tagline: Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
 description: |
-  Super DCA combines time-weighted execution with dynamic fees and a gauge so reward tokens can be directed across pools. It is aimed at people who want recurring onchain buys without running a bot, while LPs still have a fee and emissions story.
+  SuperDCAGauge (Apache-2.0) requires the Super DCA token in the pair and tickSpacing 60 in
+  _beforeInitialize, then dynamic fees after init. _beforeSwap only accepts verified routers,
+  reads msgSender, and returns fee | OVERRIDE_FEE_FLAG (0 for internal, keeper vs external).
+  Liquidity callbacks also exist for gauge accounting. This is how to do allowlisted fee
+  tiers, not a generic TWAMM you should copy blindly. Full SuperDCAGauge.sol at the permalink.
+  Listing is not an audit.
+source:
+  repo: https://github.com/Super-DCA-Tech/super-dca-gauge
+  path: src/SuperDCAGauge.sol
+  url: https://github.com/Super-DCA-Tech/super-dca-gauge/blob/master/src/SuperDCAGauge.sol
+solidity: |
+  // SPDX-License-Identifier: Apache-2.0
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: true,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: true,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  If you searched for a Uniswap v4 DCA or gauge hook, start here, then read the Super DCA docs for which chains are live. Emissions hooks can brick withdrawals if misconfigured — confirm pause paths and audits independently. v4hooks will not call this safe; it will tell you what job the hook claims to do.
+  function _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata hookData)
+      internal
+      override
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      if (!verifiedRouters[sender]) revert SuperDCAGauge__UnauthorizedRouter();
+      address swapper = IMsgSender(sender).msgSender();
+      uint24 fee = isInternalAddress[swapper] ? internalFee : swapper == keeper ? keeperFee : externalFee;
+      if (!isInternalAddress[swapper] && swapper != keeper) _handleDistributionAndSettlement(key, hookData);
+      return (IHooks.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+  }
 categories:
   - twamm
   - dynamic-fees
@@ -12,12 +52,14 @@ categories:
 chains:
   - base
   - ethereum
-website: https://superdca.org/
-status: production
+license: Apache-2.0
 flags:
-  - beforeSwap
-  - afterSwap
+  - beforeInitialize
+  - afterInitialize
   - beforeAddLiquidity
   - beforeRemoveLiquidity
+  - beforeSwap
+website: https://superdca.org/
+status: production
 added: 2026-08-27
 updated: 2026-08-27

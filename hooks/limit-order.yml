@@ -1,24 +1,64 @@
 slug: limit-order
-name: Limit order hook
-tagline: Place onchain limit orders that fill when the pool trades through a tick.
+name: Limit order
+kind: pattern
+tagline: Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
 description: |
-  Uniswap’s v4 limit-order example lets a user rest liquidity at a tick so a swap that crosses that price fills the order. It is the default answer to “does v4 have native limit orders?” — yes, as a hook, not as a core PoolManager feature.
+  Uniswap’s LimitOrder example records the last tick on afterInitialize. On afterSwap it walks
+  ticks the swap just crossed and fills any epoch resting at those ticks by removing that
+  one-tick-wide liquidity. Users call place() to add an order; withdraw() after Fill. Flags
+  must be afterInitialize + afterSwap. This is the example-contracts file, UNLICENSED, not a
+  production CLOB. Production forks add cancel, partial fill, and gas accounting. Copy the
+  full Solidity from the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-periphery
+  path: contracts/hooks/examples/LimitOrder.sol
+  url: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/LimitOrder.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  Use this when you want an onchain resting order rather than an intent sent to a solver. The example contract is a starting point; production limit-order hooks add cancellations, partial fills, and gas accounting. Check the live address and flags on Uniswap/hooklist before you post size.
+  function afterSwap(
+      address,
+      PoolKey calldata key,
+      IPoolManager.SwapParams calldata params,
+      BalanceDelta,
+      bytes calldata
+  ) external override onlyByManager returns (bytes4, int128) {
+      (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);
+      if (lower > upper) return (LimitOrder.afterSwap.selector, 0);
+      bool zeroForOne = !params.zeroForOne;
+      for (; lower <= upper; lower += key.tickSpacing) {
+          _fillEpoch(key, lower, zeroForOne);
+      }
+      setTickLowerLast(key.toId(), tickLower);
+      return (LimitOrder.afterSwap.selector, 0);
+  }
 categories:
   - limit-orders
 chains:
   - ethereum
-  - base
-  - unichain
-  - robinhood
-repo: https://github.com/Uniswap/v4-periphery
-docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
-license: MIT
-status: experimental
+license: UNLICENSED
 flags:
-  - beforeSwap
-  - afterSwap
   - afterInitialize
+  - afterSwap
+docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

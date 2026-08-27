@@ -1,20 +1,55 @@
 slug: stop-loss
-name: Stop-loss hook
-tagline: Close a position automatically when the pool trades through a stop price.
+name: Stop-loss
+kind: pattern
+tagline: After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
 description: |
-  saucepoint’s v4 stop-loss hook is the usual answer to “can Uniswap v4 run a stop order onchain?” It watches price during swap callbacks and exits when the stop is touched, without an off-chain keeper for the trigger itself (you still pay gas on the hitting swap).
+  saucepoint’s StopLoss stores amounts per pool/tick/direction. afterInitialize snapshots
+  the tick. afterSwap walks from the previous tick to the new one and fillStopLoss for
+  the opposite swap direction, then users redeem ERC1155 receipts. Early v4 API
+  (getHooksCalls). MIT hackathon code — the file still has TODOs. Use it as the fill-on-cross
+  pattern, not as something to deploy with size. Full file at the permalink. Listing is not
+  an audit.
+source:
+  repo: https://github.com/saucepoint/v4-stoploss
+  path: src/StopLoss.sol
+  url: https://github.com/saucepoint/v4-stoploss/blob/main/src/StopLoss.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+      return Hooks.Calls({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeModifyPosition: false,
+          afterModifyPosition: false,
+          beforeSwap: false,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false
+      });
+  }
 
-  Stop hooks can fail closed or fail open depending on how reverts are handled — read the repo before you size it. This listing is prior art for limit-order adjacent products. Contribute a production fork as its own slug if you maintain one.
+  function afterSwap(
+      address,
+      IPoolManager.PoolKey calldata key,
+      IPoolManager.SwapParams calldata params,
+      BalanceDelta
+  ) external override returns (bytes4) {
+      int24 prevTick = tickLowerLasts[key.toId()];
+      (, int24 tick,) = poolManager.getSlot0(key.toId());
+      int24 currentTick = getTickLower(tick, key.tickSpacing);
+      bool stopLossZeroForOne = !params.zeroForOne;
+      // walk ticks between prevTick and currentTick; fillStopLoss when amount > 0
+      tickLowerLasts[key.toId()] = currentTick;
+      return StopLoss.afterSwap.selector;
+  }
 categories:
   - limit-orders
 chains:
   - ethereum
-  - base
-repo: https://github.com/saucepoint/v4-stoploss
 license: MIT
-status: experimental
 flags:
-  - beforeSwap
+  - afterInitialize
   - afterSwap
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

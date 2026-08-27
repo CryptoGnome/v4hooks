@@ -2,16 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://v4hooks.com/schema/hook.schema.json",
   "title": "v4hooks listing",
-  "description": "One Uniswap v4 hook product. Group deployments under a single listing. Do not submit raw address-only clones of Uniswap/hooklist.",
+  "description": "One Uniswap v4 hook you can build or study. The body is a licensed Solidity excerpt plus a permalink to the full file. Not a Uniswap/hooklist address dump.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "slug",
     "name",
+    "kind",
     "tagline",
     "description",
+    "source",
+    "solidity",
     "categories",
     "chains",
+    "flags",
+    "license",
     "status",
     "added",
     "updated"
@@ -23,8 +28,34 @@
       "maxLength": 64
     },
     "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+    "kind": {
+      "type": "string",
+      "enum": ["pattern", "product"],
+      "description": "pattern = copy this to implement the job. product = production hook, excerpted so you can see how they wired callbacks."
+    },
     "tagline": { "type": "string", "minLength": 12, "maxLength": 160 },
-    "description": { "type": "string", "minLength": 280, "maxLength": 4000 },
+    "description": {
+      "type": "string",
+      "minLength": 280,
+      "maxLength": 4000,
+      "description": "How the callbacks work. Not marketing copy."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "repo"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "description": "Permalink to the Solidity file." },
+        "repo": { "type": "string", "format": "uri" },
+        "path": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    },
+    "solidity": {
+      "type": "string",
+      "minLength": 120,
+      "maxLength": 8000,
+      "description": "Excerpt of getHookPermissions plus the callbacks that matter. Not the whole contract."
+    },
     "categories": {
       "type": "array",
       "minItems": 1,
@@ -69,13 +100,13 @@
         }
       }
     },
-    "repo": { "type": "string", "format": "uri" },
     "docs": { "type": "string", "format": "uri" },
     "website": { "type": "string", "format": "uri" },
     "audit_url": { "type": "string", "format": "uri" },
     "license": { "type": "string", "minLength": 1, "maxLength": 40 },
     "flags": {
       "type": "array",
+      "minItems": 1,
       "uniqueItems": true,
       "items": {
         "type": "string",

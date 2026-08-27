@@ -1,31 +1,34 @@
 # Contributing to v4hooks
 
-v4hooks is a directory of Uniswap v4 **products**, not a clone of Uniswap/hooklist. One YAML file per hook you would tell a friend to use. Group every chain deployment under that one file.
+v4hooks is a directory of **example Uniswap v4 hook contracts** for agents and builders. One YAML file per hook. The body is a licensed Solidity excerpt plus a GitHub permalink to the full file. Not a clone of Uniswap/hooklist.
 
 ## Rules
 
 - Filename `hooks/{slug}.yml` must match `slug`.
-- `description` must be unique, at least 280 characters, and explain the job (not “this is a uniswap hook”).
-- HTTPS only for `website`, `repo`, `docs`, `audit_url`.
+- `kind` is `pattern` (implement this) or `product` (production hook, study the callbacks).
+- `source.url` must be an `https://github.com/` permalink to the `.sol` file. `source.repo` is the repo root.
+- `solidity` is an excerpt: `getHookPermissions` (or `getHooksCalls`) plus the callbacks that matter. Not the whole contract.
+- `description` ≥ 280 characters, unique, explains the callbacks.
+- `flags` must match the excerpt. `license` is the SPDX from that file.
+- HTTPS only for `website`, `docs`, `audit_url`.
 - Chains must be in the allowlist in `scripts/validate.mjs`.
-- Addresses lowercase `0x` + 40 hex. Do not invent addresses. Prefer omitting `deployments` over guessing.
-- Do not duplicate an existing slug or the same chain+address pair.
-- Status is `production`, `experimental`, or `deprecated`.
-- Listing is not an audit. Do not claim Uniswap endorsement.
+- Addresses lowercase `0x` + 40 hex. Do not invent addresses.
+- Listing is not an audit. Do not claim Uniswap endorsement or that the snippet is safe to deploy.
 
 ## Steps
 
 1. Fork the repo.
-2. Add or edit `hooks/{slug}.yml`.
-3. Run `npm run validate`.
-4. Open a PR with the template. A maintainer must merge. CI is directory-quality (schema, uniqueness, URLs), not a security review.
+2. Copy [`hooks/_template.yml`](hooks/_template.yml) to `hooks/{slug}.yml`.
+3. Fill it. Delete comments. Run `npm run validate`.
+4. Open a PR. A maintainer must merge. CI checks schema and uniqueness, not security.
 
 ## What we will reject
 
-- Raw hooklist dumps (one file per address with no product story).
-- Thin pages, keyword stuffing, or copied Uniswap docs.
-- Affiliate tracking query strings on URLs.
-- Hooks you cannot point to a public repo, site, or docs.
+- Listings with no public Solidity file we can permalink.
+- Invented or paraphrased code (must match the source file).
+- Raw hooklist dumps (one file per address, no callbacks).
+- Thin pages or copied Uniswap docs.
+- Affiliate tracking query strings.
 
 ## Advertise
 

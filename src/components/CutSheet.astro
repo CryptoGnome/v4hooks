@@ -12,6 +12,7 @@ const Tag = heading;
       <Tag>{hook.name}</Tag>
       <p class="tagline">{hook.tagline}</p>
       <div class="stamps">
+        <span class="stamp">{hook.kind}</span>
         <span class:list={["stamp", hook.status === "production" && "live", hook.status === "deprecated" && "warn"]}>
           {hook.status}
         </span>
@@ -21,13 +22,12 @@ const Tag = heading;
         {hook.chains.map((c) => (
           <span class="stamp">{chainBySlug(c)?.name ?? c}</span>
         ))}
-        {hook.audit_url && <span class="stamp live">audit</span>}
-        {hook.repo && <span class="stamp">repo</span>}
+        <span class="stamp">{hook.license}</span>
       </div>
     </div>
     <div class="bits" title="Hook permission bits">
       {FLAG_ORDER.map((flag) => (
-        <span class:list={["bit", hook.flags?.includes(flag) && "on"]} title={flag}></span>
+        <span class:list={["bit", hook.flags.includes(flag) && "on"]} title={flag}></span>
       ))}
     </div>
   </div>

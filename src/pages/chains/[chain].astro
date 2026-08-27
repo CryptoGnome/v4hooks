@@ -21,7 +21,7 @@ const jsonLd = {
 ---
 <Layout
   title={`Uniswap v4 hooks on ${chain.name}`}
-  description={`Curated Uniswap v4 hooks deployed or documented on ${chain.name}, including products you can actually integrate — not a raw address dump.`}
+  description={`Uniswap v4 hook example contracts documented on ${chain.name} — Solidity snippets, not a raw address dump.`}
   jsonLd={jsonLd}
 >
   <div class="layout">
@@ -29,7 +29,7 @@ const jsonLd = {
       <section class="lede">
         <h1>Uniswap v4 hooks on {chain.name}</h1>
         <p class="answer">
-          These listings are v4 hook products that report {chain.name} (chain id {chain.id}). Use them to find a hook to integrate; confirm the live address on Uniswap hooklist before you route.
+          These listings are example hook contracts that mention {chain.name} (chain id {chain.id}). Use the Solidity on each page; confirm a live address on Uniswap hooklist before you route.
         </p>
       </section>
       {hooks.map((hook) => <CutSheet hook={hook} />)}

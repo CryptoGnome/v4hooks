@@ -1,26 +1,57 @@
 slug: full-range
 name: Full range
-tagline: v2-style full-range liquidity as a Uniswap v4 hook.
+kind: pattern
+tagline: "Force v2-style full-range LP: only the hook can modify liquidity, users mint a pool ERC20 instead."
 description: |
-  Full Range is the example hook that makes a v4 pool behave like a constant-product v2 market: liquidity across the entire price curve instead of a tick range. Teams porting v2 inventory or wanting a simpler LP UX use this instead of teaching every LP concentrated positions.
+  FullRange’s beforeInitialize requires tickSpacing 60 and deploys a per-pool ERC20 receipt.
+  beforeAddLiquidity reverts unless sender is the hook, so LPs must call addLiquidity on the
+  hook (min to max tick). beforeSwap marks that fees have accrued. This is how you wrap a v4
+  pool as constant-product inventory. UNLICENSED Uniswap example — take the full file, including
+  rebalance/donate dust. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-periphery
+  path: contracts/hooks/examples/FullRange.sol
+  url: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/FullRange.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  It is an official Uniswap example, not a growth-stage product. If you need production wrapping, look at community “v2 on v4” deployments and still confirm addresses on hooklist. This sheet exists so “full range uniswap v4 hook” resolves to a real explanation rather than a random bytecode dump.
+  function beforeAddLiquidity(
+      address sender,
+      PoolKey calldata,
+      IPoolManager.ModifyLiquidityParams calldata,
+      bytes calldata
+  ) external view override returns (bytes4) {
+      if (sender != address(this)) revert SenderMustBeHook();
+      return FullRange.beforeAddLiquidity.selector;
+  }
 categories:
   - lp-management
   - wrappers
 chains:
   - ethereum
-  - base
-  - unichain
-  - robinhood
-repo: https://github.com/Uniswap/v4-periphery
-license: MIT
-status: experimental
+license: UNLICENSED
 flags:
+  - beforeInitialize
   - beforeAddLiquidity
-  - afterAddLiquidity
-  - beforeRemoveLiquidity
-  - afterRemoveLiquidity
   - beforeSwap
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

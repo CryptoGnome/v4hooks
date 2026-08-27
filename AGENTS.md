@@ -1,13 +1,15 @@
 # AGENTS.md
 
-You are helping with **v4hooks**, a curated Uniswap v4 hooks directory (https://v4hooks.com).
+You are helping with **v4hooks**, a directory of Uniswap v4 hook example contracts (https://v4hooks.com).
 
 ## What this repo is
 
-- Source of truth: `hooks/*.yml`
+- Source of truth: `hooks/*.yml` — each file is a licensed Solidity excerpt + GitHub permalink
+- `kind: pattern` = implement this. `kind: product` = study a live protocol’s callbacks
 - Site: Astro static pages in `src/pages`
 - Ads API: `src/worker.ts` + D1 `v4hooks-ads`
 - Do **not** clone Uniswap/hooklist. Link to it for addresses.
+- Do **not** invent Solidity or contract addresses.
 
 ## Read first
 
@@ -16,7 +18,7 @@ You are helping with **v4hooks**, a curated Uniswap v4 hooks directory (https://
 
 ## Tasks
 
-- Add a hook: new YAML, then `npm run validate`.
+- Add a hook: copy `hooks/_template.yml` to `hooks/{slug}.yml`, then `npm run validate`. Files starting with `_` are not listings.
 - Change copy/SEO: edit the page under `src/pages` and keep JSON-LD accurate.
 - Ads: Worker routes `/api/ads`, `/api/ads/intent`, `/api/ads/webhook`. Min bid 5 USDC.
 
@@ -29,6 +31,6 @@ npm run build
 
 ## Do not
 
-- Invent contract addresses.
+- Invent contract addresses or Solidity.
 - Claim listings are audited or official Uniswap routing.
 - Commit `.dev.vars` or secrets.

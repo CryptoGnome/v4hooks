@@ -1,21 +1,65 @@
 slug: eulerswap
 name: EulerSwap
-tagline: AMM hooked into Euler lending so swaps tap the same inventory LPs already posted.
+kind: product
+tagline: "Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math."
 description: |
-  EulerSwap is a DEX that uses Uniswap v4 hooks so swap inventory can sit inside Euler’s lending markets instead of a dead pool. The hook is the join between AMM pricing and isolated lending risk — useful when you want a v4 pool that is also a credit venue.
+  Euler’s UniswapHook (BUSL-1.1) quotes amountIn/amountOut off the v3 tick curve, returns a
+  BeforeSwapDelta so PoolManager’s concentrated liquidity is unused, takes the input to vaults
+  and settles the output from vaults. beforeInitialize / beforeAddLiquidity / beforeDonate stay
+  enabled so BaseHook’s default revert blocks stray inits, CLAMM LP, and donations. Study this
+  for “hook is the AMM.” Do not paste BUSL into a new MIT repo without reading the license.
+  Full UniswapHook.sol at the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/euler-xyz/euler-swap
+  path: src/UniswapHook.sol
+  url: https://github.com/euler-xyz/euler-swap/blob/master/src/UniswapHook.sol
+solidity: |
+  // SPDX-License-Identifier: BUSL-1.1
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: true,
+          afterDonate: false,
+          beforeSwapReturnDelta: true,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  Evaluate oracle assumptions and liquidation paths before you treat it as a vanilla Uniswap pool. This directory records EulerSwap as a lending + AMM product. Canonical addresses belong on hooklist; this page is for the question “which hook do I use if I want Euler-backed swaps?”
+  // take input to Euler vaults, pay output, offset the CLAMM swap
+  function _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+      internal
+      override
+      nonReentrant
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      // QuoteLib.computeQuote → poolManager.take(input) → vaults → poolManager.settle(output)
+      BeforeSwapDelta returnDelta = isExactInput
+          ? toBeforeSwapDelta(amountIn.toInt128(), -(amountOut.toInt128()))
+          : toBeforeSwapDelta(-(amountOut.toInt128()), amountIn.toInt128());
+      return (BaseHook.beforeSwap.selector, returnDelta, 0);
+  }
 categories:
   - lending
   - lp-management
 chains:
   - ethereum
+license: BUSL-1.1
+flags:
+  - beforeInitialize
+  - beforeAddLiquidity
+  - beforeSwap
+  - beforeDonate
+  - beforeSwapReturnDelta
 website: https://app.euler.finance/swap
 status: production
-flags:
-  - beforeSwap
-  - afterSwap
-  - beforeAddLiquidity
-  - afterAddLiquidity
 added: 2026-08-27
 updated: 2026-08-27

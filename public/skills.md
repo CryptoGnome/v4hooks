@@ -1,14 +1,15 @@
 ---
 name: find-v4-hook
-description: Find a Uniswap v4 hook to use by chain, category, or job. Use when the user asks for Uniswap v4 hooks, v4 hooks on Robinhood/Base/Unichain, TWAMM, launchpads, dynamic fees, or a directory of hooks.
+description: Find Uniswap v4 hook example contracts and Solidity snippets. Use when the user wants to implement a v4 hook.
 ---
 
-# Find a Uniswap v4 hook
+# Find a Uniswap v4 hook to build
 
 Copy this skill into an agent. Canonical site: https://v4hooks.com
 
 1. GET https://v4hooks.com/llms.txt
 2. GET https://v4hooks.com/hooks.json
-3. Pick a slug, then read https://v4hooks.com/hooks/{slug}
+3. GET https://v4hooks.com/llm-full.txt for Solidity excerpts
+4. Pick a slug, then read https://v4hooks.com/hooks/{slug}
 
-v4hooks is not Uniswap/hooklist. Hooklist is addresses. v4hooks is products you can use. Listing is not an audit.
+`kind: pattern` = copy the source file. `kind: product` = study callbacks. v4hooks is not Uniswap/hooklist. Listing is not an audit.

@@ -9,5 +9,6 @@
 - [ ] `npm run validate` passes
 - [ ] Filename matches `slug`
 - [ ] Description is unique and ≥ 280 characters
-- [ ] No invented addresses
+- [ ] `source.url` is a GitHub permalink; `solidity` matches that file
+- [ ] No invented addresses or invented Solidity
 - [ ] I understand listing is not an audit

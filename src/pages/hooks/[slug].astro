@@ -1,6 +1,5 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import CutSheet from "../../components/CutSheet.astro";
 import SponsorBoard from "../../components/SponsorBoard.astro";
 import { getHook, loadHooks, paragraph } from "../../lib/catalog";
 import { FLAG_ORDER, SITE } from "../../lib/meta";
@@ -18,13 +17,13 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "SoftwareApplication",
+      "@type": "SoftwareSourceCode",
       name: hook.name,
-      applicationCategory: "DeveloperApplication",
-      operatingSystem: "EVM",
+      programmingLanguage: "Solidity",
+      codeRepository: hook.source.repo,
+      license: hook.license,
       description: hook.tagline,
       url: `${SITE.url}/hooks/${hook.slug}`,
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     },
     {
       "@type": "BreadcrumbList",
@@ -38,7 +37,7 @@ const jsonLd = {
       mainEntity: [
         {
           "@type": "Question",
-          name: `What does the ${hook.name} Uniswap v4 hook do?`,
+          name: `How does the ${hook.name} Uniswap v4 hook work?`,
           acceptedAnswer: { "@type": "Answer", text: hook.tagline },
         },
         {
@@ -54,37 +53,40 @@ const jsonLd = {
 <Layout title={`${hook.name} — Uniswap v4 hook`} description={desc} jsonLd={jsonLd}>
   <div class="layout">
     <article class="prose">
-      <p class="note">Cut sheet · last updated {hook.updated}</p>
+      <p class="note">{hook.kind} · {hook.license} · last updated {hook.updated}</p>
       <h1>{hook.name}</h1>
       <p class="answer">{hook.tagline}</p>
-      <CutSheet hook={hook} heading="h3" />
       {hook.description.split(/\n\n+/).map((p) => <p>{p.trim()}</p>)}
+      <h2>Solidity</h2>
+      <p class="note">
+        Excerpt from <a href={hook.source.url}>{hook.source.path ?? hook.source.url}</a>.
+        {hook.kind === "pattern" ? " Copy the full file to implement this." : " Production hook — study the callbacks, do not paste it as your factory."}
+        Not an audit.
+      </p>
+      <pre class="sol"><code>{hook.solidity.trim()}</code></pre>
+      <h2>Permission bits</h2>
+      <p>These bits must match the deployed address. Confirm on-chain before you route.</p>
+      <ul>
+        {FLAG_ORDER.filter((f) => hook.flags.includes(f)).map((f) => <li><code>{f}</code></li>)}
+      </ul>
       <h2>Spec</h2>
       <table>
         <tbody>
+          <tr><th>Kind</th><td>{hook.kind}</td></tr>
           <tr><th>Status</th><td>{hook.status}</td></tr>
+          <tr><th>License</th><td>{hook.license}</td></tr>
+          <tr><th>Source</th><td><a href={hook.source.url}>{hook.source.repo}</a></td></tr>
           <tr><th>Categories</th><td>{hook.categories.map((c) => <a href={`/categories/${c}`}>{categoryBySlug(c)?.name}</a>)}</td></tr>
           <tr><th>Chains</th><td>{hook.chains.map((c) => <a href={`/chains/${c}`}>{chainBySlug(c)?.name}</a>)}</td></tr>
-          {hook.license && <tr><th>License</th><td>{hook.license}</td></tr>}
           {hook.website && <tr><th>Website</th><td><a href={hook.website}>{hook.website}</a></td></tr>}
-          {hook.repo && <tr><th>Repo</th><td><a href={hook.repo}>{hook.repo}</a></td></tr>}
           {hook.docs && <tr><th>Docs</th><td><a href={hook.docs}>{hook.docs}</a></td></tr>}
           {hook.audit_url && <tr><th>Audit</th><td><a href={hook.audit_url}>{hook.audit_url}</a></td></tr>}
         </tbody>
       </table>
-      {hook.flags?.length ? (
-        <>
-          <h2>Permission bits</h2>
-          <p>These are the Uniswap v4 hook flags this product reports. Confirm on-chain before you route.</p>
-          <ul>
-            {FLAG_ORDER.filter((f) => hook.flags?.includes(f)).map((f) => <li><code>{f}</code></li>)}
-          </ul>
-        </>
-      ) : null}
       {hook.deployments?.length ? (
         <>
           <h2>Known deployments</h2>
-          <p>v4hooks is not the canonical address book. Prefer <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a> for bytecode-at-address.</p>
+          <p>v4hooks is not the address book. Prefer <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a> for bytecode-at-address.</p>
           <table>
             <thead><tr><th>Chain</th><th>Address</th></tr></thead>
             <tbody>
@@ -99,8 +101,8 @@ const jsonLd = {
         </>
       ) : null}
       <h2>FAQ</h2>
-      <p><strong>Is this the official Uniswap registry?</strong> No. This page helps you decide whether to use {hook.name}. Official deployment records live in hooklist.</p>
-      <p><strong>Should I trust it with funds?</strong> Read the audit if one exists, verify the address yourself, and treat this listing as a map, not a guarantee.</p>
+      <p><strong>Can I paste this into production?</strong> The snippet is an excerpt. Use the full file at the source URL, match flags to the address, and treat this page as a map, not a guarantee.</p>
+      <p><strong>Is this Uniswap hooklist?</strong> No. Hooklist is bytecode at an address. This page is how the hook is written.</p>
     </article>
     <SponsorBoard />
   </div>

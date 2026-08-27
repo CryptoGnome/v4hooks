@@ -8,7 +8,7 @@ const DIR = path.join(process.cwd(), "hooks");
 
 export function loadHooks(): Hook[] {
   if (!fs.existsSync(DIR)) return [];
-  const files = fs.readdirSync(DIR).filter((f) => f.endsWith(".yml") || f.endsWith(".yaml"));
+  const files = fs.readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f) && !f.startsWith("_"));
   const hooks = files.map((file) => {
     const raw = fs.readFileSync(path.join(DIR, file), "utf8");
     const data = parse(raw) as Hook;

@@ -1,21 +1,64 @@
 slug: velp
 name: veLP
-tagline: Curve-style vote-escrow for Uniswap v4 liquidity positions.
+kind: pattern
+tagline: "Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition."
 description: |
-  veLP is a vote-escrow hook that locks LP value and directs influence the way Curve veCRV directs gauges. Search “uniswap v4 ve hook” and this is the community reference: lock, decay, vote — implemented as v4 callbacks rather than a separate gauge controller only.
+  kadenzipfel ports VotingEscrow onto a Uniswap v4 hook. afterInitialize stores the PoolId.
+  beforeModifyPosition lets unrelated ticks through, but if sender is modifying their locked
+  range it requires liquidityDelta > 0 until lock end. afterModifyPosition checkpoints ve
+  weight from the position’s liquidity. Early Hooks.Calls API (modifyPosition, not add/remove).
+  AGPL-3.0 — copy the full VotingEscrow.sol. Map modifyPosition to today’s
+  beforeAddLiquidity / beforeRemoveLiquidity if you port forward. Listing is not an audit.
+source:
+  repo: https://github.com/kadenzipfel/veLP
+  path: src/VotingEscrow.sol
+  url: https://github.com/kadenzipfel/veLP/blob/main/src/VotingEscrow.sol
+solidity: |
+  // SPDX-License-Identifier: AGPL-3.0-or-later
+  function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+      return Hooks.Calls({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeModifyPosition: true,
+          afterModifyPosition: true,
+          beforeSwap: false,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false
+      });
+  }
 
-  Vote-escrow designs have governance and unlock edge cases. Read the repo, check whether anyone still maintains a deployment, and never assume emissions are funded. v4hooks keeps the pattern so agents can recommend it as prior art.
+  function beforeModifyPosition(
+      address sender,
+      PoolKey calldata,
+      IPoolManager.ModifyPositionParams calldata modifyPositionParams
+  ) external view override poolManagerOnly returns (bytes4) {
+      LockTicks memory lockTicks_ = lockTicks[sender];
+      if (
+          lockTicks_.lowerTick != modifyPositionParams.tickLower
+              || lockTicks_.upperTick != modifyPositionParams.tickUpper
+      ) {
+          return VotingEscrow.beforeModifyPosition.selector;
+      }
+      LockedBalance memory locked_ = locked[sender];
+      require(
+          modifyPositionParams.liquidityDelta > 0 || locked_.end <= block.timestamp,
+          "Can't withdraw before lock end"
+      );
+      return VotingEscrow.beforeModifyPosition.selector;
+  }
 categories:
   - ve
   - lp-management
 chains:
   - ethereum
-repo: https://github.com/kadenzipfel/veLP
-license: MIT
-status: experimental
+license: AGPL-3.0-or-later
 flags:
+  - afterInitialize
   - beforeAddLiquidity
+  - afterAddLiquidity
   - beforeRemoveLiquidity
-  - afterSwap
+  - afterRemoveLiquidity
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

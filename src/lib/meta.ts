@@ -1,9 +1,9 @@
 export const SITE = {
   name: "v4hooks",
   url: "https://v4hooks.com",
-  tagline: "Uniswap v4 hooks you can use",
+  tagline: "Uniswap v4 hooks you can build",
   description:
-    "v4hooks is a curated directory of Uniswap v4 hooks you can actually use — grouped by product, chain, and job — not a clone of Uniswap’s on-chain address registry.",
+    "Example Uniswap v4 hook contracts and Solidity snippets for agents and builders. Not Uniswap’s on-chain address registry.",
 };
 
 export const FLAG_ORDER = [
@@ -88,20 +88,28 @@ export type Deployment = {
   hooklist?: boolean;
 };
 
+export type HookSource = {
+  url: string;
+  repo: string;
+  path?: string;
+};
+
 export type Hook = {
   slug: string;
   name: string;
+  kind: "pattern" | "product";
   tagline: string;
   description: string;
+  source: HookSource;
+  solidity: string;
   categories: CategorySlug[];
   chains: string[];
   deployments?: Deployment[];
-  repo?: string;
   docs?: string;
   website?: string;
   audit_url?: string;
-  license?: string;
-  flags?: Flag[];
+  license: string;
+  flags: Flag[];
   status: "production" | "experimental" | "deprecated";
   added: string;
   updated: string;

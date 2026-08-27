@@ -15,14 +15,14 @@ const hooks = hooksForCategory(category.slug);
 ---
 <Layout
   title={`${category.name} Uniswap v4 hooks`}
-  description={`Best-effort directory of Uniswap v4 ${category.name.toLowerCase()} hooks you can evaluate and use. ${category.blurb}`}
+  description={`Best-effort directory of Uniswap v4 ${category.name.toLowerCase()} hook examples and Solidity you can study. ${category.blurb}`}
   jsonLd={{ "@context": "https://schema.org", "@type": "ItemList", name: `${category.name} Uniswap v4 hooks`, numberOfItems: hooks.length }}
 >
   <div class="layout">
     <main>
       <section class="lede">
         <h1>{category.name} Uniswap v4 hooks</h1>
-        <p class="answer">{category.blurb} This is a curated product index, not Uniswap’s official hooklist.</p>
+        <p class="answer">{category.blurb} These are example contracts and snippets, not Uniswap’s hooklist.</p>
       </section>
       {hooks.map((hook) => <CutSheet hook={hook} />)}
     </main>

@@ -1,22 +1,70 @@
 slug: geomean-oracle
 name: Geomean oracle
-tagline: Turn a Uniswap v4 pool into a geometric-mean price oracle.
+kind: pattern
+tagline: Write a geometric-mean observation before any action that can move price or liquidity.
 description: |
-  The geomean oracle hook records pool prices so downstream contracts can read a time-weighted geometric mean instead of a spot tick. That is the v4 version of “use Uniswap as an oracle,” with hooks writing observations on swap rather than a separate accumulator contract bolted on.
+  The Uniswap GeomeanOracle example allows one oracle pool per pair (fee 0, max tick spacing).
+  afterInitialize seeds the observation cardinality. beforeAddLiquidity forces full-range
+  positions and writes a sample. beforeRemoveLiquidity always reverts so liquidity stays
+  locked. beforeSwap updates the oracle then lets the swap proceed. Read observe() offchain
+  or from another contract. UNLICENSED example — copy the full file including the Oracle
+  library. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-periphery
+  path: contracts/hooks/examples/GeomeanOracle.sol
+  url: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/GeomeanOracle.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: true,
+          beforeAddLiquidity: true,
+          beforeRemoveLiquidity: true,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  Oracle hooks are easy to misuse: low-liquidity pools, truncated windows, and manipulation across the observation interval all still apply. Read Uniswap’s oracle research and verify the deployed flags. v4hooks lists the pattern so agents can find it; you still have to choose a pool that is safe to read.
+  function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata)
+      external
+      override
+      onlyByManager
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      _updatePool(key);
+      return (GeomeanOracle.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+  }
+
+  function beforeRemoveLiquidity(address, PoolKey calldata, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+      external
+      view
+      override
+      onlyByManager
+      returns (bytes4)
+  {
+      revert OraclePoolMustLockLiquidity();
+  }
 categories:
   - oracles
 chains:
   - ethereum
-  - base
-  - unichain
-repo: https://github.com/Uniswap/v4-periphery
-docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
-license: MIT
-status: experimental
+license: UNLICENSED
 flags:
+  - beforeInitialize
   - afterInitialize
-  - afterSwap
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+  - beforeSwap
+docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

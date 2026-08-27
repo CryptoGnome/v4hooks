@@ -1,8 +1,11 @@
 # v4hooks
 
-Curated directory of **Uniswap v4 hooks you can use**. Site: [v4hooks.com](https://v4hooks.com).
+Example **Uniswap v4 hook** contracts and Solidity snippets. Site: [v4hooks.com](https://v4hooks.com).
 
-This is not Uniswap’s official registry. [Uniswap/hooklist](https://github.com/Uniswap/hooklist) is the address book (bytecode at an address, per chain). v4hooks is the product index: one listing per hook you might actually pick, with categories, chains, audits, and agent files.
+This is not Uniswap’s official registry. [Uniswap/hooklist](https://github.com/Uniswap/hooklist) is the address book. v4hooks is how to **build** a hook: `getHookPermissions`, the callbacks, a licensed excerpt, and a permalink to the full file.
+
+- **pattern** — copy the source to implement the job (TWAMM, limit order, oracle, …).
+- **product** — a live protocol’s hook, excerpted so you can see how they wired bits. Do not paste it as your factory.
 
 ## Use the catalog
 
@@ -11,12 +14,12 @@ This is not Uniswap’s official registry. [Uniswap/hooklist](https://github.com
 - Skill: [SKILLS.md](SKILLS.md)
 - Source: https://github.com/CryptoGnome/v4hooks
 
-Listing a hook is not an audit, allowlist, or routing guarantee.
+A listing is not an audit. “Confirmed” means we pointed at a real public file, not that you should deploy it with funds.
 
 ## Add a hook
 
-1. Copy an existing file in [`hooks/`](hooks/).
-2. Follow [`schema/hook.schema.json`](schema/hook.schema.json). Filename must match `slug`.
+1. Copy [`hooks/_template.yml`](hooks/_template.yml) to `hooks/{slug}.yml`. Filename must match `slug`.
+2. Required: `kind`, `source.url` (GitHub permalink), `solidity` excerpt, `flags`, `license`. Follow [`schema/hook.schema.json`](schema/hook.schema.json).
 3. Open a pull request. CI must pass. A maintainer merges.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -28,8 +31,6 @@ npm install
 npm run validate
 npm run dev
 ```
-
-Build and deploy to Cloudflare Workers (static pages + `/api/*` for the USDC bid board):
 
 ```bash
 npm run deploy

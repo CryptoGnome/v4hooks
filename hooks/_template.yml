@@ -1,0 +1,50 @@
+# Copy this file to hooks/{slug}.yml (filename must match slug).
+# Files starting with _ are ignored. Delete comments before you open a PR.
+
+slug: your-hook-slug
+name: Your Hook
+kind: pattern
+# pattern = implement this. product = production hook, excerpted to show callbacks.
+tagline: One line on the job these callbacks do.
+description: |
+  Explain getHookPermissions and each callback in the excerpt. Who should copy this,
+  what PoolManager will call, and what will break if flags and overrides disagree.
+  Minimum 280 characters. Do not paste Uniswap docs. Listing is not an audit.
+
+source:
+  repo: https://github.com/org/repo
+  path: src/YourHook.sol
+  url: https://github.com/org/repo/blob/main/src/YourHook.sol
+solidity: |
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+categories:
+  - launchpads
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeSwap
+# website: https://example.com
+# docs: https://example.com/docs
+# audit_url: https://example.com/audit
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

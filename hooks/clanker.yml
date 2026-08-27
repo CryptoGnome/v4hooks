@@ -1,20 +1,68 @@
 slug: clanker
 name: Clanker
-tagline: Meme coin launchpad with protocol fee routing and MEV-aware modules.
+kind: product
+tagline: "Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta."
 description: |
-  Clanker is a token launchpad that uses Uniswap v4 hooks so a newly created coin can graduate into a v4 pool with protocol fees and optional MEV modules already attached. Builders looking for a production launch surface on Base (and related Uniswap deployments) start here instead of rolling a custom initializer hook from scratch.
+  ClankerHook is MIT production code. getHookPermissions enables initialize, add-liquidity
+  (blocked while the MEV module is hot), beforeSwap/afterSwap, and both swap return-delta
+  bits so the hook can mint protocol fee into its PoolManager account. _beforeSwap sets the
+  LP fee, claims, optionally runs mevModule.beforeSwap, then uses BeforeSwapDelta on paired
+  token. Do not reimplement Clanker to “launch a coin” — use their factory. Excerpt is how
+  a launchpad hook takes fee-on-delta. Full file at the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/clanker-devco/v4-contracts
+  path: src/hooks/ClankerHook.sol
+  url: https://github.com/clanker-devco/v4-contracts/blob/main/src/hooks/ClankerHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: true,
+          afterSwapReturnDelta: true,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  Treat this as a product to evaluate, not a bytecode oracle. Confirm the live hook address on Uniswap/hooklist, read whatever audit is published, and assume listing on v4hooks is a map rather than a safety rating. Clanker is useful when you want a launchpad that already speaks v4 callbacks rather than a generic bonding-curve app glued on after the fact.
+  function _beforeSwap(
+      address,
+      PoolKey calldata poolKey,
+      IPoolManager.SwapParams calldata swapParams,
+      bytes calldata mevModuleSwapData
+  ) internal virtual override returns (bytes4, BeforeSwapDelta delta, uint24) {
+      _setFee(poolKey, swapParams);
+      _hookFeeClaim(poolKey);
+      _lpLockerFeeClaim(poolKey);
+      _runMevModule(poolKey, swapParams, mevModuleSwapData);
+      // mint protocol fee as BeforeSwapDelta when swapping for/against the clanker
+      return (BaseHook.beforeSwap.selector, delta, 0);
+  }
 categories:
   - launchpads
-  - creator-economy
+  - dynamic-fees
+  - mev-protection
 chains:
   - base
-  - ethereum
-website: https://www.clanker.world/
-status: production
+license: MIT
 flags:
+  - beforeInitialize
+  - beforeAddLiquidity
   - beforeSwap
   - afterSwap
+  - beforeSwapReturnDelta
+  - afterSwapReturnDelta
+website: https://www.clanker.world/
+docs: https://clanker.gitbook.io/documentation/references/core-contracts/v4
+status: production
 added: 2026-08-27
 updated: 2026-08-27

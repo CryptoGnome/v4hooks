@@ -21,7 +21,7 @@ const jsonLd = {
     },
     {
       "@type": "ItemList",
-      name: "Uniswap v4 hooks directory",
+      name: "Uniswap v4 hook examples",
       numberOfItems: hooks.length,
       itemListElement: hooks.map((h, i) => ({
         "@type": "ListItem",
@@ -37,12 +37,12 @@ const jsonLd = {
   <div class="layout">
     <main>
       <section class="lede">
-        <h1>Uniswap v4 hooks you can use</h1>
+        <h1>Uniswap v4 hooks you can build</h1>
         <p class="answer">
-          v4hooks is a curated directory of Uniswap v4 hook <em>products</em> — launchpads, TWAMMs, dynamic fees, LP managers — grouped so you can pick one. It is not Uniswap’s official on-chain address registry.
+          Example contracts and Solidity snippets for the callbacks you need — TWAMM, limit orders, oracles, launchpads. For agents and people implementing a hook. Not Uniswap’s address registry.
         </p>
         <p>
-          Each cut sheet is one project, not one deployment. Addresses, when we have them, link out to <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a>. Listing is not an audit.
+          Each listing is a licensed excerpt plus a permalink to the full file. <em>pattern</em> means copy it. <em>product</em> means study how a live protocol wired the bits. Addresses still live on <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a>. Listing is not an audit.
         </p>
         <div class="meta-row">
           <span><b>{hooks.length}</b> listings</span>

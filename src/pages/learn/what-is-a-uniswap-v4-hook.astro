@@ -22,7 +22,7 @@ const jsonLd = {
       name: "Is v4hooks the official Uniswap registry?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No. Uniswap/hooklist is the official on-chain deployment registry. v4hooks is a curated directory of hook products you can use, with SEO pages and an agent catalog.",
+        text: "No. Uniswap/hooklist is the official on-chain deployment registry. v4hooks is a directory of example hook contracts and Solidity snippets for builders and agents.",
       },
     },
   ],
@@ -56,15 +56,15 @@ const jsonLd = {
           <tr><td><a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a></td><td>Canonical address + flags per chain</td></tr>
           <tr><td><a href="https://hookrank.io/">HookRank</a></td><td>Analytics and ranking</td></tr>
           <tr><td><a href="https://hookatlas.com/">Hook Atlas</a></td><td>Builder inspiration</td></tr>
-          <tr><td><a href={SITE.url}>v4hooks</a></td><td>Hooks you can use: product pages, categories, agents</td></tr>
+          <tr><td><a href={SITE.url}>v4hooks</a></td><td>Example contracts and Solidity snippets to implement hooks</td></tr>
         </tbody>
       </table>
       <h2>How to pick a hook</h2>
       <ol>
-        <li>Match the job (launchpad, TWAMM, LP manager, oracle).</li>
-        <li>Check chain coverage, including newer venues such as Robinhood Chain.</li>
-        <li>Read the audit if one exists. Listing here is not an audit.</li>
-        <li>Confirm the live address on hooklist before you route or deposit.</li>
+        <li>Match the job (TWAMM, limit order, oracle, launchpad).</li>
+        <li>Read the Solidity excerpt and the full file at the source URL.</li>
+        <li>Match <code>getHookPermissions</code> to the bits in the deployed address.</li>
+        <li>Listing here is not an audit. Confirm bytecode on hooklist before you route.</li>
       </ol>
       <h2>For agents</h2>
       <p>

@@ -28,9 +28,19 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="v4hooks" />
     <meta name="twitter:card" content="summary" />
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem("v4hooks-theme");
+        const theme = stored === "light" || stored === "dark"
+          ? stored
+          : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      } catch {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
@@ -40,19 +50,43 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
           V4HOOKS
           <small>CUT SHEET DIRECTORY</small>
         </a>
-        <nav>
-          <a href="/" aria-current={path === "/" ? "page" : undefined}>Index</a>
-          <a href="/learn/what-is-a-uniswap-v4-hook" aria-current={path.startsWith("/learn") ? "page" : undefined}>Learn</a>
-          <a href="/advertise" aria-current={path === "/advertise" ? "page" : undefined}>Advertise</a>
-          <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a>
-        </nav>
+        <div class="mast-end">
+          <nav>
+            <a href="/" aria-current={path === "/" ? "page" : undefined}>Index</a>
+            <a href="/learn/what-is-a-uniswap-v4-hook" aria-current={path.startsWith("/learn") ? "page" : undefined}>Learn</a>
+            <a href="/advertise" aria-current={path === "/advertise" ? "page" : undefined}>Advertise</a>
+            <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a>
+          </nav>
+          <button class="theme" id="theme-toggle" type="button">Light</button>
+        </div>
       </header>
       <slot />
       <footer class="foot">
-        Listing is not an audit or endorsement. Address truth lives on Uniswap hooklist. Last generated at build. ·
+        Listing is not an audit. Excerpts are not the full contract. Address truth lives on Uniswap hooklist. ·
         <a href="/llms.txt">llms.txt</a> ·
         <a href="/hooks.json">hooks.json</a>
       </footer>
     </div>
+    <script>
+      const KEY = "v4hooks-theme";
+      const btn = document.getElementById("theme-toggle");
+      function current() {
+        return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+      }
+      function apply(theme, persist) {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        if (btn) {
+          btn.textContent = theme === "dark" ? "Light" : "Dark";
+          btn.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+        }
+        if (persist) localStorage.setItem(KEY, theme);
+      }
+      apply(current(), false);
+      btn?.addEventListener("click", () => apply(current() === "dark" ? "light" : "dark", true));
+      matchMedia("(prefers-color-scheme: light)").addEventListener("change", (e) => {
+        if (!localStorage.getItem(KEY)) apply(e.matches ? "light" : "dark", false);
+      });
+    </script>
   </body>
 </html>

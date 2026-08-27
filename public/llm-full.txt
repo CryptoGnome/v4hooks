@@ -1,240 +1,633 @@
 # v4hooks full catalog
 
-## Angstrom (angstrom)
-LP-defending DEX that gates swaps through a staked validator set.
-Angstrom uses a Uniswap v4 hook so only staked Angstrom validators can execute swaps, turning the pool into an onchain DEX with an explicit sequencing rule. The stated goal is to defend LPs from toxic flow by refusing unauthenticated takers instead of relying on a static fee.
+## BaseHook (base-hook)
+Kind: pattern
+Inherit this, declare permissions, override only the callbacks you actually implement.
+Every custom Uniswap v4 hook should start from BaseHook. PoolManager only calls the
+functions whose bits are set in the hook address. BaseHook stores the PoolManager,
+checks msg.sender, and routes each IHooks entrypoint to an internal _callback that
+reverts with HookNotImplemented until you override it. getHookPermissions must match
+those overrides or the constructor’s validateHookAddress fails. Copy this pattern,
+flip the permission bits you need, and implement the matching _beforeSwap (or other)
+function. This is the Uniswap v4-hooks-public MIT file, not a full AMM. Listing is
+not an audit. Confirm the import path against the v4-periphery version you compile.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// Excerpt: constructor + swap dispatch. Full file: source.url
+abstract contract BaseHook is IHooks, ImmutableState {
+    error HookNotImplemented();
 
-Pick this sheet if you want MEV protection at the hook layer rather than an RFQ overlay. Verify validator economics, audits, and the live address on hooklist. A gated swap callback is a powerful foot-gun if the allowlist bricks retail flow — read the spec before you point a frontend at it.
-Status: production
-Categories: mev-protection, auctions
+    constructor(IPoolManager _manager) ImmutableState(_manager) {
+        validateHookAddress(this);
+    }
+
+    function getHookPermissions() public pure virtual returns (Hooks.Permissions memory);
+
+    function validateHookAddress(BaseHook _this) internal pure virtual {
+        Hooks.validateHookPermissions(_this, getHookPermissions());
+    }
+
+    function beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
+        external
+        onlyPoolManager
+        returns (bytes4, BeforeSwapDelta, uint24)
+    {
+        return _beforeSwap(sender, key, params, hookData);
+    }
+
+    function _beforeSwap(address, PoolKey calldata, SwapParams calldata, bytes calldata)
+        internal
+        virtual
+        returns (bytes4, BeforeSwapDelta, uint24)
+    {
+        revert HookNotImplemented();
+    }
+}
+```
+Source: https://github.com/Uniswap/v4-hooks-public/blob/main/src/base/BaseHook.sol
+Status: experimental
+License: MIT
+Categories: wrappers
 Chains: ethereum
-Flags: beforeSwap, afterSwap
-Website: https://x.com/angstromxyz
-Page: https://v4hooks.com/hooks/angstrom
-
-## Arrakis (arrakis)
-Private and managed Uniswap v4 inventory with vault-style LP hooks.
-Arrakis has shipped private v4 hooks so market makers and vaults can control who trades a pool and how inventory is managed. If you are looking for a production LP-management hook used by professional liquidity, Arrakis is one of the names that already appears across Base and Ethereum deployments.
-
-Private hooks are not public AMMs. Read the vault docs, confirm the allowlist, and match addresses on Uniswap/hooklist. v4hooks records the product so “arrakis uniswap v4 hook” lands on a human page instead of a block explorer.
-Status: production
-Categories: lp-management
-Chains: ethereum, base
-Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
-Website: https://arrakis.finance/
-Page: https://v4hooks.com/hooks/arrakis
-
-## Bunni (bunni)
-Shapeshifting LP manager that pairs swap fees with lending yield.
-Bunni is an LP management hook for Uniswap v4 that rehypothecates idle liquidity into lending vaults while still collecting swap fees. The job it solves is capital efficiency: concentrated liquidity that would otherwise sit idle can earn a base APY, then snap back when the pool needs depth.
-
-This is the listing to open if you searched for a v4 hook for LP management or rehypothecation rather than a raw pool address. Confirm current vault integrations and audits yourself. v4hooks does not certify Bunni’s risk; it only records that the product exists as a hook you can evaluate.
-Status: production
-Categories: lp-management, lending
-Chains: ethereum, unichain, base
-Flags: beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity, beforeSwap, afterSwap
-Website: https://bunni.pro/
-Page: https://v4hooks.com/hooks/bunni
+Flags: beforeSwap
+Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+Page: https://v4hooks.com/hooks/base-hook
 
 ## Clanker (clanker)
-Meme coin launchpad with protocol fee routing and MEV-aware modules.
-Clanker is a token launchpad that uses Uniswap v4 hooks so a newly created coin can graduate into a v4 pool with protocol fees and optional MEV modules already attached. Builders looking for a production launch surface on Base (and related Uniswap deployments) start here instead of rolling a custom initializer hook from scratch.
+Kind: product
+Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
+ClankerHook is MIT production code. getHookPermissions enables initialize, add-liquidity
+(blocked while the MEV module is hot), beforeSwap/afterSwap, and both swap return-delta
+bits so the hook can mint protocol fee into its PoolManager account. _beforeSwap sets the
+LP fee, claims, optionally runs mevModule.beforeSwap, then uses BeforeSwapDelta on paired
+token. Do not reimplement Clanker to “launch a coin” — use their factory. Excerpt is how
+a launchpad hook takes fee-on-delta. Full file at the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: true,
+        afterSwapReturnDelta: true,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-Treat this as a product to evaluate, not a bytecode oracle. Confirm the live hook address on Uniswap/hooklist, read whatever audit is published, and assume listing on v4hooks is a map rather than a safety rating. Clanker is useful when you want a launchpad that already speaks v4 callbacks rather than a generic bonding-curve app glued on after the fact.
+function _beforeSwap(
+    address,
+    PoolKey calldata poolKey,
+    IPoolManager.SwapParams calldata swapParams,
+    bytes calldata mevModuleSwapData
+) internal virtual override returns (bytes4, BeforeSwapDelta delta, uint24) {
+    _setFee(poolKey, swapParams);
+    _hookFeeClaim(poolKey);
+    _lpLockerFeeClaim(poolKey);
+    _runMevModule(poolKey, swapParams, mevModuleSwapData);
+    // mint protocol fee as BeforeSwapDelta when swapping for/against the clanker
+    return (BaseHook.beforeSwap.selector, delta, 0);
+}
+```
+Source: https://github.com/clanker-devco/v4-contracts/blob/main/src/hooks/ClankerHook.sol
 Status: production
-Categories: launchpads, creator-economy
-Chains: base, ethereum
-Flags: beforeSwap, afterSwap
+License: MIT
+Categories: launchpads, dynamic-fees, mev-protection
+Chains: base
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, afterSwap, beforeSwapReturnDelta, afterSwapReturnDelta
 Website: https://www.clanker.world/
+Docs: https://clanker.gitbook.io/documentation/references/core-contracts/v4
 Page: https://v4hooks.com/hooks/clanker
 
 ## EulerSwap (eulerswap)
-AMM hooked into Euler lending so swaps tap the same inventory LPs already posted.
-EulerSwap is a DEX that uses Uniswap v4 hooks so swap inventory can sit inside Euler’s lending markets instead of a dead pool. The hook is the join between AMM pricing and isolated lending risk — useful when you want a v4 pool that is also a credit venue.
+Kind: product
+Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
+Euler’s UniswapHook (BUSL-1.1) quotes amountIn/amountOut off the v3 tick curve, returns a
+BeforeSwapDelta so PoolManager’s concentrated liquidity is unused, takes the input to vaults
+and settles the output from vaults. beforeInitialize / beforeAddLiquidity / beforeDonate stay
+enabled so BaseHook’s default revert blocks stray inits, CLAMM LP, and donations. Study this
+for “hook is the AMM.” Do not paste BUSL into a new MIT repo without reading the license.
+Full UniswapHook.sol at the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: BUSL-1.1
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: true,
+        afterDonate: false,
+        beforeSwapReturnDelta: true,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-Evaluate oracle assumptions and liquidation paths before you treat it as a vanilla Uniswap pool. This directory records EulerSwap as a lending + AMM product. Canonical addresses belong on hooklist; this page is for the question “which hook do I use if I want Euler-backed swaps?”
+// take input to Euler vaults, pay output, offset the CLAMM swap
+function _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+    internal
+    override
+    nonReentrant
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    // QuoteLib.computeQuote → poolManager.take(input) → vaults → poolManager.settle(output)
+    BeforeSwapDelta returnDelta = isExactInput
+        ? toBeforeSwapDelta(amountIn.toInt128(), -(amountOut.toInt128()))
+        : toBeforeSwapDelta(-(amountOut.toInt128()), amountIn.toInt128());
+    return (BaseHook.beforeSwap.selector, returnDelta, 0);
+}
+```
+Source: https://github.com/euler-xyz/euler-swap/blob/master/src/UniswapHook.sol
 Status: production
+License: BUSL-1.1
 Categories: lending, lp-management
 Chains: ethereum
-Flags: beforeSwap, afterSwap, beforeAddLiquidity, afterAddLiquidity
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, beforeDonate, beforeSwapReturnDelta
 Website: https://app.euler.finance/swap
 Page: https://v4hooks.com/hooks/eulerswap
 
 ## Flaunch (flaunch)
-Fair launchpad that routes 100% of trading fees to creators and buybacks.
-Flaunch is a meme-coin launchpad built around a Uniswap v4 hook that can set initial price, take swap fees, and split those fees toward creators and buybacks without a separate off-chain accountant. If you are searching for a v4 hook that turns a launch into a fee stream, this is the pattern: initializer plus swap callbacks, not a fork of v3.
-
-Use the public site and any published repo to verify the current deployment. v4hooks groups Flaunch as one product across chains rather than one JSON file per address. Always match the hook address against Uniswap/hooklist before you route or LP.
+Kind: product
+PositionManager hook: beforeSwap runs the internal swap pool; afterSwap distributes creator fees.
+Flaunch’s PositionManager is a Uniswap v4 hook (MIT). Permissions: block external
+initialize, InternalSwapPool on beforeSwap + beforeSwapReturnDelta, FeeDistributor and
+BidWall on afterSwap + afterSwapReturnDelta, liquidity/donate event tracking. You do not
+copy this to “build Flaunch” — you read how a launchpad declares a wide permission mask
+and splits work across callbacks. Full PositionManager.sol is large; start at
+getHookPermissions then follow the comments in square brackets. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true, // Prevent initialize
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: true, // [EventTracking]
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: true, // [EventTracking]
+        beforeSwap: true, // [InternalSwapPool]
+        afterSwap: true, // [FeeDistributor], [InternalSwapPool], [BidWall], [EventTracking]
+        beforeDonate: false,
+        afterDonate: true, // [EventTracking]
+        beforeSwapReturnDelta: true, // [InternalSwapPool]
+        afterSwapReturnDelta: true, // [FeeDistributor]
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/flayerlabs/flaunchgg-contracts/blob/main/src/contracts/PositionManager.sol
 Status: production
+License: MIT
 Categories: launchpads, creator-economy
 Chains: base
-Flags: beforeInitialize, afterInitialize, beforeSwap, afterSwap
+Flags: beforeInitialize, afterAddLiquidity, afterRemoveLiquidity, beforeSwap, afterSwap, afterDonate, beforeSwapReturnDelta, afterSwapReturnDelta
 Website: https://flaunch.gg/
 Page: https://v4hooks.com/hooks/flaunch
 
 ## Full range (full-range)
-v2-style full-range liquidity as a Uniswap v4 hook.
-Full Range is the example hook that makes a v4 pool behave like a constant-product v2 market: liquidity across the entire price curve instead of a tick range. Teams porting v2 inventory or wanting a simpler LP UX use this instead of teaching every LP concentrated positions.
+Kind: pattern
+Force v2-style full-range LP: only the hook can modify liquidity, users mint a pool ERC20 instead.
+FullRange’s beforeInitialize requires tickSpacing 60 and deploys a per-pool ERC20 receipt.
+beforeAddLiquidity reverts unless sender is the hook, so LPs must call addLiquidity on the
+hook (min to max tick). beforeSwap marks that fees have accrued. This is how you wrap a v4
+pool as constant-product inventory. UNLICENSED Uniswap example — take the full file, including
+rebalance/donate dust. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-It is an official Uniswap example, not a growth-stage product. If you need production wrapping, look at community “v2 on v4” deployments and still confirm addresses on hooklist. This sheet exists so “full range uniswap v4 hook” resolves to a real explanation rather than a random bytecode dump.
+function beforeAddLiquidity(
+    address sender,
+    PoolKey calldata,
+    IPoolManager.ModifyLiquidityParams calldata,
+    bytes calldata
+) external view override returns (bytes4) {
+    if (sender != address(this)) revert SenderMustBeHook();
+    return FullRange.beforeAddLiquidity.selector;
+}
+```
+Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/FullRange.sol
 Status: experimental
+License: UNLICENSED
 Categories: lp-management, wrappers
-Chains: ethereum, base, unichain, robinhood
-Flags: beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity, beforeSwap
-Repo: https://github.com/Uniswap/v4-periphery
-License: MIT
+Chains: ethereum
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap
 Page: https://v4hooks.com/hooks/full-range
 
 ## Geomean oracle (geomean-oracle)
-Turn a Uniswap v4 pool into a geometric-mean price oracle.
-The geomean oracle hook records pool prices so downstream contracts can read a time-weighted geometric mean instead of a spot tick. That is the v4 version of “use Uniswap as an oracle,” with hooks writing observations on swap rather than a separate accumulator contract bolted on.
+Kind: pattern
+Write a geometric-mean observation before any action that can move price or liquidity.
+The Uniswap GeomeanOracle example allows one oracle pool per pair (fee 0, max tick spacing).
+afterInitialize seeds the observation cardinality. beforeAddLiquidity forces full-range
+positions and writes a sample. beforeRemoveLiquidity always reverts so liquidity stays
+locked. beforeSwap updates the oracle then lets the swap proceed. Read observe() offchain
+or from another contract. UNLICENSED example — copy the full file including the Oracle
+library. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: true,
+        beforeAddLiquidity: true,
+        beforeRemoveLiquidity: true,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-Oracle hooks are easy to misuse: low-liquidity pools, truncated windows, and manipulation across the observation interval all still apply. Read Uniswap’s oracle research and verify the deployed flags. v4hooks lists the pattern so agents can find it; you still have to choose a pool that is safe to read.
+function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata)
+    external
+    override
+    onlyByManager
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    _updatePool(key);
+    return (GeomeanOracle.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+}
+
+function beforeRemoveLiquidity(address, PoolKey calldata, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+    external
+    view
+    override
+    onlyByManager
+    returns (bytes4)
+{
+    revert OraclePoolMustLockLiquidity();
+}
+```
+Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/GeomeanOracle.sol
 Status: experimental
+License: UNLICENSED
 Categories: oracles
-Chains: ethereum, base, unichain
-Flags: afterInitialize, afterSwap
-Repo: https://github.com/Uniswap/v4-periphery
+Chains: ethereum
+Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
-License: MIT
 Page: https://v4hooks.com/hooks/geomean-oracle
 
-## Limit order hook (limit-order)
-Place onchain limit orders that fill when the pool trades through a tick.
-Uniswap’s v4 limit-order example lets a user rest liquidity at a tick so a swap that crosses that price fills the order. It is the default answer to “does v4 have native limit orders?” — yes, as a hook, not as a core PoolManager feature.
+## Limit order (limit-order)
+Kind: pattern
+Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
+Uniswap’s LimitOrder example records the last tick on afterInitialize. On afterSwap it walks
+ticks the swap just crossed and fills any epoch resting at those ticks by removing that
+one-tick-wide liquidity. Users call place() to add an order; withdraw() after Fill. Flags
+must be afterInitialize + afterSwap. This is the example-contracts file, UNLICENSED, not a
+production CLOB. Production forks add cancel, partial fill, and gas accounting. Copy the
+full Solidity from the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-Use this when you want an onchain resting order rather than an intent sent to a solver. The example contract is a starting point; production limit-order hooks add cancellations, partial fills, and gas accounting. Check the live address and flags on Uniswap/hooklist before you post size.
+function afterSwap(
+    address,
+    PoolKey calldata key,
+    IPoolManager.SwapParams calldata params,
+    BalanceDelta,
+    bytes calldata
+) external override onlyByManager returns (bytes4, int128) {
+    (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);
+    if (lower > upper) return (LimitOrder.afterSwap.selector, 0);
+    bool zeroForOne = !params.zeroForOne;
+    for (; lower <= upper; lower += key.tickSpacing) {
+        _fillEpoch(key, lower, zeroForOne);
+    }
+    setTickLowerLast(key.toId(), tickLower);
+    return (LimitOrder.afterSwap.selector, 0);
+}
+```
+Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/LimitOrder.sol
 Status: experimental
+License: UNLICENSED
 Categories: limit-orders
-Chains: ethereum, base, unichain, robinhood
-Flags: beforeSwap, afterSwap, afterInitialize
-Repo: https://github.com/Uniswap/v4-periphery
+Chains: ethereum
+Flags: afterInitialize, afterSwap
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
-License: MIT
 Page: https://v4hooks.com/hooks/limit-order
 
-## New York trading hours (trading-days)
-Revert swaps while New York equity markets are closed.
-horsefacts’ trading-days hook refuses pool actions outside New York market hours. It is the canonical “RWA hours” example: a Uniswap v4 hook that encodes a calendar so onchain FX or equity-like pairs do not trade through the US close.
+## Stop-loss (stop-loss)
+Kind: pattern
+After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
+saucepoint’s StopLoss stores amounts per pool/tick/direction. afterInitialize snapshots
+the tick. afterSwap walks from the previous tick to the new one and fillStopLoss for
+the opposite swap direction, then users redeem ERC1155 receipts. Early v4 API
+(getHooksCalls). MIT hackathon code — the file still has TODOs. Use it as the fill-on-cross
+pattern, not as something to deploy with size. Full file at the permalink. Listing is not
+an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+    return Hooks.Calls({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeModifyPosition: false,
+        afterModifyPosition: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false
+    });
+}
 
-Use it as prior art for compliance calendars, not as a drop-in for every asset. Timezone, holidays, and L2 sequencer quirks all matter. Confirm the deployed bytecode if you actually gate a pool with it. v4hooks keeps this listing because people search for market-hours hooks and should find a real implementation instead of a tweet.
+function afterSwap(
+    address,
+    IPoolManager.PoolKey calldata key,
+    IPoolManager.SwapParams calldata params,
+    BalanceDelta
+) external override returns (bytes4) {
+    int24 prevTick = tickLowerLasts[key.toId()];
+    (, int24 tick,) = poolManager.getSlot0(key.toId());
+    int24 currentTick = getTickLower(tick, key.tickSpacing);
+    bool stopLossZeroForOne = !params.zeroForOne;
+    // walk ticks between prevTick and currentTick; fillStopLoss when amount > 0
+    tickLowerLasts[key.toId()] = currentTick;
+    return StopLoss.afterSwap.selector;
+}
+```
+Source: https://github.com/saucepoint/v4-stoploss/blob/main/src/StopLoss.sol
 Status: experimental
-Categories: rwa, compliance
-Chains: ethereum
-Flags: beforeSwap, beforeAddLiquidity, beforeRemoveLiquidity
-Repo: https://github.com/horsefacts/trading-days
 License: MIT
-Page: https://v4hooks.com/hooks/trading-days
-
-## Pubhouse (pubhouse)
-Permissionless prediction markets whose trading rails are a Uniswap v4 hook.
-Pubhouse lets anyone create a belief or prediction market and trade it. The v4 hook is the matching and fee layer so each market can be a pool instead of a custom CLOB. If you want prior art for prediction markets on Uniswap v4, this is a live product page, not a hackathon leftover only.
-
-Prediction markets have resolution and oracle risk that the hook cannot hide. Read the app, then verify contracts. v4hooks lists Pubhouse as a product you can try, with the usual disclaimer that listing is not an audit.
-Status: experimental
-Categories: auctions
-Chains: base
-Flags: beforeSwap, afterSwap, afterInitialize
-Website: https://www.pubhouse.xyz/
-Page: https://v4hooks.com/hooks/pubhouse
-
-## SafeSwap (safeswap)
-Anti-rug and anti-whale v4 hook with sell limits, cooldowns, and launch mode.
-SafeSwap is a production-oriented protection hook: sell-rate limits, cooldowns, progressive fees, and a launch protection mode with an immutable per-pool config. It is aimed at token teams who want Uniswap v4 without unbounded dumps on day one.
-
-Protection hooks can trap LPs or look like honeypots — read the parameters, not the marketing. Confirm the Arbitrum (and any later) address on hooklist. This sheet exists so “anti whale uniswap v4 hook” has a concrete project, not a generic blog post.
-Status: production
-Categories: mev-protection, launchpads
-Chains: arbitrum
-Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
-Repo: https://github.com/zontak/SafeSwap
-Page: https://v4hooks.com/hooks/safeswap
-
-## Stop-loss hook (stop-loss)
-Close a position automatically when the pool trades through a stop price.
-saucepoint’s v4 stop-loss hook is the usual answer to “can Uniswap v4 run a stop order onchain?” It watches price during swap callbacks and exits when the stop is touched, without an off-chain keeper for the trigger itself (you still pay gas on the hitting swap).
-
-Stop hooks can fail closed or fail open depending on how reverts are handled — read the repo before you size it. This listing is prior art for limit-order adjacent products. Contribute a production fork as its own slug if you maintain one.
-Status: experimental
 Categories: limit-orders
-Chains: ethereum, base
-Flags: beforeSwap, afterSwap
-Repo: https://github.com/saucepoint/v4-stoploss
-License: MIT
+Chains: ethereum
+Flags: afterInitialize, afterSwap
 Page: https://v4hooks.com/hooks/stop-loss
 
 ## Super DCA (super-dca)
-TWAMM-style DCA with dynamic fees and a Curve-like gauge for rewards.
-Super DCA combines time-weighted execution with dynamic fees and a gauge so reward tokens can be directed across pools. It is aimed at people who want recurring onchain buys without running a bot, while LPs still have a fee and emissions story.
+Kind: product
+Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
+SuperDCAGauge (Apache-2.0) requires the Super DCA token in the pair and tickSpacing 60 in
+_beforeInitialize, then dynamic fees after init. _beforeSwap only accepts verified routers,
+reads msgSender, and returns fee | OVERRIDE_FEE_FLAG (0 for internal, keeper vs external).
+Liquidity callbacks also exist for gauge accounting. This is how to do allowlisted fee
+tiers, not a generic TWAMM you should copy blindly. Full SuperDCAGauge.sol at the permalink.
+Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: Apache-2.0
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: true,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: true,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
 
-If you searched for a Uniswap v4 DCA or gauge hook, start here, then read the Super DCA docs for which chains are live. Emissions hooks can brick withdrawals if misconfigured — confirm pause paths and audits independently. v4hooks will not call this safe; it will tell you what job the hook claims to do.
+function _beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata hookData)
+    internal
+    override
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    if (!verifiedRouters[sender]) revert SuperDCAGauge__UnauthorizedRouter();
+    address swapper = IMsgSender(sender).msgSender();
+    uint24 fee = isInternalAddress[swapper] ? internalFee : swapper == keeper ? keeperFee : externalFee;
+    if (!isInternalAddress[swapper] && swapper != keeper) _handleDistributionAndSettlement(key, hookData);
+    return (IHooks.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+}
+```
+Source: https://github.com/Super-DCA-Tech/super-dca-gauge/blob/master/src/SuperDCAGauge.sol
 Status: production
+License: Apache-2.0
 Categories: twamm, dynamic-fees, ve
 Chains: base, ethereum
-Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
+Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Website: https://superdca.org/
 Page: https://v4hooks.com/hooks/super-dca
 
-## TWAMM (twamm)
-Time-weighted average market maker for slicing large orders onchain.
-The Uniswap v4 TWAMM example hook executes large orders over time instead of dumping them into a single swap. Searchers looking for “uniswap v4 twamm hook” want this pattern: virtual orders accrue between blocks, then settle against the pool, reducing price impact and some sandwich surface.
+## Trading days (trading-days)
+Kind: pattern
+Revert beforeSwap unless New York cash markets are open.
+horsefacts’ TradingDaysHook is the canonical calendar gate: beforeSwap reads State
+(OPEN, HOLIDAY, WEEKEND, AFTER_HOURS) from NY time, holidays, and DST, then reverts
+when closed. The first swap of an open day emits DingDingDing. Older Hooks.Calls API
+(beforeSwap only). MIT. Copy TradingDays.sol plus the calendar libraries from the repo;
+this excerpt is the hook surface. Timezone and L2 sequencer lag still apply. Listing
+is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+    return Hooks.Calls({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeModifyPosition: false,
+        afterModifyPosition: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false
+    });
+}
 
-The reference lives in v4-periphery example contracts and Uniswap’s TWAMM research post. Production forks exist; this sheet is the canonical idea, not a promise that a specific address is the one Uniswap routes. Verify bytecode and flags on hooklist before you schedule a TWAMM order.
+function beforeSwap(address sender, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata)
+    external
+    override
+    returns (bytes4)
+{
+    State s = state();
+    if (s == State.OPEN) {
+        _ringOpeningBell(sender);
+    } else if (s == State.HOLIDAY) {
+        revert ClosedForHoliday(getHoliday());
+    } else if (s == State.WEEKEND) {
+        revert ClosedForWeekend();
+    } else if (s == State.AFTER_HOURS) {
+        revert AfterHours();
+    }
+    return BaseHook.beforeSwap.selector;
+}
+```
+Source: https://github.com/horsefacts/trading-days/blob/main/src/TradingDaysHook.sol
 Status: experimental
-Categories: twamm
-Chains: ethereum, unichain, base, robinhood
-Flags: beforeSwap, afterSwap, beforeAddLiquidity, afterAddLiquidity
-Repo: https://github.com/Uniswap/v4-periphery
-Docs: https://blog.uniswap.org/v4-twamm-hook
 License: MIT
+Categories: rwa, compliance
+Chains: ethereum
+Flags: beforeSwap
+Page: https://v4hooks.com/hooks/trading-days
+
+## TWAMM (twamm)
+Kind: pattern
+Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
+Uniswap’s example TWAMM hook runs executeTWAMMOrders in beforeInitialize, beforeAddLiquidity,
+and beforeSwap so long-lived orders accrue between blocks and settle against the pool instead
+of dumping in one swap. Permissions must enable those three callbacks. The rest of the file
+(order storage, expiration) lives in the linked Solidity — copy the full contract from
+v4-periphery example-contracts, do not ship this excerpt. The example is UNLICENSED research
+code, not production. Confirm bytecode on hooklist if you route size. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function beforeAddLiquidity(address, PoolKey calldata key, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+    external
+    override
+    onlyByManager
+    returns (bytes4)
+{
+    executeTWAMMOrders(key);
+    return BaseHook.beforeAddLiquidity.selector;
+}
+
+function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata)
+    external
+    override
+    onlyByManager
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    executeTWAMMOrders(key);
+    return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+}
+```
+Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/TWAMM.sol
+Status: experimental
+License: UNLICENSED
+Categories: twamm
+Chains: ethereum
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap
+Docs: https://blog.uniswap.org/v4-twamm-hook
 Page: https://v4hooks.com/hooks/twamm
 
-## Unimon (unimon)
-NFT battle game whose mint and state live inside a Uniswap v4 hook.
-Unimon is a game that uses a v4 hook so swapping a specific pool can mint or manage NFTs. That is a different job than a fee or oracle hook: the pool is the game loop. Builders looking for prior art on “can a hook mint an NFT on swap?” should read this before inventing a new callback maze.
-
-Gaming hooks are experimental by nature. Check the live app, chain, and whether the NFT contract still matches the hook. Listing here does not mean the game is maintained — it means the pattern shipped and is searchable.
-Status: experimental
-Categories: gaming
-Chains: base
-Flags: afterSwap, afterInitialize
-Website: https://www.unimon.app/
-Page: https://v4hooks.com/hooks/unimon
-
 ## veLP (velp)
-Curve-style vote-escrow for Uniswap v4 liquidity positions.
-veLP is a vote-escrow hook that locks LP value and directs influence the way Curve veCRV directs gauges. Search “uniswap v4 ve hook” and this is the community reference: lock, decay, vote — implemented as v4 callbacks rather than a separate gauge controller only.
+Kind: pattern
+Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
+kadenzipfel ports VotingEscrow onto a Uniswap v4 hook. afterInitialize stores the PoolId.
+beforeModifyPosition lets unrelated ticks through, but if sender is modifying their locked
+range it requires liquidityDelta > 0 until lock end. afterModifyPosition checkpoints ve
+weight from the position’s liquidity. Early Hooks.Calls API (modifyPosition, not add/remove).
+AGPL-3.0 — copy the full VotingEscrow.sol. Map modifyPosition to today’s
+beforeAddLiquidity / beforeRemoveLiquidity if you port forward. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: AGPL-3.0-or-later
+function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+    return Hooks.Calls({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeModifyPosition: true,
+        afterModifyPosition: true,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false
+    });
+}
 
-Vote-escrow designs have governance and unlock edge cases. Read the repo, check whether anyone still maintains a deployment, and never assume emissions are funded. v4hooks keeps the pattern so agents can recommend it as prior art.
+function beforeModifyPosition(
+    address sender,
+    PoolKey calldata,
+    IPoolManager.ModifyPositionParams calldata modifyPositionParams
+) external view override poolManagerOnly returns (bytes4) {
+    LockTicks memory lockTicks_ = lockTicks[sender];
+    if (
+        lockTicks_.lowerTick != modifyPositionParams.tickLower
+            || lockTicks_.upperTick != modifyPositionParams.tickUpper
+    ) {
+        return VotingEscrow.beforeModifyPosition.selector;
+    }
+    LockedBalance memory locked_ = locked[sender];
+    require(
+        modifyPositionParams.liquidityDelta > 0 || locked_.end <= block.timestamp,
+        "Can't withdraw before lock end"
+    );
+    return VotingEscrow.beforeModifyPosition.selector;
+}
+```
+Source: https://github.com/kadenzipfel/veLP/blob/main/src/VotingEscrow.sol
 Status: experimental
+License: AGPL-3.0-or-later
 Categories: ve, lp-management
 Chains: ethereum
-Flags: beforeAddLiquidity, beforeRemoveLiquidity, afterSwap
-Repo: https://github.com/kadenzipfel/veLP
-License: MIT
+Flags: afterInitialize, beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity
 Page: https://v4hooks.com/hooks/velp
-
-## Volatility fee hook (volatility-fee)
-Dynamic swap fees driven by realized volatility to protect LPs.
-Volatility fee hooks raise or lower Uniswap v4 swap fees as realized volatility moves, a standard answer to “how do I protect LPs on violent pairs without a 3% static fee?” Implementations differ (onchain EWMA, Brevis proofs, external oracles) but they all sit on beforeSwap and the dynamic-fee flag.
-
-This sheet is the category prototype rather than a single startup’s brand. When you contribute a specific production fee oracle, add a new listing with its own slug. Until then, use this page to understand the job and compare community repos such as umbrellaresearch and 0xrhsmt examples.
-Status: experimental
-Categories: dynamic-fees, mev-protection
-Chains: ethereum, base
-Flags: beforeSwap, afterSwap
-Repo: https://github.com/umbrellaresearch/uni-v4-hooks-tutorial
-License: MIT
-Page: https://v4hooks.com/hooks/volatility-fee
-
-## Zora creator hook (zora-creator)
-Creator-coin launch rails with fee conversion and reward split.
-Zora’s creator hook is the v4 surface behind creator coins: it converts swap fees into a payout token and distributes rewards without a custom off-chain splitter. If you are looking for a Uniswap v4 hook already used by a large creator network, this is the reference, not a toy example from a hackathon.
-
-Deployments span Zora’s own chain and other Uniswap v4 venues. Confirm which address your app should call via Uniswap/hooklist and Zora docs. v4hooks lists the product once so agents and humans do not have to dedupe a dozen Post Hook versions by hand.
-Status: production
-Categories: creator-economy, launchpads
-Chains: base, zora
-Flags: afterSwap, afterInitialize
-Website: https://zora.co/
-Page: https://v4hooks.com/hooks/zora-creator

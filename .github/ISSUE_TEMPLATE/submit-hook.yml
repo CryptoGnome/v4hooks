@@ -7,7 +7,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Prefer a pull request that adds `hooks/{slug}.yml`. This form is for discussion. Listing is not an audit.
+        Prefer a pull request: copy `hooks/_template.yml` to `hooks/{slug}.yml` with a GitHub permalink and Solidity excerpt. This form is for discussion. Listing is not an audit.
   - type: input
     id: name
     attributes:
@@ -18,7 +18,7 @@ body:
     id: job
     attributes:
       label: What job does it do?
-      description: Launchpad, TWAMM, LP manager, etc. Unique prose, not a slogan.
+      description: Which callbacks, what they change. Unique prose. Include a GitHub .sol permalink.
     validations:
       required: true
   - type: input
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Confirm
       options:
-        - label: This is a product listing, not a Uniswap/hooklist address dump.
+        - label: This is a hook contract listing with public Solidity, not a Uniswap/hooklist address dump.
           required: true
         - label: I have not invented contract addresses.
           required: true

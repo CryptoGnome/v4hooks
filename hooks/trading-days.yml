@@ -1,21 +1,58 @@
 slug: trading-days
-name: New York trading hours
-tagline: Revert swaps while New York equity markets are closed.
+name: Trading days
+kind: pattern
+tagline: Revert beforeSwap unless New York cash markets are open.
 description: |
-  horsefacts’ trading-days hook refuses pool actions outside New York market hours. It is the canonical “RWA hours” example: a Uniswap v4 hook that encodes a calendar so onchain FX or equity-like pairs do not trade through the US close.
+  horsefacts’ TradingDaysHook is the canonical calendar gate: beforeSwap reads State
+  (OPEN, HOLIDAY, WEEKEND, AFTER_HOURS) from NY time, holidays, and DST, then reverts
+  when closed. The first swap of an open day emits DingDingDing. Older Hooks.Calls API
+  (beforeSwap only). MIT. Copy TradingDays.sol plus the calendar libraries from the repo;
+  this excerpt is the hook surface. Timezone and L2 sequencer lag still apply. Listing
+  is not an audit.
+source:
+  repo: https://github.com/horsefacts/trading-days
+  path: src/TradingDaysHook.sol
+  url: https://github.com/horsefacts/trading-days/blob/main/src/TradingDaysHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+      return Hooks.Calls({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeModifyPosition: false,
+          afterModifyPosition: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false
+      });
+  }
 
-  Use it as prior art for compliance calendars, not as a drop-in for every asset. Timezone, holidays, and L2 sequencer quirks all matter. Confirm the deployed bytecode if you actually gate a pool with it. v4hooks keeps this listing because people search for market-hours hooks and should find a real implementation instead of a tweet.
+  function beforeSwap(address sender, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata)
+      external
+      override
+      returns (bytes4)
+  {
+      State s = state();
+      if (s == State.OPEN) {
+          _ringOpeningBell(sender);
+      } else if (s == State.HOLIDAY) {
+          revert ClosedForHoliday(getHoliday());
+      } else if (s == State.WEEKEND) {
+          revert ClosedForWeekend();
+      } else if (s == State.AFTER_HOURS) {
+          revert AfterHours();
+      }
+      return BaseHook.beforeSwap.selector;
+  }
 categories:
   - rwa
   - compliance
 chains:
   - ethereum
-repo: https://github.com/horsefacts/trading-days
 license: MIT
-status: experimental
 flags:
   - beforeSwap
-  - beforeAddLiquidity
-  - beforeRemoveLiquidity
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27

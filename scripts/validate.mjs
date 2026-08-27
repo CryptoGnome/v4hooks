@@ -35,7 +35,7 @@ const CHAINS = new Set([
 ]);
 
 const dir = path.join(root, "hooks");
-const files = fs.readdirSync(dir).filter((f) => f.endsWith(".yml") || f.endsWith(".yaml"));
+const files = fs.readdirSync(dir).filter((f) => /\.ya?ml$/.test(f) && !f.startsWith("_"));
 if (!files.length) {
   console.error("no hook files");
   process.exit(1);
@@ -62,6 +62,11 @@ for (const file of files) {
   if (data?.slug && file.replace(/\.ya?ml$/, "") !== data.slug) {
     errors += 1;
     console.error(prefix, "filename must match slug");
+  }
+  const src = data?.source?.url ?? "";
+  if (src && !src.startsWith("https://github.com/")) {
+    errors += 1;
+    console.error(prefix, "source.url must be a GitHub permalink");
   }
   for (const chain of data?.chains ?? []) {
     if (!CHAINS.has(chain)) {

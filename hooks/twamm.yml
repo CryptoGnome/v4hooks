@@ -1,25 +1,68 @@
 slug: twamm
 name: TWAMM
-tagline: Time-weighted average market maker for slicing large orders onchain.
+kind: pattern
+tagline: Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
 description: |
-  The Uniswap v4 TWAMM example hook executes large orders over time instead of dumping them into a single swap. Searchers looking for “uniswap v4 twamm hook” want this pattern: virtual orders accrue between blocks, then settle against the pool, reducing price impact and some sandwich surface.
+  Uniswap’s example TWAMM hook runs executeTWAMMOrders in beforeInitialize, beforeAddLiquidity,
+  and beforeSwap so long-lived orders accrue between blocks and settle against the pool instead
+  of dumping in one swap. Permissions must enable those three callbacks. The rest of the file
+  (order storage, expiration) lives in the linked Solidity — copy the full contract from
+  v4-periphery example-contracts, do not ship this excerpt. The example is UNLICENSED research
+  code, not production. Confirm bytecode on hooklist if you route size. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-periphery
+  path: contracts/hooks/examples/TWAMM.sol
+  url: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/TWAMM.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
 
-  The reference lives in v4-periphery example contracts and Uniswap’s TWAMM research post. Production forks exist; this sheet is the canonical idea, not a promise that a specific address is the one Uniswap routes. Verify bytecode and flags on hooklist before you schedule a TWAMM order.
+  function beforeAddLiquidity(address, PoolKey calldata key, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+      external
+      override
+      onlyByManager
+      returns (bytes4)
+  {
+      executeTWAMMOrders(key);
+      return BaseHook.beforeAddLiquidity.selector;
+  }
+
+  function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata, bytes calldata)
+      external
+      override
+      onlyByManager
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      executeTWAMMOrders(key);
+      return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+  }
 categories:
   - twamm
 chains:
   - ethereum
-  - unichain
-  - base
-  - robinhood
-repo: https://github.com/Uniswap/v4-periphery
-docs: https://blog.uniswap.org/v4-twamm-hook
-license: MIT
-status: experimental
+license: UNLICENSED
 flags:
-  - beforeSwap
-  - afterSwap
+  - beforeInitialize
   - beforeAddLiquidity
-  - afterAddLiquidity
+  - beforeSwap
+docs: https://blog.uniswap.org/v4-twamm-hook
+status: experimental
 added: 2026-08-27
 updated: 2026-08-27
