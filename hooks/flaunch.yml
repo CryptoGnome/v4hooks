@@ -48,6 +48,8 @@ flags:
   - afterDonate
   - beforeSwapReturnDelta
   - afterSwapReturnDelta
+properties:
+  - custom-swap-data
 website: https://flaunch.gg/
 status: production
 added: 2026-08-27

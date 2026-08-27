@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T12:03:12.985Z",
+  "generated": "2026-08-27T12:22:30.700Z",
   "hooks": [
     {
       "slug": "anti-sandwich",
@@ -24,6 +24,9 @@
         "beforeSwap",
         "afterSwap",
         "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
       "website": "https://v4hooks.com/learn/openzeppelin-hooks",
@@ -52,6 +55,9 @@
       "license": "MIT",
       "flags": [
         "beforeSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
       "website": "https://v4hooks.com/learn/openzeppelin-hooks",
@@ -88,6 +94,10 @@
         "beforeSwapReturnDelta",
         "afterSwapReturnDelta"
       ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
       "website": "https://www.clanker.world/",
       "docs": "https://clanker.gitbook.io/documentation/references/core-contracts/v4",
       "status": "production",
@@ -120,6 +130,9 @@
         "beforeSwap",
         "beforeDonate",
         "beforeSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "website": "https://app.euler.finance/swap",
       "status": "production",
@@ -156,6 +169,9 @@
         "beforeSwapReturnDelta",
         "afterSwapReturnDelta"
       ],
+      "properties": [
+        "custom-swap-data"
+      ],
       "website": "https://flaunch.gg/",
       "status": "production",
       "added": "2026-08-27",
@@ -185,6 +201,9 @@
         "beforeInitialize",
         "beforeAddLiquidity",
         "beforeSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "status": "experimental",
       "added": "2026-08-27",
@@ -216,6 +235,9 @@
         "beforeRemoveLiquidity",
         "beforeSwap"
       ],
+      "properties": [
+        "vanilla-swap"
+      ],
       "docs": "https://docs.uniswap.org/contracts/v4/concepts/hooks",
       "status": "experimental",
       "added": "2026-08-27",
@@ -244,6 +266,9 @@
         "afterInitialize",
         "afterSwap"
       ],
+      "properties": [
+        "vanilla-swap"
+      ],
       "docs": "https://docs.uniswap.org/contracts/v4/concepts/hooks",
       "status": "experimental",
       "added": "2026-08-27",
@@ -271,6 +296,9 @@
       "flags": [
         "afterInitialize",
         "afterSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "status": "experimental",
       "added": "2026-08-27",
@@ -305,6 +333,9 @@
         "beforeRemoveLiquidity",
         "beforeSwap"
       ],
+      "properties": [
+        "dynamic-fee"
+      ],
       "website": "https://superdca.org/",
       "status": "production",
       "added": "2026-08-27",
@@ -333,6 +364,9 @@
       "flags": [
         "beforeSwap"
       ],
+      "properties": [
+        "vanilla-swap"
+      ],
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
@@ -360,6 +394,10 @@
         "beforeInitialize",
         "beforeAddLiquidity",
         "beforeSwap"
+      ],
+      "properties": [
+        "vanilla-swap",
+        "custom-swap-data"
       ],
       "docs": "https://blog.uniswap.org/v4-twamm-hook",
       "status": "experimental",
@@ -392,6 +430,9 @@
         "afterAddLiquidity",
         "beforeRemoveLiquidity",
         "afterRemoveLiquidity"
+      ],
+      "properties": [
+        "vanilla-swap"
       ],
       "status": "experimental",
       "added": "2026-08-27",

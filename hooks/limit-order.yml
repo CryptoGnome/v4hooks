@@ -58,6 +58,8 @@ license: UNLICENSED
 flags:
   - afterInitialize
   - afterSwap
+properties:
+  - vanilla-swap
 docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
 status: experimental
 added: 2026-08-27

@@ -12,6 +12,7 @@ const hooks = files
 
 const cats = [...new Set(hooks.flatMap((h) => h.categories))].sort();
 const chains = [...new Set(hooks.flatMap((h) => h.chains))].sort();
+const props = [...new Set(hooks.flatMap((h) => h.properties ?? []))].sort();
 
 const llms = `# v4hooks
 
@@ -31,6 +32,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [${site}/advertise](${site}/advertise): USDC bid board
 ${cats.map((c) => `- [${site}/categories/${c}](${site}/categories/${c})`).join("\n")}
 ${chains.map((c) => `- [${site}/chains/${c}](${site}/chains/${c})`).join("\n")}
+${props.map((p) => `- [${site}/properties/${p}](${site}/properties/${p})`).join("\n")}
 
 ## Hooks
 ${hooks.map((h) => `- [${h.name}](${site}/hooks/${h.slug}) (${h.kind}): ${h.tagline}`).join("\n")}
@@ -56,6 +58,7 @@ ${hooks
       `Status: ${h.status}`,
       `License: ${h.license}`,
       `Categories: ${h.categories.join(", ")}`,
+      `Properties: ${(h.properties ?? []).join(", ")}`,
       `Chains: ${h.chains.join(", ")}`,
       `Flags: ${h.flags.join(", ")}`,
       h.website ? `Website: ${h.website}` : null,

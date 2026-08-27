@@ -59,6 +59,8 @@ flags:
   - beforeAddLiquidity
   - beforeRemoveLiquidity
   - beforeSwap
+properties:
+  - dynamic-fee
 website: https://superdca.org/
 status: production
 added: 2026-08-27

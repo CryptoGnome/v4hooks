@@ -62,6 +62,9 @@ flags:
   - beforeInitialize
   - beforeAddLiquidity
   - beforeSwap
+properties:
+  - vanilla-swap
+  - custom-swap-data
 docs: https://blog.uniswap.org/v4-twamm-hook
 status: experimental
 added: 2026-08-27

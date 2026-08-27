@@ -3,7 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import SponsorBoard from "../../components/SponsorBoard.astro";
 import { getHook, loadHooks, paragraph } from "../../lib/catalog";
 import { FLAG_ORDER, SITE } from "../../lib/meta";
-import { categoryBySlug, chainBySlug } from "../../lib/meta";
+import { categoryBySlug, chainBySlug, propertyBySlug } from "../../lib/meta";
 
 export function getStaticPaths() {
   return loadHooks().map((hook) => ({ params: { slug: hook.slug } }));
@@ -77,6 +77,7 @@ const jsonLd = {
           <tr><th>License</th><td>{hook.license}</td></tr>
           <tr><th>Source</th><td><a href={hook.source.url}>{hook.source.repo}</a></td></tr>
           <tr><th>Categories</th><td>{hook.categories.map((c) => <a href={`/categories/${c}`}>{categoryBySlug(c)?.name}</a>)}</td></tr>
+          <tr><th>Properties</th><td>{hook.properties.map((p) => <a href={`/properties/${p}`}>{propertyBySlug(p)?.name}</a>)}</td></tr>
           <tr><th>Chains</th><td>{hook.chains.map((c) => <a href={`/chains/${c}`}>{chainBySlug(c)?.name}</a>)}</td></tr>
           {hook.website && <tr><th>Website</th><td><a href={hook.website}>{hook.website}</a></td></tr>}
           {hook.docs && <tr><th>Docs</th><td><a href={hook.docs}>{hook.docs}</a></td></tr>}

@@ -1,6 +1,6 @@
 ---
 import { FLAG_ORDER, type Hook } from "../lib/meta";
-import { categoryBySlug, chainBySlug } from "../lib/meta";
+import { categoryBySlug, chainBySlug, propertyBySlug } from "../lib/meta";
 
 type Props = { hook: Hook; heading?: "h2" | "h3" };
 const { hook, heading = "h2" } = Astro.props;
@@ -18,6 +18,9 @@ const Tag = heading;
         </span>
         {hook.categories.map((c) => (
           <span class="stamp">{categoryBySlug(c)?.name ?? c}</span>
+        ))}
+        {hook.properties?.map((p) => (
+          <span class="stamp">{propertyBySlug(p)?.name ?? p}</span>
         ))}
         {hook.chains.map((c) => (
           <span class="stamp">{chainBySlug(c)?.name ?? c}</span>

@@ -41,6 +41,7 @@ Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/An
 Status: experimental
 License: MIT
 Categories: mev-protection
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeSwap, afterSwap, afterSwapReturnDelta
 Website: https://v4hooks.com/learn/openzeppelin-hooks
@@ -100,6 +101,7 @@ Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/base/BaseH
 Status: experimental
 License: MIT
 Categories: wrappers
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeSwap
 Website: https://v4hooks.com/learn/openzeppelin-hooks
@@ -155,6 +157,7 @@ Source: https://github.com/clanker-devco/v4-contracts/blob/main/src/hooks/Clanke
 Status: production
 License: MIT
 Categories: launchpads, dynamic-fees, mev-protection
+Properties: dynamic-fee, vanilla-swap
 Chains: base
 Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, afterSwap, beforeSwapReturnDelta, afterSwapReturnDelta
 Website: https://www.clanker.world/
@@ -210,6 +213,7 @@ Source: https://github.com/euler-xyz/euler-swap/blob/master/src/UniswapHook.sol
 Status: production
 License: BUSL-1.1
 Categories: lending, lp-management
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, beforeDonate, beforeSwapReturnDelta
 Website: https://app.euler.finance/swap
@@ -250,6 +254,7 @@ Source: https://github.com/flayerlabs/flaunchgg-contracts/blob/main/src/contract
 Status: production
 License: MIT
 Categories: launchpads, creator-economy
+Properties: custom-swap-data
 Chains: base
 Flags: beforeInitialize, afterAddLiquidity, afterRemoveLiquidity, beforeSwap, afterSwap, afterDonate, beforeSwapReturnDelta, afterSwapReturnDelta
 Website: https://flaunch.gg/
@@ -299,6 +304,7 @@ Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts
 Status: experimental
 License: UNLICENSED
 Categories: lp-management, wrappers
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeInitialize, beforeAddLiquidity, beforeSwap
 Page: https://v4hooks.com/hooks/full-range
@@ -358,6 +364,7 @@ Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts
 Status: experimental
 License: UNLICENSED
 Categories: oracles
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
@@ -415,6 +422,7 @@ Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts
 Status: experimental
 License: UNLICENSED
 Categories: limit-orders
+Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
@@ -464,6 +472,7 @@ Source: https://github.com/saucepoint/v4-stoploss/blob/main/src/StopLoss.sol
 Status: experimental
 License: MIT
 Categories: limit-orders
+Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap
 Page: https://v4hooks.com/hooks/stop-loss
@@ -515,6 +524,7 @@ Source: https://github.com/Super-DCA-Tech/super-dca-gauge/blob/master/src/SuperD
 Status: production
 License: Apache-2.0
 Categories: twamm, dynamic-fees, ve
+Properties: dynamic-fee
 Chains: base, ethereum
 Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Website: https://superdca.org/
@@ -567,6 +577,7 @@ Source: https://github.com/horsefacts/trading-days/blob/main/src/TradingDaysHook
 Status: experimental
 License: MIT
 Categories: rwa, compliance
+Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeSwap
 Page: https://v4hooks.com/hooks/trading-days
@@ -626,6 +637,7 @@ Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts
 Status: experimental
 License: UNLICENSED
 Categories: twamm
+Properties: vanilla-swap, custom-swap-data
 Chains: ethereum
 Flags: beforeInitialize, beforeAddLiquidity, beforeSwap
 Docs: https://blog.uniswap.org/v4-twamm-hook
@@ -680,6 +692,7 @@ Source: https://github.com/kadenzipfel/veLP/blob/main/src/VotingEscrow.sol
 Status: experimental
 License: AGPL-3.0-or-later
 Categories: ve, lp-management
+Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity
 Page: https://v4hooks.com/hooks/velp

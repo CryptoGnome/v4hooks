@@ -58,6 +58,8 @@ chains:
 license: MIT
 flags:
   - beforeSwap
+properties:
+  - vanilla-swap
 docs: https://github.com/OpenZeppelin/uniswap-hooks
 website: https://v4hooks.com/learn/openzeppelin-hooks
 status: experimental

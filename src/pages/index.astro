@@ -2,13 +2,14 @@
 import Layout from "../layouts/Layout.astro";
 import CutSheet from "../components/CutSheet.astro";
 import SponsorBoard from "../components/SponsorBoard.astro";
-import { loadHooks, latestUpdate, usedCategories, usedChains } from "../lib/catalog";
+import { loadHooks, latestUpdate, usedCategories, usedChains, usedProperties } from "../lib/catalog";
 import { SITE } from "../lib/meta";
 
 const hooks = loadHooks();
 const updated = latestUpdate(hooks);
 const chains = usedChains(hooks);
 const categories = usedCategories(hooks);
+const properties = usedProperties(hooks);
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -61,10 +62,14 @@ const jsonLd = {
           <option value="">All categories</option>
           {categories.map((c) => <option value={c.slug}>{c.name}</option>)}
         </select>
+        <select id="prop">
+          <option value="">All properties</option>
+          {properties.map((p) => <option value={p.slug}>{p.name}</option>)}
+        </select>
       </div>
       <div id="index">
         {hooks.map((hook) => (
-          <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")}>
+          <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
             <CutSheet hook={hook} />
           </div>
         ))}
@@ -78,18 +83,21 @@ const jsonLd = {
   const q = document.getElementById("q");
   const chain = document.getElementById("chain");
   const cat = document.getElementById("cat");
+  const prop = document.getElementById("prop");
   const rows = [...document.querySelectorAll(".row")];
   const empty = document.getElementById("empty");
   function apply() {
     const query = q.value.toLowerCase().trim();
     const ch = chain.value;
     const category = cat.value;
+    const property = prop.value;
     let shown = 0;
     for (const row of rows) {
       const okQ = !query || row.dataset.name.includes(query) || row.dataset.tagline.includes(query);
       const okC = !ch || row.dataset.chains.split(" ").includes(ch);
       const okK = !category || row.dataset.cats.split(" ").includes(category);
-      const on = okQ && okC && okK;
+      const okP = !property || row.dataset.props.split(" ").includes(property);
+      const on = okQ && okC && okK && okP;
       row.hidden = !on;
       if (on) shown += 1;
     }
@@ -98,4 +106,5 @@ const jsonLd = {
   q.addEventListener("input", apply);
   chain.addEventListener("change", apply);
   cat.addEventListener("change", apply);
+  prop.addEventListener("change", apply);
 </script>

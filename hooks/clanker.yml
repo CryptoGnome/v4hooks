@@ -61,6 +61,9 @@ flags:
   - afterSwap
   - beforeSwapReturnDelta
   - afterSwapReturnDelta
+properties:
+  - dynamic-fee
+  - vanilla-swap
 website: https://www.clanker.world/
 docs: https://clanker.gitbook.io/documentation/references/core-contracts/v4
 status: production

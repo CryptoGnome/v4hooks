@@ -25,6 +25,15 @@ export const FLAG_ORDER = [
 
 export type Flag = (typeof FLAG_ORDER)[number];
 
+export const PROPERTIES = [
+  { slug: "dynamic-fee", name: "Dynamic fee", blurb: "Pool fee can change via the hook (OVERRIDE_FEE / dynamic fee flag)." },
+  { slug: "upgradeable", name: "Upgradeable", blurb: "Hook logic sits behind a proxy or otherwise upgradeable deployment." },
+  { slug: "custom-swap-data", name: "Custom swap data", blurb: "Swaps need encoded hookData (or a custom router), not a bare vanilla swap." },
+  { slug: "vanilla-swap", name: "Vanilla swap", blurb: "Works with a normal swap path; no special hookData required to trade." },
+] as const;
+
+export type PropertySlug = (typeof PROPERTIES)[number]["slug"];
+
 export const CATEGORIES = [
   { slug: "dynamic-fees", name: "Dynamic fees", blurb: "Fees that move with volatility, volume, or loyalty." },
   { slug: "limit-orders", name: "Limit orders", blurb: "Onchain orders that fill at a tick." },
@@ -73,6 +82,7 @@ export type ChainSlug = (typeof CHAINS)[number]["slug"];
 
 export const CHAIN_SLUGS = new Set(CHAINS.map((c) => c.slug));
 export const CATEGORY_SLUGS = new Set(CATEGORIES.map((c) => c.slug));
+export const PROPERTY_SLUGS = new Set(PROPERTIES.map((p) => p.slug));
 
 export function chainBySlug(slug: string) {
   return CHAINS.find((c) => c.slug === slug);
@@ -80,6 +90,10 @@ export function chainBySlug(slug: string) {
 
 export function categoryBySlug(slug: string) {
   return CATEGORIES.find((c) => c.slug === slug);
+}
+
+export function propertyBySlug(slug: string) {
+  return PROPERTIES.find((p) => p.slug === slug);
 }
 
 export type Deployment = {
@@ -110,6 +124,7 @@ export type Hook = {
   audit_url?: string;
   license: string;
   flags: Flag[];
+  properties: PropertySlug[];
   status: "production" | "experimental" | "deprecated";
   added: string;
   updated: string;

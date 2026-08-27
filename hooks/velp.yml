@@ -59,6 +59,8 @@ flags:
   - afterAddLiquidity
   - beforeRemoveLiquidity
   - afterRemoveLiquidity
+properties:
+  - vanilla-swap
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

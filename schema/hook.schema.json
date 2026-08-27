@@ -16,6 +16,7 @@
     "categories",
     "chains",
     "flags",
+    "properties",
     "license",
     "status",
     "added",
@@ -125,6 +126,21 @@
           "afterSwapReturnDelta",
           "afterAddLiquidityReturnDelta",
           "afterRemoveLiquidityReturnDelta"
+        ]
+      }
+    },
+    "properties": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Behavioral labels: dynamic fee, upgradeable proxy, needs custom hookData, or works with vanilla swaps.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "dynamic-fee",
+          "upgradeable",
+          "custom-swap-data",
+          "vanilla-swap"
         ]
       }
     },

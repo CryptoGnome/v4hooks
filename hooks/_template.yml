@@ -42,6 +42,9 @@ chains:
 license: MIT
 flags:
   - beforeSwap
+properties:
+  - vanilla-swap
+  # also: dynamic-fee | upgradeable | custom-swap-data
 # website: https://example.com
 # docs: https://example.com/docs
 # audit_url: https://example.com/audit

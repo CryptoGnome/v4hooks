@@ -1,0 +1,31 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import CutSheet from "../../components/CutSheet.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { hooksForProperty, usedProperties } from "../../lib/catalog";
+import { propertyBySlug } from "../../lib/meta";
+
+export function getStaticPaths() {
+  return usedProperties().map((p) => ({ params: { property: p.slug } }));
+}
+
+const property = propertyBySlug(Astro.params.property!);
+if (!property) throw new Error("missing property");
+const hooks = hooksForProperty(property.slug);
+---
+<Layout
+  title={`${property.name} Uniswap v4 hooks`}
+  description={`Uniswap v4 hooks tagged ${property.name.toLowerCase()}. ${property.blurb}`}
+  jsonLd={{ "@context": "https://schema.org", "@type": "ItemList", name: `${property.name} Uniswap v4 hooks`, numberOfItems: hooks.length }}
+>
+  <div class="layout">
+    <main>
+      <section class="lede">
+        <h1>{property.name} Uniswap v4 hooks</h1>
+        <p class="answer">{property.blurb}</p>
+      </section>
+      {hooks.map((hook) => <CutSheet hook={hook} />)}
+    </main>
+    <SponsorBoard />
+  </div>
+</Layout>

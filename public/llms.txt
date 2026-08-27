@@ -29,6 +29,9 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [https://v4hooks.com/categories/wrappers](https://v4hooks.com/categories/wrappers)
 - [https://v4hooks.com/chains/base](https://v4hooks.com/chains/base)
 - [https://v4hooks.com/chains/ethereum](https://v4hooks.com/chains/ethereum)
+- [https://v4hooks.com/properties/custom-swap-data](https://v4hooks.com/properties/custom-swap-data)
+- [https://v4hooks.com/properties/dynamic-fee](https://v4hooks.com/properties/dynamic-fee)
+- [https://v4hooks.com/properties/vanilla-swap](https://v4hooks.com/properties/vanilla-swap)
 
 ## Hooks
 - [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.

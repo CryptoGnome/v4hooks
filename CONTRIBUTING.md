@@ -9,7 +9,8 @@ v4hooks is a directory of **example Uniswap v4 hook contracts** for agents and b
 - `source.url` must be an `https://github.com/` permalink to the `.sol` file. `source.repo` is the repo root.
 - `solidity` is an excerpt: `getHookPermissions` (or `getHooksCalls`) plus the callbacks that matter. Not the whole contract.
 - `description` ≥ 280 characters, unique, explains the callbacks.
-- `flags` must match the excerpt. `license` is the SPDX from that file.
+- `flags` must match the excerpt. `properties` tags behavior: `dynamic-fee`, `upgradeable`, `custom-swap-data`, `vanilla-swap`.
+- `license` is the SPDX from that file.
 - HTTPS only for `website`, `docs`, `audit_url`.
 - Chains must be in the allowlist in `scripts/validate.mjs`.
 - Addresses lowercase `0x` + 40 hex. Do not invent addresses.

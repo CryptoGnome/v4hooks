@@ -33,6 +33,15 @@ body:
       label: Chains
       placeholder: base, ethereum, robinhood
   - type: checkboxes
+    id: properties
+    attributes:
+      label: Properties (check all that apply)
+      options:
+        - label: dynamic-fee
+        - label: upgradeable
+        - label: custom-swap-data
+        - label: vanilla-swap
+  - type: checkboxes
     id: not-hooklist
     attributes:
       label: Confirm

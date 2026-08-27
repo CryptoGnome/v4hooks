@@ -59,6 +59,8 @@ flags:
   - beforeSwap
   - beforeDonate
   - beforeSwapReturnDelta
+properties:
+  - vanilla-swap
 website: https://app.euler.finance/swap
 status: production
 added: 2026-08-27

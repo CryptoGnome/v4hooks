@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parse } from "yaml";
 import type { Hook } from "./meta";
-import { CATEGORIES, CHAINS } from "./meta";
+import { CATEGORIES, CHAINS, PROPERTIES } from "./meta";
 
 const DIR = path.join(process.cwd(), "hooks");
 
@@ -42,6 +42,15 @@ export function usedChains(hooks = loadHooks()) {
 export function usedCategories(hooks = loadHooks()) {
   const used = new Set(hooks.flatMap((h) => h.categories));
   return CATEGORIES.filter((c) => used.has(c.slug));
+}
+
+export function hooksForProperty(property: string) {
+  return loadHooks().filter((h) => h.properties.includes(property as Hook["properties"][number]));
+}
+
+export function usedProperties(hooks = loadHooks()) {
+  const used = new Set(hooks.flatMap((h) => h.properties));
+  return PROPERTIES.filter((p) => used.has(p.slug));
 }
 
 export function paragraph(text: string) {

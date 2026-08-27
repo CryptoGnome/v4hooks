@@ -1,0 +1,19 @@
+---
+description: Always ask before git commit/push after any code or content change
+alwaysApply: true
+---
+
+# Confirm before commit & push
+
+After finishing any task that changes files (features, fixes, copy, config, etc.):
+
+1. **Stop.** Do not run `git commit` or `git push` yet.
+2. **Ask with the `AskQuestion` tool** (clickable Cursor buttons). One single-select question:
+   - **Commit & push** — stage relevant files, commit, push to remote
+   - **Commit only** — commit locally, do not push
+   - **Skip** — leave changes uncommitted
+3. Do **not** fall back to numbered lists in chat when `AskQuestion` is available.
+4. If `AskQuestion` is missing from this session’s tools, say so briefly and ask the same three choices in one short line.
+5. Wait for the user’s answer. Only then run the matching git commands.
+6. If they already said “commit”, “push”, or “commit and push” in the same turn, treat that as confirmation and proceed.
+7. Still follow the usual commit safety rules (no secrets, no force push, good message, etc.).
