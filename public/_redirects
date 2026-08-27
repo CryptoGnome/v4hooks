@@ -1,0 +1,7 @@
+# Parsed by Workers Assets, never served as an asset. Rules here do not apply to paths
+# handled by the Worker, which is only /api/* per run_worker_first in wrangler.jsonc.
+
+# The advertise page was removed. The site sets trailingSlash "never", but the live URL
+# was linked both ways, so both spellings are matched rather than assuming normalisation.
+/advertise      /  301
+/advertise/     /  301
