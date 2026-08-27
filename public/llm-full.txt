@@ -1,5 +1,32 @@
 # v4hooks full catalog
 
+## AllowlistSwap (allowlist-swap)
+Kind: pattern
+Gate-controlled per-pool swap allowlist; beforeSwap reverts for unlisted traders.
+First-party teaching hook inspired by Uniswap Permissioned Pools. An immutable gate address sets
+allowed[poolId][trader]. beforeSwap resolves the trader from hookData (abi.encode address) or the
+swap sender and reverts Unauthorized if not listed. No permissions-adapter stack — minimal allowlist
+gate only. Experimental. Forge tests in test/AllowlistSwap.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata, bytes calldata hookData)
+    internal view override returns (bytes4, BeforeSwapDelta, uint24)
+{
+    address trader = traderOf(sender, hookData);
+    if (!allowed[key.toId()][trader]) revert Unauthorized();
+    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AllowlistSwap.sol
+Status: experimental
+License: MIT
+Categories: compliance
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeSwap
+Page: https://v4hooks.com/hooks/allowlist-swap
+
 ## AntiSandwichHook (anti-sandwich)
 Kind: pattern
 Checkpoint top-of-block pool state and cap one swap direction to that price.
@@ -624,6 +651,94 @@ Chains: ethereum
 Flags: beforeAddLiquidity, beforeSwap, beforeSwapReturnDelta
 Page: https://v4hooks.com/hooks/constant-sum
 
+## Doppler (doppler)
+Kind: product
+Whetstone bonding-curve hook: rebalance slugs before swap, migrate when proceeds cap hit.
+Doppler is Whetstone Research production code (BUSL-1.1). The hook runs a time-epoch bonding
+curve: beforeSwap rebalances concentrated liquidity slugs when a new epoch starts, tracks
+totalTokensSold and totalProceeds, and blocks swaps before startTime or after migration.
+beforeAddLiquidity reverts (CannotAddLiquidity); LPs are the hook's slug positions, not external
+adds. Study for launchpad / LBP-style v4 hooks. Do not deploy without a Whetstone license.
+Excerpt shows permissions and epoch gate in beforeSwap. Full file at the permalink. Not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: BUSL-1.1
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: true,
+        beforeAddLiquidity: true,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: true,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+    if (block.timestamp < startingTime) revert CannotSwapBeforeStartTime();
+    // rebalance slug liquidity when epoch advances, then pool executes swap
+}
+```
+Source: https://github.com/whetstoneresearch/doppler/blob/main/src/initializers/Doppler.sol
+Status: production
+License: BUSL-1.1
+Categories: launchpads, lp-management
+Properties: dynamic-fee, vanilla-swap
+Chains: base
+Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeSwap, afterSwap, beforeDonate
+Website: https://whetstone.cc/
+Page: https://v4hooks.com/hooks/doppler
+
+## DualPool (dual-pool)
+Kind: product
+Uniswap ALF JIT hook: deploy multi-range LP around each swap, vault via ERC4626.
+DualPoolHook is Uniswap Labs production code from v4-hooks-public. On each swap it runs a JIT
+cycle: beforeSwap locks LP ops, redeploys liquidity across weighted tick buckets, then afterSwap
+tears down positions and re-deposits surplus to ERC4626 vaults. Pool fee is static from PoolKey;
+the hook does not override fees. Study this for JIT + vault rehypothecation, not as a drop-in
+ALF deployment. Full file at the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        beforeRemoveLiquidity: true,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+// beforeSwap: set JIT lock → deploy bucket LP → [swap] → afterSwap: remove LP, settle, vault
+```
+Source: https://github.com/Uniswap/v4-hooks-public/blob/main/src/alf/DualPoolHook.sol
+Status: production
+License: MIT
+Categories: lp-management, wrappers
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap, afterSwap
+Docs: https://github.com/Uniswap/v4-hooks-public
+Page: https://v4hooks.com/hooks/dual-pool
+
 ## EulerSwap (eulerswap)
 Kind: product
 Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
@@ -678,6 +793,32 @@ Chains: ethereum
 Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, beforeDonate, beforeSwapReturnDelta
 Website: https://app.euler.finance/swap
 Page: https://v4hooks.com/hooks/eulerswap
+
+## FeeRouter (fee-router)
+Kind: pattern
+afterSwap skims protocolBps of output to an immutable treasury address.
+First-party teaching hook for fee collect-and-route on every swap. afterSwap takes protocolBps of
+the swap output token via take + ERC20 transfer to treasury. Similar shape to referral-fee.yml but
+fixed recipient instead of hookData referrer. Experimental. Forge tests in test/FeeRouter.t.sol.
+Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function _afterSwap(...) internal override returns (bytes4, int128) {
+    uint256 pay = (uint256(int256(out)) * protocolBps) / 10_000;
+    outCur.take(poolManager, address(this), pay, false);
+    IERC20(Currency.unwrap(outCur)).transfer(treasury, pay);
+    return (this.afterSwap.selector, pay.toInt128());
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/FeeRouter.sol
+Status: experimental
+License: MIT
+Categories: creator-economy, dynamic-fees
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/fee-router
 
 ## Flaunch (flaunch)
 Kind: product
@@ -922,6 +1063,35 @@ Chains: ethereum
 Flags: afterInitialize, beforeSwap, afterSwap
 Website: https://www.fhenix.io/
 Page: https://v4hooks.com/hooks/iceberg-order
+
+## JitVault (jit-vault)
+Kind: pattern
+JIT lock blocks LP ops during swap; optional output skim accrues to vault balances.
+First-party teaching hook inspired by Uniswap DualPoolHook. beforeSwap sets jitActive; beforeAddLiquidity
+and beforeRemoveLiquidity revert while active. afterSwap clears the lock and optionally skims skimBps
+of swap output into per-pool vault0/vault1 balances held by the hook. No ERC4626 or bucket deployment —
+study the lifecycle gate only. Experimental. Forge tests in test/JitVault.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+    jitActive[key.toId()] = true;
+    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+}
+
+function _afterSwap(...) internal override returns (bytes4, int128) {
+    jitActive[id] = false;
+    // skim skimBps of output into vault0/vault1
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/JitVault.sol
+Status: experimental
+License: MIT
+Categories: lp-management, mev-protection
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap, afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/jit-vault
 
 ## Limit order (limit-order)
 Kind: pattern
@@ -1292,6 +1462,34 @@ Flags: afterSwap, afterSwapReturnDelta
 Docs: https://github.com/LVooooors/ETHGlobalLondon
 Page: https://v4hooks.com/hooks/mev-donate
 
+## MevWindow (mev-window)
+Kind: pattern
+Elevated swap fee and blocked add-liquidity for mevBlocks after pool init.
+First-party teaching hook inspired by Clanker MEV module window. afterInitialize records launchBlock;
+while block.number < launchBlock + mevBlocks, beforeSwap returns mevFee and beforeAddLiquidity
+reverts MevWindowActive. After the window, baseFee applies and LP adds resume. Requires dynamic
+fee pool. Experimental. Forge tests in test/MevWindow.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function feeFor(PoolId poolId) public view returns (uint24) {
+    return inMevWindow(poolId) ? mevFee : baseFee;
+}
+
+function _beforeAddLiquidity(...) internal view override returns (bytes4) {
+    if (inMevWindow(key.toId())) revert MevWindowActive();
+    return this.beforeAddLiquidity.selector;
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MevWindow.sol
+Status: experimental
+License: MIT
+Categories: launchpads, mev-protection, dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: base
+Flags: afterInitialize, beforeAddLiquidity, beforeSwap
+Page: https://v4hooks.com/hooks/mev-window
+
 ## NthBuyPot (nth-buy-pot)
 Kind: pattern
 Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
@@ -1332,6 +1530,43 @@ Properties: custom-swap-data, vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap, afterSwapReturnDelta
 Page: https://v4hooks.com/hooks/nth-buy-pot
+
+## Permissioned Pools (permissioned-pools)
+Kind: product
+Per-currency allowlist enforced on swap and add-liquidity via permissions adapters.
+PermissionedHooks is Uniswap v4-periphery production code. Pools must include at least one
+verified IPermissionsAdapter currency; beforeInitialize rejects unverified adapters.
+beforeSwap and beforeAddLiquidity call the adapter to authorize msgSender() reported by
+registered wrapper contracts. afterSwap emits a router-compatible Swap event for indexers.
+Use Uniswap's permissioned pool stack — do not reimplement KYC here. Excerpt shows permissions
+and initialize gate. Full file at the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHookPermissions() public pure override returns (Hooks.Permissions memory permissions) {
+    permissions.beforeInitialize = true;
+    permissions.beforeSwap = true;
+    permissions.afterSwap = true;
+    permissions.beforeAddLiquidity = true;
+}
+
+function _beforeInitialize(address, PoolKey calldata key, uint160) internal view override returns (bytes4) {
+    address currency0 = Currency.unwrap(key.currency0);
+    address currency1 = Currency.unwrap(key.currency1);
+    bool currency0IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency0) != address(0);
+    bool currency1IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency1) != address(0);
+    // requires at least one verified adapter; rejects unverified adapter currencies
+}
+```
+Source: https://github.com/Uniswap/v4-hooks-public/blob/main/src/permissioned-pools/PermissionedHooks.sol
+Status: production
+License: MIT
+Categories: compliance, wrappers
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, afterSwap
+Docs: https://docs.uniswap.org/contracts/v4/overview
+Page: https://v4hooks.com/hooks/permissioned-pools
 
 ## Referral fee (referral-fee)
 Kind: pattern
@@ -1584,6 +1819,32 @@ Properties: dynamic-fee, vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, beforeSwap
 Page: https://v4hooks.com/hooks/slippage-fee
+
+## SniperTax (sniper-tax)
+Kind: pattern
+Launch LP fee decays linearly from startFee to baseFee over duration seconds.
+First-party teaching hook inspired by Zora ZoraV4CoinHook launch fee decay. afterInitialize records
+launchTime; beforeSwap returns a fee that linearly decays from startFee (e.g. 99%) to baseFee (e.g. 1%)
+over duration seconds. Requires a dynamic-fee pool. Contrast anti-snipe.yml which caps buy size in
+blocks. Experimental. Forge tests in test/SniperTax.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function feeFor(PoolId poolId) public view returns (uint24) {
+    uint256 elapsed = block.timestamp - launchTime[poolId];
+    if (elapsed >= duration) return baseFee;
+    uint256 delta = uint256(startFee) - uint256(baseFee);
+    return uint24(uint256(baseFee) + (delta * (duration - elapsed)) / duration);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SniperTax.sol
+Status: experimental
+License: MIT
+Categories: launchpads, dynamic-fees, mev-protection
+Properties: dynamic-fee, vanilla-swap
+Chains: base
+Flags: afterInitialize, beforeSwap
+Page: https://v4hooks.com/hooks/sniper-tax
 
 ## Stop-loss (stop-loss)
 Kind: pattern
@@ -2210,6 +2471,34 @@ Flags: beforeInitialize, afterInitialize
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
 Page: https://v4hooks.com/hooks/volatility-oracle
 
+## VolatilityFee (volatility-fee)
+Kind: pattern
+LP fee rises with |currentTick − lastTick| since the previous swap.
+First-party teaching hook inspired by Clanker-style tick-accumulator dynamic fees. Stores lastTick
+per pool; beforeSwap reads current tick from StateLibrary and adds tickFactor × |Δtick| to baseFee,
+capped at maxFee. afterSwap updates lastTick. Contrast surge-fee.yml (size vs liquidity) and
+volatility-oracle.yml (time ramp). Requires dynamic fee pool. Experimental. Forge tests in
+test/VolatilityFee.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function feeFor(PoolKey calldata key) public view returns (uint24) {
+    (, int24 tick,,) = poolManager.getSlot0(key.toId());
+    uint256 move = _absTickDelta(tick, lastTick[key.toId()]);
+    uint256 total = uint256(baseFee) + move * uint256(tickFactor);
+    if (total > maxFee) return maxFee;
+    return uint24(total);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/VolatilityFee.sol
+Status: experimental
+License: MIT
+Categories: dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: base
+Flags: afterInitialize, beforeSwap, afterSwap
+Page: https://v4hooks.com/hooks/volatility-fee
+
 ## Volume tier (volume-tier)
 Kind: pattern
 Cumulative swap notional unlocks lower dynamic fees for high-volume traders.
@@ -2247,3 +2536,50 @@ Chains: ethereum
 Flags: afterInitialize, beforeSwap, afterSwap
 Docs: https://github.com/Keinberger/royalty-swap
 Page: https://v4hooks.com/hooks/volume-tier
+
+## Zora Coin Hook (zora-coin-hook)
+Kind: product
+Creator coin hook: launch fee decay, LP positions on init, fee swap + reward distribution.
+ZoraV4CoinHook is Zora production code. On pool init it seeds multi-range LP from coin config.
+beforeSwap returns a dynamic launch fee that decays from ~99% to 1% over ~10 seconds after coin
+creation (LAUNCH_FEE_START → LP_FEE_V4). afterSwap collects LP fees, swaps to backing currency,
+and distributes rewards. Supports hook upgrades via IUpgradeableV4Hook migration paths. Use Zora's
+factory — do not reimplement to launch a coin. Excerpt shows permissions and launch fee calc.
+Full file at the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+/// Fee decays linearly from LAUNCH_FEE_START (99%) to LP_FEE_V4 (1%) over LAUNCH_FEE_DURATION.
+function _calculateLaunchFee(address coin) internal view returns (uint24 fee) {
+    // elapsed since IHasCreationInfo.creationTime(); returns OVERRIDE_FEE_FLAG | fee
+}
+```
+Source: https://github.com/ourzora/zora-protocol/blob/main/packages/coins/src/hooks/ZoraV4CoinHook.sol
+Status: production
+License: MIT
+Categories: launchpads, creator-economy, dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: base
+Flags: afterInitialize, beforeAddLiquidity, beforeSwap, afterSwap
+Website: https://zora.co/
+Docs: https://docs.zora.co/
+Page: https://v4hooks.com/hooks/zora-coin-hook

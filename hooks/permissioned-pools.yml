@@ -1,0 +1,48 @@
+slug: permissioned-pools
+name: Permissioned Pools
+kind: product
+tagline: "Per-currency allowlist enforced on swap and add-liquidity via permissions adapters."
+description: |
+  PermissionedHooks is Uniswap v4-periphery production code. Pools must include at least one
+  verified IPermissionsAdapter currency; beforeInitialize rejects unverified adapters.
+  beforeSwap and beforeAddLiquidity call the adapter to authorize msgSender() reported by
+  registered wrapper contracts. afterSwap emits a router-compatible Swap event for indexers.
+  Use Uniswap's permissioned pool stack — do not reimplement KYC here. Excerpt shows permissions
+  and initialize gate. Full file at the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-hooks-public
+  path: src/permissioned-pools/PermissionedHooks.sol
+  url: https://github.com/Uniswap/v4-hooks-public/blob/main/src/permissioned-pools/PermissionedHooks.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory permissions) {
+      permissions.beforeInitialize = true;
+      permissions.beforeSwap = true;
+      permissions.afterSwap = true;
+      permissions.beforeAddLiquidity = true;
+  }
+
+  function _beforeInitialize(address, PoolKey calldata key, uint160) internal view override returns (bytes4) {
+      address currency0 = Currency.unwrap(key.currency0);
+      address currency1 = Currency.unwrap(key.currency1);
+      bool currency0IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency0) != address(0);
+      bool currency1IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency1) != address(0);
+      // requires at least one verified adapter; rejects unverified adapter currencies
+  }
+categories:
+  - compliance
+  - wrappers
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeInitialize
+  - beforeAddLiquidity
+  - beforeSwap
+  - afterSwap
+properties:
+  - vanilla-swap
+docs: https://docs.uniswap.org/contracts/v4/overview
+status: production
+added: 2026-08-27
+updated: 2026-08-27

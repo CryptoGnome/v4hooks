@@ -34,6 +34,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [https://v4hooks.com/properties/vanilla-swap](https://v4hooks.com/properties/vanilla-swap)
 
 ## Hooks
+- [AllowlistSwap](https://v4hooks.com/hooks/allowlist-swap) (pattern): Gate-controlled per-pool swap allowlist; beforeSwap reverts for unlisted traders.
 - [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.
 - [AntiSnipe](https://v4hooks.com/hooks/anti-snipe) (pattern): Launch guard — max buy (% supply), snipe tax on exact-input buys for N blocks after init.
 - [AutoBurn](https://v4hooks.com/hooks/auto-burn) (pattern): Burns burnBps of token output on exact-input buys via afterSwapReturnDelta.
@@ -44,11 +45,15 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [Buyback](https://v4hooks.com/hooks/buyback) (pattern): Treasury-funded market buy when pool tick is at or below thresholdTick.
 - [Clanker](https://v4hooks.com/hooks/clanker) (product): Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
 - [Constant sum](https://v4hooks.com/hooks/constant-sum) (pattern): Replace xy=k with x+y=k so every swap fills exactly 1:1, using a NoOp beforeSwap.
+- [Doppler](https://v4hooks.com/hooks/doppler) (product): Whetstone bonding-curve hook: rebalance slugs before swap, migrate when proceeds cap hit.
+- [DualPool](https://v4hooks.com/hooks/dual-pool) (product): Uniswap ALF JIT hook: deploy multi-range LP around each swap, vault via ERC4626.
 - [EulerSwap](https://v4hooks.com/hooks/eulerswap) (product): Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
+- [FeeRouter](https://v4hooks.com/hooks/fee-router) (pattern): afterSwap skims protocolBps of output to an immutable treasury address.
 - [Flaunch](https://v4hooks.com/hooks/flaunch) (product): PositionManager hook: beforeSwap runs the internal swap pool; afterSwap distributes creator fees.
 - [Full range](https://v4hooks.com/hooks/full-range) (pattern): Force v2-style full-range LP: only the hook can modify liquidity, users mint a pool ERC20 instead.
 - [Geomean oracle](https://v4hooks.com/hooks/geomean-oracle) (pattern): Write a geometric-mean observation before any action that can move price or liquidity.
 - [Iceberg](https://v4hooks.com/hooks/iceberg-order) (pattern): Encrypted limit orders — size and direction stay hidden until the tick is crossed.
+- [JitVault](https://v4hooks.com/hooks/jit-vault) (pattern): JIT lock blocks LP ops during swap; optional output skim accrues to vault balances.
 - [Limit order](https://v4hooks.com/hooks/limit-order) (pattern): Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
 - [LimitOrderHook](https://v4hooks.com/hooks/limit-order-hook) (pattern): Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
 - [Liquidity bootstrapping](https://v4hooks.com/hooks/liquidity-bootstrapping) (pattern): Linear-decay token sale via beforeSwapReturnDelta (LBP-style custom curve).
@@ -57,11 +62,14 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [LpRewards](https://v4hooks.com/hooks/lp-rewards) (pattern): Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.
 - [Median oracle](https://v4hooks.com/hooks/median-oracle) (pattern): Ring buffer of post-swap ticks with onchain medianTick view.
 - [MEV donate](https://v4hooks.com/hooks/mev-donate) (pattern): Skim swap output to pending, then flush() donates to in-range LPs.
+- [MevWindow](https://v4hooks.com/hooks/mev-window) (pattern): Elevated swap fee and blocked add-liquidity for mevBlocks after pool init.
 - [NthBuyPot](https://v4hooks.com/hooks/nth-buy-pot) (pattern): Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
+- [Permissioned Pools](https://v4hooks.com/hooks/permissioned-pools) (product): Per-currency allowlist enforced on swap and add-liquidity via permissions adapters.
 - [Referral fee](https://v4hooks.com/hooks/referral-fee) (pattern): abi.encode(referrer) in hookData pays refBps of swap output to the referrer.
 - [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
 - [Sell guard](https://v4hooks.com/hooks/sell-guard) (pattern): Sell cooldown blocks rapid dumps; repeat sells in a window pay ramp fee.
 - [SlippageFeeHook](https://v4hooks.com/hooks/slippage-fee) (pattern): Simulate the swap, measure the tick it would move, then price the fee off that slippage.
+- [SniperTax](https://v4hooks.com/hooks/sniper-tax) (pattern): Launch LP fee decays linearly from startFee to baseFee over duration seconds.
 - [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): Tick-walk fill-on-cross stop loss via unlock-wrapped market sells.
 - [SuckerPunch](https://v4hooks.com/hooks/sucker-punch) (pattern): Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
@@ -74,4 +82,6 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [veLP](https://v4hooks.com/hooks/velp) (pattern): Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
 - [VerifierHook](https://v4hooks.com/hooks/purefi-verifier) (pattern): Gate every pool action behind an off-chain AML proof checked in the callback.
 - [Volatility oracle](https://v4hooks.com/hooks/volatility-oracle) (pattern): Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.
+- [VolatilityFee](https://v4hooks.com/hooks/volatility-fee) (pattern): LP fee rises with |currentTick − lastTick| since the previous swap.
 - [Volume tier](https://v4hooks.com/hooks/volume-tier) (pattern): Cumulative swap notional unlocks lower dynamic fees for high-volume traders.
+- [Zora Coin Hook](https://v4hooks.com/hooks/zora-coin-hook) (product): Creator coin hook: launch fee decay, LP positions on init, fee swap + reward distribution.

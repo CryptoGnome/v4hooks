@@ -1,6 +1,35 @@
 {
-  "generated": "2026-08-27T15:40:18.646Z",
+  "generated": "2026-08-27T15:52:03.776Z",
   "hooks": [
+    {
+      "slug": "allowlist-swap",
+      "name": "AllowlistSwap",
+      "kind": "pattern",
+      "tagline": "Gate-controlled per-pool swap allowlist; beforeSwap reverts for unlisted traders.",
+      "description": "First-party teaching hook inspired by Uniswap Permissioned Pools. An immutable gate address sets\nallowed[poolId][trader]. beforeSwap resolves the trader from hookData (abi.encode address) or the\nswap sender and reverts Unauthorized if not listed. No permissions-adapter stack — minimal allowlist\ngate only. Experimental. Forge tests in test/AllowlistSwap.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/AllowlistSwap.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AllowlistSwap.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata, bytes calldata hookData)\n    internal view override returns (bytes4, BeforeSwapDelta, uint24)\n{\n    address trader = traderOf(sender, hookData);\n    if (!allowed[key.toId()][trader]) revert Unauthorized();\n    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);\n}\n",
+      "categories": [
+        "compliance"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
     {
       "slug": "anti-sandwich",
       "name": "AntiSandwichHook",
@@ -334,6 +363,78 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "doppler",
+      "name": "Doppler",
+      "kind": "product",
+      "tagline": "Whetstone bonding-curve hook: rebalance slugs before swap, migrate when proceeds cap hit.",
+      "description": "Doppler is Whetstone Research production code (BUSL-1.1). The hook runs a time-epoch bonding\ncurve: beforeSwap rebalances concentrated liquidity slugs when a new epoch starts, tracks\ntotalTokensSold and totalProceeds, and blocks swaps before startTime or after migration.\nbeforeAddLiquidity reverts (CannotAddLiquidity); LPs are the hook's slug positions, not external\nadds. Study for launchpad / LBP-style v4 hooks. Do not deploy without a Whetstone license.\nExcerpt shows permissions and epoch gate in beforeSwap. Full file at the permalink. Not an audit.\n",
+      "source": {
+        "repo": "https://github.com/whetstoneresearch/doppler",
+        "path": "src/initializers/Doppler.sol",
+        "url": "https://github.com/whetstoneresearch/doppler/blob/main/src/initializers/Doppler.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: BUSL-1.1\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: true,\n        afterInitialize: true,\n        beforeAddLiquidity: true,\n        beforeRemoveLiquidity: false,\n        afterAddLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: true,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {\n    if (block.timestamp < startingTime) revert CannotSwapBeforeStartTime();\n    // rebalance slug liquidity when epoch advances, then pool executes swap\n}\n",
+      "categories": [
+        "launchpads",
+        "lp-management"
+      ],
+      "chains": [
+        "base"
+      ],
+      "license": "BUSL-1.1",
+      "flags": [
+        "beforeInitialize",
+        "afterInitialize",
+        "beforeAddLiquidity",
+        "beforeSwap",
+        "afterSwap",
+        "beforeDonate"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "website": "https://whetstone.cc/",
+      "status": "production",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "dual-pool",
+      "name": "DualPool",
+      "kind": "product",
+      "tagline": "Uniswap ALF JIT hook: deploy multi-range LP around each swap, vault via ERC4626.",
+      "description": "DualPoolHook is Uniswap Labs production code from v4-hooks-public. On each swap it runs a JIT\ncycle: beforeSwap locks LP ops, redeploys liquidity across weighted tick buckets, then afterSwap\ntears down positions and re-deposits surplus to ERC4626 vaults. Pool fee is static from PoolKey;\nthe hook does not override fees. Study this for JIT + vault rehypothecation, not as a drop-in\nALF deployment. Full file at the permalink. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/Uniswap/v4-hooks-public",
+        "path": "src/alf/DualPoolHook.sol",
+        "url": "https://github.com/Uniswap/v4-hooks-public/blob/main/src/alf/DualPoolHook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: true,\n        afterInitialize: false,\n        beforeAddLiquidity: true,\n        beforeRemoveLiquidity: true,\n        afterAddLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\n// beforeSwap: set JIT lock → deploy bucket LP → [swap] → afterSwap: remove LP, settle, vault\n",
+      "categories": [
+        "lp-management",
+        "wrappers"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeInitialize",
+        "beforeAddLiquidity",
+        "beforeRemoveLiquidity",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "docs": "https://github.com/Uniswap/v4-hooks-public",
+      "status": "production",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "eulerswap",
       "name": "EulerSwap",
       "kind": "product",
@@ -365,6 +466,37 @@
       ],
       "website": "https://app.euler.finance/swap",
       "status": "production",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "fee-router",
+      "name": "FeeRouter",
+      "kind": "pattern",
+      "tagline": "afterSwap skims protocolBps of output to an immutable treasury address.",
+      "description": "First-party teaching hook for fee collect-and-route on every swap. afterSwap takes protocolBps of\nthe swap output token via take + ERC20 transfer to treasury. Similar shape to referral-fee.yml but\nfixed recipient instead of hookData referrer. Experimental. Forge tests in test/FeeRouter.t.sol.\nListing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/FeeRouter.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/FeeRouter.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction _afterSwap(...) internal override returns (bytes4, int128) {\n    uint256 pay = (uint256(int256(out)) * protocolBps) / 10_000;\n    outCur.take(poolManager, address(this), pay, false);\n    IERC20(Currency.unwrap(outCur)).transfer(treasury, pay);\n    return (this.afterSwap.selector, pay.toInt128());\n}\n",
+      "categories": [
+        "creator-economy",
+        "dynamic-fees"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
     },
@@ -500,6 +632,40 @@
         "vanilla-swap"
       ],
       "website": "https://www.fhenix.io/",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "jit-vault",
+      "name": "JitVault",
+      "kind": "pattern",
+      "tagline": "JIT lock blocks LP ops during swap; optional output skim accrues to vault balances.",
+      "description": "First-party teaching hook inspired by Uniswap DualPoolHook. beforeSwap sets jitActive; beforeAddLiquidity\nand beforeRemoveLiquidity revert while active. afterSwap clears the lock and optionally skims skimBps\nof swap output into per-pool vault0/vault1 balances held by the hook. No ERC4626 or bucket deployment —\nstudy the lifecycle gate only. Experimental. Forge tests in test/JitVault.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/JitVault.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/JitVault.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {\n    jitActive[key.toId()] = true;\n    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);\n}\n\nfunction _afterSwap(...) internal override returns (bytes4, int128) {\n    jitActive[id] = false;\n    // skim skimBps of output into vault0/vault1\n}\n",
+      "categories": [
+        "lp-management",
+        "mev-protection"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeAddLiquidity",
+        "beforeRemoveLiquidity",
+        "beforeSwap",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
@@ -760,6 +926,40 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "mev-window",
+      "name": "MevWindow",
+      "kind": "pattern",
+      "tagline": "Elevated swap fee and blocked add-liquidity for mevBlocks after pool init.",
+      "description": "First-party teaching hook inspired by Clanker MEV module window. afterInitialize records launchBlock;\nwhile block.number < launchBlock + mevBlocks, beforeSwap returns mevFee and beforeAddLiquidity\nreverts MevWindowActive. After the window, baseFee applies and LP adds resume. Requires dynamic\nfee pool. Experimental. Forge tests in test/MevWindow.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/MevWindow.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MevWindow.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction feeFor(PoolId poolId) public view returns (uint24) {\n    return inMevWindow(poolId) ? mevFee : baseFee;\n}\n\nfunction _beforeAddLiquidity(...) internal view override returns (bytes4) {\n    if (inMevWindow(key.toId())) revert MevWindowActive();\n    return this.beforeAddLiquidity.selector;\n}\n",
+      "categories": [
+        "launchpads",
+        "mev-protection",
+        "dynamic-fees"
+      ],
+      "chains": [
+        "base"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeAddLiquidity",
+        "beforeSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "nth-buy-pot",
       "name": "NthBuyPot",
       "kind": "pattern",
@@ -788,6 +988,40 @@
         "vanilla-swap"
       ],
       "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "permissioned-pools",
+      "name": "Permissioned Pools",
+      "kind": "product",
+      "tagline": "Per-currency allowlist enforced on swap and add-liquidity via permissions adapters.",
+      "description": "PermissionedHooks is Uniswap v4-periphery production code. Pools must include at least one\nverified IPermissionsAdapter currency; beforeInitialize rejects unverified adapters.\nbeforeSwap and beforeAddLiquidity call the adapter to authorize msgSender() reported by\nregistered wrapper contracts. afterSwap emits a router-compatible Swap event for indexers.\nUse Uniswap's permissioned pool stack — do not reimplement KYC here. Excerpt shows permissions\nand initialize gate. Full file at the permalink. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/Uniswap/v4-hooks-public",
+        "path": "src/permissioned-pools/PermissionedHooks.sol",
+        "url": "https://github.com/Uniswap/v4-hooks-public/blob/main/src/permissioned-pools/PermissionedHooks.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory permissions) {\n    permissions.beforeInitialize = true;\n    permissions.beforeSwap = true;\n    permissions.afterSwap = true;\n    permissions.beforeAddLiquidity = true;\n}\n\nfunction _beforeInitialize(address, PoolKey calldata key, uint160) internal view override returns (bytes4) {\n    address currency0 = Currency.unwrap(key.currency0);\n    address currency1 = Currency.unwrap(key.currency1);\n    bool currency0IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency0) != address(0);\n    bool currency1IsAdapter = PERMISSIONS_ADAPTER_FACTORY.permissionsAdapterOf(currency1) != address(0);\n    // requires at least one verified adapter; rejects unverified adapter currencies\n}\n",
+      "categories": [
+        "compliance",
+        "wrappers"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeInitialize",
+        "beforeAddLiquidity",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "docs": "https://docs.uniswap.org/contracts/v4/overview",
+      "status": "production",
       "added": "2026-08-27",
       "updated": "2026-08-27"
     },
@@ -909,6 +1143,39 @@
       ],
       "chains": [
         "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "sniper-tax",
+      "name": "SniperTax",
+      "kind": "pattern",
+      "tagline": "Launch LP fee decays linearly from startFee to baseFee over duration seconds.",
+      "description": "First-party teaching hook inspired by Zora ZoraV4CoinHook launch fee decay. afterInitialize records\nlaunchTime; beforeSwap returns a fee that linearly decays from startFee (e.g. 99%) to baseFee (e.g. 1%)\nover duration seconds. Requires a dynamic-fee pool. Contrast anti-snipe.yml which caps buy size in\nblocks. Experimental. Forge tests in test/SniperTax.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/SniperTax.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SniperTax.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction feeFor(PoolId poolId) public view returns (uint24) {\n    uint256 elapsed = block.timestamp - launchTime[poolId];\n    if (elapsed >= duration) return baseFee;\n    uint256 delta = uint256(startFee) - uint256(baseFee);\n    return uint24(uint256(baseFee) + (delta * (duration - elapsed)) / duration);\n}\n",
+      "categories": [
+        "launchpads",
+        "dynamic-fees",
+        "mev-protection"
+      ],
+      "chains": [
+        "base"
       ],
       "license": "MIT",
       "flags": [
@@ -1324,6 +1591,38 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "volatility-fee",
+      "name": "VolatilityFee",
+      "kind": "pattern",
+      "tagline": "LP fee rises with |currentTick − lastTick| since the previous swap.",
+      "description": "First-party teaching hook inspired by Clanker-style tick-accumulator dynamic fees. Stores lastTick\nper pool; beforeSwap reads current tick from StateLibrary and adds tickFactor × |Δtick| to baseFee,\ncapped at maxFee. afterSwap updates lastTick. Contrast surge-fee.yml (size vs liquidity) and\nvolatility-oracle.yml (time ramp). Requires dynamic fee pool. Experimental. Forge tests in\ntest/VolatilityFee.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/VolatilityFee.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/VolatilityFee.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction feeFor(PoolKey calldata key) public view returns (uint24) {\n    (, int24 tick,,) = poolManager.getSlot0(key.toId());\n    uint256 move = _absTickDelta(tick, lastTick[key.toId()]);\n    uint256 total = uint256(baseFee) + move * uint256(tickFactor);\n    if (total > maxFee) return maxFee;\n    return uint24(total);\n}\n",
+      "categories": [
+        "dynamic-fees"
+      ],
+      "chains": [
+        "base"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "volume-tier",
       "name": "Volume tier",
       "kind": "pattern",
@@ -1354,6 +1653,43 @@
       ],
       "docs": "https://github.com/Keinberger/royalty-swap",
       "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "zora-coin-hook",
+      "name": "Zora Coin Hook",
+      "kind": "product",
+      "tagline": "Creator coin hook: launch fee decay, LP positions on init, fee swap + reward distribution.",
+      "description": "ZoraV4CoinHook is Zora production code. On pool init it seeds multi-range LP from coin config.\nbeforeSwap returns a dynamic launch fee that decays from ~99% to 1% over ~10 seconds after coin\ncreation (LAUNCH_FEE_START → LP_FEE_V4). afterSwap collects LP fees, swaps to backing currency,\nand distributes rewards. Supports hook upgrades via IUpgradeableV4Hook migration paths. Use Zora's\nfactory — do not reimplement to launch a coin. Excerpt shows permissions and launch fee calc.\nFull file at the permalink. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/ourzora/zora-protocol",
+        "path": "packages/coins/src/hooks/ZoraV4CoinHook.sol",
+        "url": "https://github.com/ourzora/zora-protocol/blob/main/packages/coins/src/hooks/ZoraV4CoinHook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: true,\n        beforeAddLiquidity: true,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\n/// Fee decays linearly from LAUNCH_FEE_START (99%) to LP_FEE_V4 (1%) over LAUNCH_FEE_DURATION.\nfunction _calculateLaunchFee(address coin) internal view returns (uint24 fee) {\n    // elapsed since IHasCreationInfo.creationTime(); returns OVERRIDE_FEE_FLAG | fee\n}\n",
+      "categories": [
+        "launchpads",
+        "creator-economy",
+        "dynamic-fees"
+      ],
+      "chains": [
+        "base"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeAddLiquidity",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "website": "https://zora.co/",
+      "docs": "https://docs.zora.co/",
+      "status": "production",
       "added": "2026-08-27",
       "updated": "2026-08-27"
     }

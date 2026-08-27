@@ -1,0 +1,40 @@
+slug: mev-window
+name: MevWindow
+kind: pattern
+tagline: Elevated swap fee and blocked add-liquidity for mevBlocks after pool init.
+description: |
+  First-party teaching hook inspired by Clanker MEV module window. afterInitialize records launchBlock;
+  while block.number < launchBlock + mevBlocks, beforeSwap returns mevFee and beforeAddLiquidity
+  reverts MevWindowActive. After the window, baseFee applies and LP adds resume. Requires dynamic
+  fee pool. Experimental. Forge tests in test/MevWindow.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/MevWindow.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MevWindow.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function feeFor(PoolId poolId) public view returns (uint24) {
+      return inMevWindow(poolId) ? mevFee : baseFee;
+  }
+
+  function _beforeAddLiquidity(...) internal view override returns (bytes4) {
+      if (inMevWindow(key.toId())) revert MevWindowActive();
+      return this.beforeAddLiquidity.selector;
+  }
+categories:
+  - launchpads
+  - mev-protection
+  - dynamic-fees
+chains:
+  - base
+license: MIT
+flags:
+  - afterInitialize
+  - beforeAddLiquidity
+  - beforeSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

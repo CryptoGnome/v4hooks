@@ -1,0 +1,54 @@
+slug: dual-pool
+name: DualPool
+kind: product
+tagline: "Uniswap ALF JIT hook: deploy multi-range LP around each swap, vault via ERC4626."
+description: |
+  DualPoolHook is Uniswap Labs production code from v4-hooks-public. On each swap it runs a JIT
+  cycle: beforeSwap locks LP ops, redeploys liquidity across weighted tick buckets, then afterSwap
+  tears down positions and re-deposits surplus to ERC4626 vaults. Pool fee is static from PoolKey;
+  the hook does not override fees. Study this for JIT + vault rehypothecation, not as a drop-in
+  ALF deployment. Full file at the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/Uniswap/v4-hooks-public
+  path: src/alf/DualPoolHook.sol
+  url: https://github.com/Uniswap/v4-hooks-public/blob/main/src/alf/DualPoolHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          beforeRemoveLiquidity: true,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  // beforeSwap: set JIT lock → deploy bucket LP → [swap] → afterSwap: remove LP, settle, vault
+categories:
+  - lp-management
+  - wrappers
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeInitialize
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+  - beforeSwap
+  - afterSwap
+properties:
+  - vanilla-swap
+docs: https://github.com/Uniswap/v4-hooks-public
+status: production
+added: 2026-08-27
+updated: 2026-08-27

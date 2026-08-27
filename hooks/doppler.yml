@@ -1,0 +1,60 @@
+slug: doppler
+name: Doppler
+kind: product
+tagline: "Whetstone bonding-curve hook: rebalance slugs before swap, migrate when proceeds cap hit."
+description: |
+  Doppler is Whetstone Research production code (BUSL-1.1). The hook runs a time-epoch bonding
+  curve: beforeSwap rebalances concentrated liquidity slugs when a new epoch starts, tracks
+  totalTokensSold and totalProceeds, and blocks swaps before startTime or after migration.
+  beforeAddLiquidity reverts (CannotAddLiquidity); LPs are the hook's slug positions, not external
+  adds. Study for launchpad / LBP-style v4 hooks. Do not deploy without a Whetstone license.
+  Excerpt shows permissions and epoch gate in beforeSwap. Full file at the permalink. Not an audit.
+source:
+  repo: https://github.com/whetstoneresearch/doppler
+  path: src/initializers/Doppler.sol
+  url: https://github.com/whetstoneresearch/doppler/blob/main/src/initializers/Doppler.sol
+solidity: |
+  // SPDX-License-Identifier: BUSL-1.1
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: true,
+          beforeAddLiquidity: true,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: true,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+      if (block.timestamp < startingTime) revert CannotSwapBeforeStartTime();
+      // rebalance slug liquidity when epoch advances, then pool executes swap
+  }
+categories:
+  - launchpads
+  - lp-management
+chains:
+  - base
+license: BUSL-1.1
+flags:
+  - beforeInitialize
+  - afterInitialize
+  - beforeAddLiquidity
+  - beforeSwap
+  - afterSwap
+  - beforeDonate
+properties:
+  - dynamic-fee
+  - vanilla-swap
+website: https://whetstone.cc/
+status: production
+added: 2026-08-27
+updated: 2026-08-27

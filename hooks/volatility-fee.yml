@@ -1,0 +1,38 @@
+slug: volatility-fee
+name: VolatilityFee
+kind: pattern
+tagline: LP fee rises with |currentTick − lastTick| since the previous swap.
+description: |
+  First-party teaching hook inspired by Clanker-style tick-accumulator dynamic fees. Stores lastTick
+  per pool; beforeSwap reads current tick from StateLibrary and adds tickFactor × |Δtick| to baseFee,
+  capped at maxFee. afterSwap updates lastTick. Contrast surge-fee.yml (size vs liquidity) and
+  volatility-oracle.yml (time ramp). Requires dynamic fee pool. Experimental. Forge tests in
+  test/VolatilityFee.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/VolatilityFee.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/VolatilityFee.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function feeFor(PoolKey calldata key) public view returns (uint24) {
+      (, int24 tick,,) = poolManager.getSlot0(key.toId());
+      uint256 move = _absTickDelta(tick, lastTick[key.toId()]);
+      uint256 total = uint256(baseFee) + move * uint256(tickFactor);
+      if (total > maxFee) return maxFee;
+      return uint24(total);
+  }
+categories:
+  - dynamic-fees
+chains:
+  - base
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+  - afterSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

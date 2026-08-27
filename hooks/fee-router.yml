@@ -1,0 +1,35 @@
+slug: fee-router
+name: FeeRouter
+kind: pattern
+tagline: afterSwap skims protocolBps of output to an immutable treasury address.
+description: |
+  First-party teaching hook for fee collect-and-route on every swap. afterSwap takes protocolBps of
+  the swap output token via take + ERC20 transfer to treasury. Similar shape to referral-fee.yml but
+  fixed recipient instead of hookData referrer. Experimental. Forge tests in test/FeeRouter.t.sol.
+  Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/FeeRouter.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/FeeRouter.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function _afterSwap(...) internal override returns (bytes4, int128) {
+      uint256 pay = (uint256(int256(out)) * protocolBps) / 10_000;
+      outCur.take(poolManager, address(this), pay, false);
+      IERC20(Currency.unwrap(outCur)).transfer(treasury, pay);
+      return (this.afterSwap.selector, pay.toInt128());
+  }
+categories:
+  - creator-economy
+  - dynamic-fees
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

@@ -1,0 +1,41 @@
+slug: jit-vault
+name: JitVault
+kind: pattern
+tagline: JIT lock blocks LP ops during swap; optional output skim accrues to vault balances.
+description: |
+  First-party teaching hook inspired by Uniswap DualPoolHook. beforeSwap sets jitActive; beforeAddLiquidity
+  and beforeRemoveLiquidity revert while active. afterSwap clears the lock and optionally skims skimBps
+  of swap output into per-pool vault0/vault1 balances held by the hook. No ERC4626 or bucket deployment —
+  study the lifecycle gate only. Experimental. Forge tests in test/JitVault.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/JitVault.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/JitVault.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function _beforeSwap(...) internal override returns (bytes4, BeforeSwapDelta, uint24) {
+      jitActive[key.toId()] = true;
+      return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+  }
+
+  function _afterSwap(...) internal override returns (bytes4, int128) {
+      jitActive[id] = false;
+      // skim skimBps of output into vault0/vault1
+  }
+categories:
+  - lp-management
+  - mev-protection
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+  - beforeSwap
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

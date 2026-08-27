@@ -1,0 +1,60 @@
+slug: zora-coin-hook
+name: Zora Coin Hook
+kind: product
+tagline: "Creator coin hook: launch fee decay, LP positions on init, fee swap + reward distribution."
+description: |
+  ZoraV4CoinHook is Zora production code. On pool init it seeds multi-range LP from coin config.
+  beforeSwap returns a dynamic launch fee that decays from ~99% to 1% over ~10 seconds after coin
+  creation (LAUNCH_FEE_START → LP_FEE_V4). afterSwap collects LP fees, swaps to backing currency,
+  and distributes rewards. Supports hook upgrades via IUpgradeableV4Hook migration paths. Use Zora's
+  factory — do not reimplement to launch a coin. Excerpt shows permissions and launch fee calc.
+  Full file at the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/ourzora/zora-protocol
+  path: packages/coins/src/hooks/ZoraV4CoinHook.sol
+  url: https://github.com/ourzora/zora-protocol/blob/main/packages/coins/src/hooks/ZoraV4CoinHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  /// Fee decays linearly from LAUNCH_FEE_START (99%) to LP_FEE_V4 (1%) over LAUNCH_FEE_DURATION.
+  function _calculateLaunchFee(address coin) internal view returns (uint24 fee) {
+      // elapsed since IHasCreationInfo.creationTime(); returns OVERRIDE_FEE_FLAG | fee
+  }
+categories:
+  - launchpads
+  - creator-economy
+  - dynamic-fees
+chains:
+  - base
+license: MIT
+flags:
+  - afterInitialize
+  - beforeAddLiquidity
+  - beforeSwap
+  - afterSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+website: https://zora.co/
+docs: https://docs.zora.co/
+status: production
+added: 2026-08-27
+updated: 2026-08-27

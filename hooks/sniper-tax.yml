@@ -1,0 +1,37 @@
+slug: sniper-tax
+name: SniperTax
+kind: pattern
+tagline: Launch LP fee decays linearly from startFee to baseFee over duration seconds.
+description: |
+  First-party teaching hook inspired by Zora ZoraV4CoinHook launch fee decay. afterInitialize records
+  launchTime; beforeSwap returns a fee that linearly decays from startFee (e.g. 99%) to baseFee (e.g. 1%)
+  over duration seconds. Requires a dynamic-fee pool. Contrast anti-snipe.yml which caps buy size in
+  blocks. Experimental. Forge tests in test/SniperTax.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/SniperTax.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SniperTax.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  function feeFor(PoolId poolId) public view returns (uint24) {
+      uint256 elapsed = block.timestamp - launchTime[poolId];
+      if (elapsed >= duration) return baseFee;
+      uint256 delta = uint256(startFee) - uint256(baseFee);
+      return uint24(uint256(baseFee) + (delta * (duration - elapsed)) / duration);
+  }
+categories:
+  - launchpads
+  - dynamic-fees
+  - mev-protection
+chains:
+  - base
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

@@ -47,3 +47,9 @@ See `CONTRIBUTING.md` → First-party hooks.
 | `MedianOracle.sol` | `median-oracle` | saucepoint median-oracles |
 | `ReferralFee.sol` | `referral-fee` | mergd/ref-fee-hook |
 | `Buyback.sol` | `buyback` | atj3097/buyback-hook |
+| `JitVault.sol` | `jit-vault` | Uniswap DualPoolHook |
+| `AllowlistSwap.sol` | `allowlist-swap` | Uniswap Permissioned Pools |
+| `SniperTax.sol` | `sniper-tax` | Zora launch fee decay |
+| `VolatilityFee.sol` | `volatility-fee` | Clanker tick accumulator |
+| `FeeRouter.sol` | `fee-router` | Zora / launchpad fee routing |
+| `MevWindow.sol` | `mev-window` | Clanker MEV module window |
