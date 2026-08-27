@@ -37,9 +37,18 @@ export default {
     }
     try {
       if (url.pathname === "/api/ads" && request.method === "GET") return json(await listLive(env));
-      if (url.pathname === "/api/ads/intent" && request.method === "POST") return intent(request, env);
-      if (url.pathname === "/api/ads/webhook" && request.method === "POST") return webhook(request, env);
-      if (url.pathname === "/api/ads/dev-pay" && request.method === "POST") return devPay(request, env);
+      // The write routes (intent, webhook, dev-pay) are unrouted while the sponsor rail is
+      // paused. They were reachable with no UI in front of them, and each needs a fix before
+      // it goes back:
+      //   - webhook() skips verification entirely when HELIO_WEBHOOK_SECRET is unset, so a
+      //     missing binding silently makes it public. It must fail closed.
+      //   - no amount is ever verified. extractPayment reads only id/tx/chain, and the
+      //     charge computed at intent time is returned to the caller and never stored.
+      //   - intent() matches `existing` on url alone, so activate() will overwrite a live
+      //     listing the caller does not own. Needs a per-listing claim secret.
+      //   - TURNSTILE_SECRET is declared but never checked; intent() is unauthenticated.
+      //   - cleanUrl caps nothing, and ads has no UNIQUE index on a live url.
+      // The handlers are kept below so the feature can be rebuilt -- not re-enabled as-is.
       return json({ error: "not found" }, 404);
     } catch (err) {
       const message = err instanceof Error ? err.message : "server error";
