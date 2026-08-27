@@ -24,3 +24,14 @@ npm run validate     # YAML catalog
 - Listing is not an audit. `status: experimental` until you have a stronger claim (and evidence).
 
 See `CONTRIBUTING.md` → First-party hooks.
+
+## Catalogued examples
+
+| Contract | Listing | Spark-inspired behavior |
+|----------|---------|------------------------|
+| `SuckerPunch.sol` | `sucker-punch` | Hold-time / MEV sell fees |
+| `AntiSnipe.sol` | `anti-snipe` | Guard window, max buy, snipe tax |
+| `SurgeFee.sol` | `surge-fee` | Size-vs-liquidity surge fee |
+| `AutoBurn.sol` | `auto-burn` | Burn buy output (return delta) |
+| `LpRewards.sol` | `lp-rewards` | Donate buy cut to LPs (`flush`) |
+| `NthBuyPot.sol` | `nth-buy-pot` | Nth-buy jackpot + claim |

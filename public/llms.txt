@@ -35,6 +35,8 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 
 ## Hooks
 - [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.
+- [AntiSnipe](https://v4hooks.com/hooks/anti-snipe) (pattern): Launch guard — max buy (% supply), snipe tax on exact-input buys for N blocks after init.
+- [AutoBurn](https://v4hooks.com/hooks/auto-burn) (pattern): Burns burnBps of token output on exact-input buys via afterSwapReturnDelta.
 - [BackGeoOracle](https://v4hooks.com/hooks/back-geo-oracle) (pattern): Geomean oracle that backruns its own pool so the recorded price is not stale.
 - [BaseDynamicFee](https://v4hooks.com/hooks/base-dynamic-fee) (pattern): Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
 - [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, gate callbacks with onlyPoolManager.
@@ -49,11 +51,14 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [Limit order](https://v4hooks.com/hooks/limit-order) (pattern): Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
 - [LimitOrderHook](https://v4hooks.com/hooks/limit-order-hook) (pattern): Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
 - [LiquidityPenaltyHook](https://v4hooks.com/hooks/liquidity-penalty) (pattern): Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
+- [LpRewards](https://v4hooks.com/hooks/lp-rewards) (pattern): Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.
+- [NthBuyPot](https://v4hooks.com/hooks/nth-buy-pot) (pattern): Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
 - [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
 - [SlippageFeeHook](https://v4hooks.com/hooks/slippage-fee) (pattern): Simulate the swap, measure the tick it would move, then price the fee off that slippage.
 - [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
 - [SuckerPunch](https://v4hooks.com/hooks/sucker-punch) (pattern): Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
+- [SurgeFee](https://v4hooks.com/hooks/surge-fee) (pattern): LP fee scales with swap size vs pool liquidity — no simulate-and-revert.
 - [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
 - [Trading days](https://v4hooks.com/hooks/trading-days) (pattern): Revert beforeSwap unless New York cash markets are open.
 - [TWAMM](https://v4hooks.com/hooks/twamm) (pattern): Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.

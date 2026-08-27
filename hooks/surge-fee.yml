@@ -1,0 +1,53 @@
+slug: surge-fee
+name: SurgeFee
+kind: pattern
+tagline: LP fee scales with swap size vs pool liquidity — no simulate-and-revert.
+description: |
+  First-party teaching hook inspired by Spark Surge Fees. Contrast with slippage-fee.yml: that hook
+  simulates the swap and reverts with the post-trade tick to price the fee; SurgeFee reads pool
+  liquidity from StateLibrary and adds surgeFactor * (tradeSize / liquidity) to baseFee in beforeSwap,
+  capped at maxFee. No try/catch simulation — cheaper gas, coarser signal (size vs liquidity, not tick
+  walk). Inherits OpenZeppelin BaseOverrideFee. Requires dynamic fee pool. Experimental. Forge tests
+  in test/SurgeFee.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/SurgeFee.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SurgeFee.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // v4hooks first-party — excerpt. Full file: source.url
+  function feeFor(PoolKey calldata key, SwapParams calldata params) public view returns (uint24) {
+      uint128 liquidity = poolManager.getLiquidity(key.toId());
+      if (liquidity == 0) return baseFee;
+      uint256 tradeSize = params.amountSpecified < 0
+          ? uint256(-params.amountSpecified)
+          : uint256(params.amountSpecified);
+      uint256 surge = (tradeSize * uint256(surgeFactor)) / uint256(liquidity);
+      uint256 total = uint256(baseFee) + surge;
+      if (total > maxFee) return maxFee;
+      return uint24(total);
+  }
+
+  function _getFee(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)
+      internal
+      view
+      override
+      returns (uint24)
+  {
+      return feeFor(key, params);
+  }
+categories:
+  - dynamic-fees
+  - launchpads
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

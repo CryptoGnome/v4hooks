@@ -1,0 +1,51 @@
+slug: nth-buy-pot
+name: NthBuyPot
+kind: pattern
+tagline: Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
+description: |
+  First-party teaching hook inspired by Spark Nth-buy Pot. afterInitialize requires native currency0.
+  On exact-input buys, afterSwap pulls potBps of token output into the hook (afterSwapReturnDelta) and
+  increments buyCount at most once per block; when buyCount reaches nthBuy, winner is set from
+  abi.encode(trader) in hookData (else swap sender). claim() sends accumulated token1 to the winner.
+  No random draw — public counter, no permissionless flush. Exact-input buys only. Experimental.
+  Forge tests in test/NthBuyPot.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/NthBuyPot.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/NthBuyPot.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // v4hooks first-party — excerpt. Full file: source.url
+  function _afterSwap(
+      address sender,
+      PoolKey calldata key,
+      SwapParams calldata params,
+      BalanceDelta delta,
+      bytes calldata hookData
+  ) internal override returns (bytes4, int128) {
+      if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+      PotState storage state = pots[key.toId()];
+      if (block.number != state.lastCountBlock) {
+          state.lastCountBlock = block.number;
+          state.buyCount++;
+          if (state.buyCount == nthBuy) state.winner = traderOf(sender, hookData);
+      }
+      uint256 contribution = (uint256(int256(delta.amount1())) * potBps) / 10_000;
+      key.currency1.take(poolManager, address(this), contribution, false);
+      return (this.afterSwap.selector, contribution.toInt128());
+  }
+categories:
+  - launchpads
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - custom-swap-data
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

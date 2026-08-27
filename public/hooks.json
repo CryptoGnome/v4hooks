@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T15:10:29.241Z",
+  "generated": "2026-08-27T15:28:08.433Z",
   "hooks": [
     {
       "slug": "anti-sandwich",
@@ -30,6 +30,72 @@
       ],
       "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
       "website": "https://v4hooks.com/learn/openzeppelin-hooks",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "anti-snipe",
+      "name": "AntiSnipe",
+      "kind": "pattern",
+      "tagline": "Launch guard — max buy (% supply), snipe tax on exact-input buys for N blocks after init.",
+      "description": "First-party teaching hook inspired by Spark's Anti-Snipe launchpad block (usespark.fun/builder).\nafterInitialize records graduationBlock and requires native currency0 + dynamic fee. beforeSwap\napplies snipeTax via OVERRIDE_FEE_FLAG on exact-input buys while inGuardWindow; after guard, baseLpFee.\nafterSwap caps token output to maxBuyBps of totalSupply using afterSwapReturnDelta (FullMath.mulDiv\navoids supply overflow). Per-swap cap only — not per-wallet. Sells skip tax and cap. Experimental.\nForge tests in test/AntiSnipe.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/AntiSnipe.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AntiSnipe.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: true,\n        beforeAddLiquidity: false,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: true,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeSwap(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)\n    internal\n    view\n    override\n    returns (bytes4, BeforeSwapDelta, uint24)\n{\n    bool isExactInputBuy = params.zeroForOne && params.amountSpecified < 0;\n    uint24 fee = feeFor(key.toId(), isExactInputBuy);\n    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);\n}\n",
+      "categories": [
+        "launchpads",
+        "mev-protection",
+        "dynamic-fees"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "auto-burn",
+      "name": "AutoBurn",
+      "kind": "pattern",
+      "tagline": "Burns burnBps of token output on exact-input buys via afterSwapReturnDelta.",
+      "description": "First-party teaching hook inspired by Spark Auto Burn. afterInitialize requires native currency0.\nafterSwap on exact-input buys (zeroForOne, amountSpecified < 0) takes burnBps of token1 output from\nthe swapper via poolManager.take, transfers to DEAD, and returns the same amount as afterSwap\nreturn delta. Sells and exact-output swaps skip. Teaches output-side hook accounting without\ncomposing extra LP fee. Experimental. Forge tests in test/AutoBurn.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/AutoBurn.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AutoBurn.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party — excerpt. Full file: source.url\nfunction _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)\n    internal\n    override\n    returns (bytes4, int128)\n{\n    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);\n    int128 tokenOut = delta.amount1();\n    if (tokenOut <= 0) return (this.afterSwap.selector, 0);\n    uint256 burnAmount = (uint256(int256(tokenOut)) * burnBps) / 10_000;\n    if (burnAmount == 0) return (this.afterSwap.selector, 0);\n    key.currency1.take(poolManager, address(this), burnAmount, false);\n    IERC20(Currency.unwrap(key.currency1)).transfer(DEAD, burnAmount);\n    return (this.afterSwap.selector, burnAmount.toInt128());\n}\n",
+      "categories": [
+        "launchpads"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
@@ -507,6 +573,70 @@
       "updated": "2026-08-27"
     },
     {
+      "slug": "lp-rewards",
+      "name": "LpRewards",
+      "kind": "pattern",
+      "tagline": "Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.",
+      "description": "First-party teaching hook inspired by Spark LP Rewards. Spark routes an ETH-side buy cut; this\nversion takes rewardBps of token output on exact-input buys (same afterSwapReturnDelta path as\nAutoBurn) into pending[poolId], then flush() unlocks and calls poolManager.donate + settle so\nfeeGrowthGlobal rises for LPs. Deferred donate avoids NoLiquidityToReceiveFees when a large buy\nwalks price out of range mid-callback. Contrast liquidity-penalty.yml (donate on JIT remove).\nExperimental. Forge tests in test/LpRewards.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/LpRewards.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LpRewards.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party — excerpt. Full file: source.url\nfunction _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)\n    internal\n    override\n    returns (bytes4, int128)\n{\n    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);\n    uint256 reward = (uint256(int256(delta.amount1())) * rewardBps) / 10_000;\n    if (reward == 0) return (this.afterSwap.selector, 0);\n    key.currency1.take(poolManager, address(this), reward, false);\n    pending[key.toId()] += reward;\n    return (this.afterSwap.selector, reward.toInt128());\n}\n\nfunction flush(PoolKey calldata key) external {\n    poolManager.unlock(abi.encode(key));\n}\n",
+      "categories": [
+        "launchpads",
+        "lp-management"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "nth-buy-pot",
+      "name": "NthBuyPot",
+      "kind": "pattern",
+      "tagline": "Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.",
+      "description": "First-party teaching hook inspired by Spark Nth-buy Pot. afterInitialize requires native currency0.\nOn exact-input buys, afterSwap pulls potBps of token output into the hook (afterSwapReturnDelta) and\nincrements buyCount at most once per block; when buyCount reaches nthBuy, winner is set from\nabi.encode(trader) in hookData (else swap sender). claim() sends accumulated token1 to the winner.\nNo random draw — public counter, no permissionless flush. Exact-input buys only. Experimental.\nForge tests in test/NthBuyPot.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/NthBuyPot.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/NthBuyPot.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party — excerpt. Full file: source.url\nfunction _afterSwap(\n    address sender,\n    PoolKey calldata key,\n    SwapParams calldata params,\n    BalanceDelta delta,\n    bytes calldata hookData\n) internal override returns (bytes4, int128) {\n    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);\n    PotState storage state = pots[key.toId()];\n    if (block.number != state.lastCountBlock) {\n        state.lastCountBlock = block.number;\n        state.buyCount++;\n        if (state.buyCount == nthBuy) state.winner = traderOf(sender, hookData);\n    }\n    uint256 contribution = (uint256(int256(delta.amount1())) * potBps) / 10_000;\n    key.currency1.take(poolManager, address(this), contribution, false);\n    return (this.afterSwap.selector, contribution.toInt128());\n}\n",
+      "categories": [
+        "launchpads"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "properties": [
+        "custom-swap-data",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
       "slug": "rehypothecation",
       "name": "ReHypothecationHook",
       "kind": "pattern",
@@ -671,6 +801,38 @@
       ],
       "website": "https://superdca.org/",
       "status": "production",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "surge-fee",
+      "name": "SurgeFee",
+      "kind": "pattern",
+      "tagline": "LP fee scales with swap size vs pool liquidity — no simulate-and-revert.",
+      "description": "First-party teaching hook inspired by Spark Surge Fees. Contrast with slippage-fee.yml: that hook\nsimulates the swap and reverts with the post-trade tick to price the fee; SurgeFee reads pool\nliquidity from StateLibrary and adds surgeFactor * (tradeSize / liquidity) to baseFee in beforeSwap,\ncapped at maxFee. No try/catch simulation — cheaper gas, coarser signal (size vs liquidity, not tick\nwalk). Inherits OpenZeppelin BaseOverrideFee. Requires dynamic fee pool. Experimental. Forge tests\nin test/SurgeFee.t.sol. Listing is not an audit.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/SurgeFee.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SurgeFee.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party — excerpt. Full file: source.url\nfunction feeFor(PoolKey calldata key, SwapParams calldata params) public view returns (uint24) {\n    uint128 liquidity = poolManager.getLiquidity(key.toId());\n    if (liquidity == 0) return baseFee;\n    uint256 tradeSize = params.amountSpecified < 0\n        ? uint256(-params.amountSpecified)\n        : uint256(params.amountSpecified);\n    uint256 surge = (tradeSize * uint256(surgeFactor)) / uint256(liquidity);\n    uint256 total = uint256(baseFee) + surge;\n    if (total > maxFee) return maxFee;\n    return uint24(total);\n}\n\nfunction _getFee(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)\n    internal\n    view\n    override\n    returns (uint24)\n{\n    return feeFor(key, params);\n}\n",
+      "categories": [
+        "dynamic-fees",
+        "launchpads"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "vanilla-swap"
+      ],
+      "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"
     },

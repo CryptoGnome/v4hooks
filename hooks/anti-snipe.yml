@@ -1,0 +1,65 @@
+slug: anti-snipe
+name: AntiSnipe
+kind: pattern
+tagline: Launch guard — max buy (% supply), snipe tax on exact-input buys for N blocks after init.
+description: |
+  First-party teaching hook inspired by Spark's Anti-Snipe launchpad block (usespark.fun/builder).
+  afterInitialize records graduationBlock and requires native currency0 + dynamic fee. beforeSwap
+  applies snipeTax via OVERRIDE_FEE_FLAG on exact-input buys while inGuardWindow; after guard, baseLpFee.
+  afterSwap caps token output to maxBuyBps of totalSupply using afterSwapReturnDelta (FullMath.mulDiv
+  avoids supply overflow). Per-swap cap only — not per-wallet. Sells skip tax and cap. Experimental.
+  Forge tests in test/AntiSnipe.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/AntiSnipe.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AntiSnipe.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // v4hooks first-party — excerpt. Full file: source.url
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: true,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeSwap(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)
+      internal
+      view
+      override
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      bool isExactInputBuy = params.zeroForOne && params.amountSpecified < 0;
+      uint24 fee = feeFor(key.toId(), isExactInputBuy);
+      return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+  }
+categories:
+  - launchpads
+  - mev-protection
+  - dynamic-fees
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - beforeSwap
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - dynamic-fee
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

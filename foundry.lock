@@ -1,1 +1,8 @@
-{}
+{
+  "lib/forge-std": {
+    "rev": "da5b326fb2d7f69e87c3ea95f3fcc3ab49a38549"
+  },
+  "lib/uniswap-hooks": {
+    "rev": "31a1393f02528095e539b9e31440192ba1aa02c3"
+  }
+}

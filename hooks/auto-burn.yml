@@ -1,0 +1,45 @@
+slug: auto-burn
+name: AutoBurn
+kind: pattern
+tagline: Burns burnBps of token output on exact-input buys via afterSwapReturnDelta.
+description: |
+  First-party teaching hook inspired by Spark Auto Burn. afterInitialize requires native currency0.
+  afterSwap on exact-input buys (zeroForOne, amountSpecified < 0) takes burnBps of token1 output from
+  the swapper via poolManager.take, transfers to DEAD, and returns the same amount as afterSwap
+  return delta. Sells and exact-output swaps skip. Teaches output-side hook accounting without
+  composing extra LP fee. Experimental. Forge tests in test/AutoBurn.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/AutoBurn.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AutoBurn.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // v4hooks first-party — excerpt. Full file: source.url
+  function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)
+      internal
+      override
+      returns (bytes4, int128)
+  {
+      if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+      int128 tokenOut = delta.amount1();
+      if (tokenOut <= 0) return (this.afterSwap.selector, 0);
+      uint256 burnAmount = (uint256(int256(tokenOut)) * burnBps) / 10_000;
+      if (burnAmount == 0) return (this.afterSwap.selector, 0);
+      key.currency1.take(poolManager, address(this), burnAmount, false);
+      IERC20(Currency.unwrap(key.currency1)).transfer(DEAD, burnAmount);
+      return (this.afterSwap.selector, burnAmount.toInt128());
+  }
+categories:
+  - launchpads
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

@@ -1,0 +1,49 @@
+slug: lp-rewards
+name: LpRewards
+kind: pattern
+tagline: Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.
+description: |
+  First-party teaching hook inspired by Spark LP Rewards. Spark routes an ETH-side buy cut; this
+  version takes rewardBps of token output on exact-input buys (same afterSwapReturnDelta path as
+  AutoBurn) into pending[poolId], then flush() unlocks and calls poolManager.donate + settle so
+  feeGrowthGlobal rises for LPs. Deferred donate avoids NoLiquidityToReceiveFees when a large buy
+  walks price out of range mid-callback. Contrast liquidity-penalty.yml (donate on JIT remove).
+  Experimental. Forge tests in test/LpRewards.t.sol. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/LpRewards.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LpRewards.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // v4hooks first-party — excerpt. Full file: source.url
+  function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)
+      internal
+      override
+      returns (bytes4, int128)
+  {
+      if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+      uint256 reward = (uint256(int256(delta.amount1())) * rewardBps) / 10_000;
+      if (reward == 0) return (this.afterSwap.selector, 0);
+      key.currency1.take(poolManager, address(this), reward, false);
+      pending[key.toId()] += reward;
+      return (this.afterSwap.selector, reward.toInt128());
+  }
+
+  function flush(PoolKey calldata key) external {
+      poolManager.unlock(abi.encode(key));
+  }
+categories:
+  - launchpads
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

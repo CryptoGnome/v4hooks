@@ -48,6 +48,94 @@ Website: https://v4hooks.com/learn/openzeppelin-hooks
 Docs: https://github.com/OpenZeppelin/uniswap-hooks
 Page: https://v4hooks.com/hooks/anti-sandwich
 
+## AntiSnipe (anti-snipe)
+Kind: pattern
+Launch guard — max buy (% supply), snipe tax on exact-input buys for N blocks after init.
+First-party teaching hook inspired by Spark's Anti-Snipe launchpad block (usespark.fun/builder).
+afterInitialize records graduationBlock and requires native currency0 + dynamic fee. beforeSwap
+applies snipeTax via OVERRIDE_FEE_FLAG on exact-input buys while inGuardWindow; after guard, baseLpFee.
+afterSwap caps token output to maxBuyBps of totalSupply using afterSwapReturnDelta (FullMath.mulDiv
+avoids supply overflow). Per-swap cap only — not per-wallet. Sells skip tax and cap. Experimental.
+Forge tests in test/AntiSnipe.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party — excerpt. Full file: source.url
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: true,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function _beforeSwap(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)
+    internal
+    view
+    override
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    bool isExactInputBuy = params.zeroForOne && params.amountSpecified < 0;
+    uint24 fee = feeFor(key.toId(), isExactInputBuy);
+    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AntiSnipe.sol
+Status: experimental
+License: MIT
+Categories: launchpads, mev-protection, dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap, afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/anti-snipe
+
+## AutoBurn (auto-burn)
+Kind: pattern
+Burns burnBps of token output on exact-input buys via afterSwapReturnDelta.
+First-party teaching hook inspired by Spark Auto Burn. afterInitialize requires native currency0.
+afterSwap on exact-input buys (zeroForOne, amountSpecified < 0) takes burnBps of token1 output from
+the swapper via poolManager.take, transfers to DEAD, and returns the same amount as afterSwap
+return delta. Sells and exact-output swaps skip. Teaches output-side hook accounting without
+composing extra LP fee. Experimental. Forge tests in test/AutoBurn.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party — excerpt. Full file: source.url
+function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)
+    internal
+    override
+    returns (bytes4, int128)
+{
+    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+    int128 tokenOut = delta.amount1();
+    if (tokenOut <= 0) return (this.afterSwap.selector, 0);
+    uint256 burnAmount = (uint256(int256(tokenOut)) * burnBps) / 10_000;
+    if (burnAmount == 0) return (this.afterSwap.selector, 0);
+    key.currency1.take(poolManager, address(this), burnAmount, false);
+    IERC20(Currency.unwrap(key.currency1)).transfer(DEAD, burnAmount);
+    return (this.afterSwap.selector, burnAmount.toInt128());
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/AutoBurn.sol
+Status: experimental
+License: MIT
+Categories: launchpads
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/auto-burn
+
 ## BackGeoOracle (back-geo-oracle)
 Kind: pattern
 Geomean oracle that backruns its own pool so the recorded price is not stale.
@@ -978,6 +1066,86 @@ Website: https://v4hooks.com/learn/openzeppelin-hooks
 Docs: https://github.com/OpenZeppelin/uniswap-hooks
 Page: https://v4hooks.com/hooks/liquidity-penalty
 
+## LpRewards (lp-rewards)
+Kind: pattern
+Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.
+First-party teaching hook inspired by Spark LP Rewards. Spark routes an ETH-side buy cut; this
+version takes rewardBps of token output on exact-input buys (same afterSwapReturnDelta path as
+AutoBurn) into pending[poolId], then flush() unlocks and calls poolManager.donate + settle so
+feeGrowthGlobal rises for LPs. Deferred donate avoids NoLiquidityToReceiveFees when a large buy
+walks price out of range mid-callback. Contrast liquidity-penalty.yml (donate on JIT remove).
+Experimental. Forge tests in test/LpRewards.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party — excerpt. Full file: source.url
+function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta delta, bytes calldata)
+    internal
+    override
+    returns (bytes4, int128)
+{
+    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+    uint256 reward = (uint256(int256(delta.amount1())) * rewardBps) / 10_000;
+    if (reward == 0) return (this.afterSwap.selector, 0);
+    key.currency1.take(poolManager, address(this), reward, false);
+    pending[key.toId()] += reward;
+    return (this.afterSwap.selector, reward.toInt128());
+}
+
+function flush(PoolKey calldata key) external {
+    poolManager.unlock(abi.encode(key));
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LpRewards.sol
+Status: experimental
+License: MIT
+Categories: launchpads, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/lp-rewards
+
+## NthBuyPot (nth-buy-pot)
+Kind: pattern
+Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
+First-party teaching hook inspired by Spark Nth-buy Pot. afterInitialize requires native currency0.
+On exact-input buys, afterSwap pulls potBps of token output into the hook (afterSwapReturnDelta) and
+increments buyCount at most once per block; when buyCount reaches nthBuy, winner is set from
+abi.encode(trader) in hookData (else swap sender). claim() sends accumulated token1 to the winner.
+No random draw — public counter, no permissionless flush. Exact-input buys only. Experimental.
+Forge tests in test/NthBuyPot.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party — excerpt. Full file: source.url
+function _afterSwap(
+    address sender,
+    PoolKey calldata key,
+    SwapParams calldata params,
+    BalanceDelta delta,
+    bytes calldata hookData
+) internal override returns (bytes4, int128) {
+    if (!params.zeroForOne || params.amountSpecified >= 0) return (this.afterSwap.selector, 0);
+    PotState storage state = pots[key.toId()];
+    if (block.number != state.lastCountBlock) {
+        state.lastCountBlock = block.number;
+        state.buyCount++;
+        if (state.buyCount == nthBuy) state.winner = traderOf(sender, hookData);
+    }
+    uint256 contribution = (uint256(int256(delta.amount1())) * potBps) / 10_000;
+    key.currency1.take(poolManager, address(this), contribution, false);
+    return (this.afterSwap.selector, contribution.toInt128());
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/NthBuyPot.sol
+Status: experimental
+License: MIT
+Categories: launchpads
+Properties: custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, afterSwap, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/nth-buy-pot
+
 ## ReHypothecationHook (rehypothecation)
 Kind: pattern
 Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
@@ -1314,6 +1482,49 @@ Chains: base, ethereum
 Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Website: https://superdca.org/
 Page: https://v4hooks.com/hooks/super-dca
+
+## SurgeFee (surge-fee)
+Kind: pattern
+LP fee scales with swap size vs pool liquidity — no simulate-and-revert.
+First-party teaching hook inspired by Spark Surge Fees. Contrast with slippage-fee.yml: that hook
+simulates the swap and reverts with the post-trade tick to price the fee; SurgeFee reads pool
+liquidity from StateLibrary and adds surgeFactor * (tradeSize / liquidity) to baseFee in beforeSwap,
+capped at maxFee. No try/catch simulation — cheaper gas, coarser signal (size vs liquidity, not tick
+walk). Inherits OpenZeppelin BaseOverrideFee. Requires dynamic fee pool. Experimental. Forge tests
+in test/SurgeFee.t.sol. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party — excerpt. Full file: source.url
+function feeFor(PoolKey calldata key, SwapParams calldata params) public view returns (uint24) {
+    uint128 liquidity = poolManager.getLiquidity(key.toId());
+    if (liquidity == 0) return baseFee;
+    uint256 tradeSize = params.amountSpecified < 0
+        ? uint256(-params.amountSpecified)
+        : uint256(params.amountSpecified);
+    uint256 surge = (tradeSize * uint256(surgeFactor)) / uint256(liquidity);
+    uint256 total = uint256(baseFee) + surge;
+    if (total > maxFee) return maxFee;
+    return uint24(total);
+}
+
+function _getFee(address, PoolKey calldata key, SwapParams calldata params, bytes calldata)
+    internal
+    view
+    override
+    returns (uint24)
+{
+    return feeFor(key, params);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SurgeFee.sol
+Status: experimental
+License: MIT
+Categories: dynamic-fees, launchpads
+Properties: dynamic-fee, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap
+Page: https://v4hooks.com/hooks/surge-fee
 
 ## Take profits (take-profits)
 Kind: pattern
