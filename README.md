@@ -1,76 +1,90 @@
-# v4hooks — Uniswap v4 hooks you can build
+# v4hooks
 
-**[v4hooks.com](https://v4hooks.com)** — a builder cookbook for Uniswap v4 hooks.
+A practical catalog of [Uniswap v4](https://docs.uniswap.org/contracts/v4/overview) hook patterns and production implementations.
 
-Licensed Solidity excerpts. GitHub permalinks. Permissions bits. Callbacks you can actually read. Built for humans *and* agents.
+Browse the catalog at **[v4hooks.com](https://v4hooks.com)**.
 
-Every listing shows the `getHookPermissions` block and the callbacks that matter, so you can see which of the 14 permission bits a hook lights up before you copy anything into Foundry.
+Each entry includes:
 
----
+- a pinned GitHub source link
+- a licensed Solidity excerpt
+- the hook's permission flags
+- the callbacks that define its behavior
+- chain, category, deployment, audit, and license metadata when available
 
-## What you get
+> [!WARNING]
+> This catalog is not an audit. A confirmed source means the linked code exists; it does not mean the hook is safe to deploy with funds.
 
-| | |
-|---|---|
-| **Patterns** | Reference implementations — TWAMM, limit orders, take-profit, oracles, dynamic fees, JIT penalty, rehypothecation, v2-on-v4, first-party rewrites, … |
-| **First-party** | [`contracts/`](contracts/) — hooks we maintain here (Foundry + tests). Legacy ideas rewritten for current v4. |
-| **Products** | How live protocols wire their hooks — study the callbacks, don’t paste the factory |
-| **Agent dumps** | [`llms.txt`](https://v4hooks.com/llms.txt) · [`llm-full.txt`](https://v4hooks.com/llm-full.txt) · [`hooks.json`](https://v4hooks.com/hooks.json) |
+## Catalog
 
-Source of truth: `hooks/*.yml`. Each listing is a real public file + a licensed excerpt. Nothing invented.
+The catalog covers:
 
-> **Not an audit.** “Confirmed” means the source file exists in public. It does **not** mean safe to deploy with funds.
+- dynamic fees and MEV protection
+- limit orders, stop-losses, and take-profit orders
+- liquidity management and launchpads
+- TWAMMs, oracles, lending, and wrappers
+- production hooks from projects such as Clanker, EulerSwap, Flaunch, and Zora
+- first-party reference implementations maintained in this repository
 
----
+Start with the [full catalog](https://v4hooks.com), browse by [category](https://v4hooks.com/categories/dynamic-fees), or read the [building guides](https://v4hooks.com/learn).
 
-## In the catalog
+## Repository structure
 
-[LP management](https://v4hooks.com/categories/lp-management) · [Dynamic fees](https://v4hooks.com/categories/dynamic-fees) · [Limit orders](https://v4hooks.com/categories/limit-orders) · [MEV protection](https://v4hooks.com/categories/mev-protection) · [Wrappers](https://v4hooks.com/categories/wrappers) · [Launchpads](https://v4hooks.com/categories/launchpads) · [Lending](https://v4hooks.com/categories/lending) · [TWAMM](https://v4hooks.com/categories/twamm) · [Vote-escrow](https://v4hooks.com/categories/ve) · [Compliance](https://v4hooks.com/categories/compliance) · [Creator economy](https://v4hooks.com/categories/creator-economy) · [Oracles](https://v4hooks.com/categories/oracles) · [RWA](https://v4hooks.com/categories/rwa)
+| Path | Contents |
+| --- | --- |
+| [`hooks/`](hooks/) | Catalog records in YAML; the source of truth |
+| [`contracts/`](contracts/) | First-party Solidity reference implementations |
+| [`test/`](test/) | Foundry tests for first-party contracts |
+| [`src/`](src/) | Astro site and Cloudflare Worker |
+| [`schema/`](schema/) | JSON Schema for catalog records |
+| [`scripts/`](scripts/) | Validation, generation, and catalog sync tools |
 
-Includes AntiSandwichHook, BaseHook, LimitOrderHook, LiquidityPenaltyHook, ReHypothecationHook, TWAMM, Geomean oracle, Volatility oracle, Stop-loss, Take profits, Full range, veLP and the hooks behind Clanker, EulerSwap, Flaunch and Super DCA.
+Generated machine-readable files:
 
----
+- [`hooks.json`](https://v4hooks.com/hooks.json) — complete structured catalog
+- [`llms.txt`](https://v4hooks.com/llms.txt) — compact index for agents
+- [`llm-full.txt`](https://v4hooks.com/llm-full.txt) — full catalog for agents
+- [`SKILLS.md`](SKILLS.md) — agent workflow for using the repository
 
-## Browse
+## Add a hook
 
-- Site → [v4hooks.com](https://v4hooks.com)
-- Learn → [v4hooks.com/learn](https://v4hooks.com/learn) — [What is a v4 hook?](https://v4hooks.com/learn/what-is-a-uniswap-v4-hook) · [Secure v4 hooks](https://v4hooks.com/learn/secure-v4-hooks) · [OpenZeppelin hooks](https://v4hooks.com/learn/openzeppelin-hooks)
-- Resources → [v4hooks.com/learn/resources](https://v4hooks.com/learn/resources)
-- Agent skill → [`SKILLS.md`](SKILLS.md)
-- Repo → [CryptoGnome/v4hooks](https://github.com/CryptoGnome/v4hooks)
-
----
-
-## Add a listing
+Copy the template, fill in the required metadata, and validate it:
 
 ```bash
 cp hooks/_template.yml hooks/{slug}.yml
-# fill kind, source.url, solidity, flags, license
-npm run validate
-```
-
-Filename must match `slug`. Schema: [`schema/hook.schema.json`](schema/hook.schema.json). Open a PR — CI must pass. Details in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
----
-
-## Develop
-
-```bash
-nvm use            # Node 22 (>=22.12.0)
 npm install
 npm run validate
-npm run dev        # local site
-npm run build      # Astro + agent files
-forge build && forge test   # first-party contracts/
-npm run deploy     # build + wrangler (manual)
 ```
 
-Push to `main` deploys via **Cloudflare Workers Builds**. GitHub Actions runs catalog validation **and** `forge test`.
+The filename must match `slug`, and `source.url` must point to a pinned public GitHub file. See [CONTRIBUTING.md](CONTRIBUTING.md) for the schema rules and review checklist.
 
-For the ads rail, set Worker secrets `HELIO_PAYLINK_ID` and `HELIO_WEBHOOK_SECRET`. Local: copy `.dev.vars.example` → `.dev.vars`.
+## Development
 
----
+Requirements:
+
+- Node.js 22.12 or newer
+- npm 10.8 or newer
+- Foundry for Solidity builds and tests
+
+```bash
+nvm use
+npm install
+npm run validate
+npm run build
+forge build
+forge test
+```
+
+Use `npm run dev` for the local site. Pushes to `main` deploy through Cloudflare Workers Builds; GitHub Actions validates the catalog and runs the Foundry suite.
+
+For local ad API development, copy `.dev.vars.example` to `.dev.vars`. Production requires the `HELIO_PAYLINK_ID` and `HELIO_WEBHOOK_SECRET` Worker secrets.
 
 ## Stack
 
-Astro · Cloudflare Workers (assets + API) · D1 (`v4hooks-ads`) · Workers Builds on `main`
+Astro, TypeScript, Solidity, Foundry, Cloudflare Workers, and D1.
+
+## License and security
+
+Catalog excerpts retain the licenses declared by their upstream sources. First-party code in this repository is covered by [LICENSE](LICENSE).
+
+Report vulnerabilities according to [SECURITY.md](SECURITY.md).
