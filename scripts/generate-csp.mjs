@@ -28,11 +28,10 @@ const UMAMI_SCRIPT = "https://cloud.umami.is";
 const UMAMI_COLLECT = "https://gateway.umami.is";
 const GOOGLE_FONTS_CSS = "https://fonts.googleapis.com";
 const GOOGLE_FONTS_FILES = "https://fonts.gstatic.com";
-// Cloudflare Web Analytics. Its beacon is injected at the edge, so it never appears in the
-// built HTML this script scans -- it has to be named explicitly or it is silently blocked.
-// Remove both if Web Analytics is turned off in the dashboard; Umami above is separate.
-const CF_INSIGHTS_SCRIPT = "https://static.cloudflareinsights.com";
-const CF_INSIGHTS_COLLECT = "https://cloudflareinsights.com";
+// Deliberately NOT allowed: static.cloudflareinsights.com, the Cloudflare Web Analytics
+// beacon. Cloudflare injects it at the edge so it does not appear in the built HTML, and it
+// gets blocked -- that is intended. Analytics here is Umami only. Turning Web Analytics off
+// in the Cloudflare dashboard stops the injection and the console error along with it.
 
 function htmlFiles(dir) {
   const out = [];
@@ -70,11 +69,11 @@ if (handlers.length) {
 
 const csp = [
   "default-src 'self'",
-  `script-src 'self' ${UMAMI_SCRIPT} ${CF_INSIGHTS_SCRIPT} ${[...hashes].sort().join(" ")}`,
+  `script-src 'self' ${UMAMI_SCRIPT} ${[...hashes].sort().join(" ")}`,
   `style-src 'self' ${GOOGLE_FONTS_CSS}`,
   `font-src ${GOOGLE_FONTS_FILES}`,
   "img-src 'self' data:",
-  `connect-src 'self' ${UMAMI_SCRIPT} ${UMAMI_COLLECT} ${CF_INSIGHTS_COLLECT}`,
+  `connect-src 'self' ${UMAMI_SCRIPT} ${UMAMI_COLLECT}`,
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
