@@ -16,6 +16,11 @@
     "binding": "ASSETS",
     "directory": "./dist",
     "not_found_handling": "404-page",
+    // Astro sets trailingSlash "never" and emits slash-free links, canonicals and sitemap
+    // entries, but builds directory pages (categories/oracles/index.html). Cloudflare's
+    // default auto-trailing-slash serves folder indexes *with* a slash, so every internal
+    // link took a 307 to a URL the canonical tag disowns. Drop the slash to match Astro.
+    "html_handling": "drop-trailing-slash",
     "run_worker_first": ["/api/*"]
   },
   "d1_databases": [
