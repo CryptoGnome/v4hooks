@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
@@ -11,7 +10,7 @@ import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {LpRewards} from "../contracts/LpRewards.sol";
 
-contract LpRewardsTest is Test, Deployers {
+contract LpRewardsTest is Deployers {
     using StateLibrary for IPoolManager;
 
     LpRewards hook;

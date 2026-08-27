@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
@@ -10,7 +9,7 @@ import {SwapParams} from "@uniswap/v4-core/src/types/PoolOperation.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {SurgeFee} from "../contracts/SurgeFee.sol";
 
-contract SurgeFeeTest is Test, Deployers {
+contract SurgeFeeTest is Deployers {
     SurgeFee hook;
     uint24 constant BASE = 3000;
     uint24 constant MAX = 100_000;

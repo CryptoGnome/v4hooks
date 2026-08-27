@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {VolumeTier} from "../contracts/VolumeTier.sol";
 
-contract VolumeTierTest is Test, Deployers {
+contract VolumeTierTest is Deployers {
     VolumeTier hook;
 
     function setUp() public {

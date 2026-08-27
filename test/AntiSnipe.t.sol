@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
@@ -13,7 +12,7 @@ import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
 import {AntiSnipe} from "../contracts/AntiSnipe.sol";
 
-contract AntiSnipeTest is Test, Deployers {
+contract AntiSnipeTest is Deployers {
     using PoolIdLibrary for PoolKey;
 
     AntiSnipe hook;

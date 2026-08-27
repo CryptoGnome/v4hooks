@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {LiquidityLock} from "../contracts/LiquidityLock.sol";
 
-contract LiquidityLockTest is Test, Deployers {
+contract LiquidityLockTest is Deployers {
     LiquidityLock hook;
     uint256 constant LOCK = 1 days;
 

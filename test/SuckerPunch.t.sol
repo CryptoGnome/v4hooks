@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {IPoolManager} from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
@@ -12,7 +11,7 @@ import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {SuckerPunch} from "../contracts/SuckerPunch.sol";
 
-contract SuckerPunchTest is Test, Deployers {
+contract SuckerPunchTest is Deployers {
     using CurrencyLibrary for Currency;
     using PoolIdLibrary for PoolKey;
 

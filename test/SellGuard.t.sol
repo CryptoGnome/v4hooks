@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Test} from "forge-std/Test.sol";
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
 import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
 import {CurrencyLibrary} from "@uniswap/v4-core/src/types/Currency.sol";
@@ -9,7 +8,7 @@ import {LPFeeLibrary} from "@uniswap/v4-core/src/libraries/LPFeeLibrary.sol";
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {SellGuard} from "../contracts/SellGuard.sol";
 
-contract SellGuardTest is Test, Deployers {
+contract SellGuardTest is Deployers {
     SellGuard hook;
 
     function setUp() public {
