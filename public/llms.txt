@@ -14,7 +14,6 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [https://v4hooks.com/learn/secure-v4-hooks](https://v4hooks.com/learn/secure-v4-hooks): Security checklist
 - [https://v4hooks.com/learn/openzeppelin-hooks](https://v4hooks.com/learn/openzeppelin-hooks): OpenZeppelin library guide
 - [https://v4hooks.com/learn/resources](https://v4hooks.com/learn/resources): Templates, tutorials, and tools
-- [https://v4hooks.com/advertise](https://v4hooks.com/advertise): USDC bid board
 - [https://v4hooks.com/categories/compliance](https://v4hooks.com/categories/compliance)
 - [https://v4hooks.com/categories/creator-economy](https://v4hooks.com/categories/creator-economy)
 - [https://v4hooks.com/categories/dynamic-fees](https://v4hooks.com/categories/dynamic-fees)

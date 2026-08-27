@@ -33,4 +33,4 @@ v4hooks is a directory of **example Uniswap v4 hook contracts** for agents and b
 
 ## Advertise
 
-Paid placement is the [sponsor rail](https://v4hooks.com/advertise), not a YAML file. Do not PR ads into `hooks/`.
+There is no paid placement right now. Do not PR ads into `hooks/`.

@@ -1,7 +1,8 @@
 ---
-// The sponsor rail is paused. Flip this to true to bring it back — every call site, the
-// /advertise page, the /api/ads Worker route and the D1 table are deliberately left intact,
-// and .layout re-widens on its own via :has(> .rail).
+// The sponsor rail is paused. Flip this to true to bring it back — every call site is left
+// in place and .layout re-widens on its own via :has(> .rail). The /api/ads Worker route and
+// the D1 table are still there, but /advertise and its bid form are gone, so restoring the
+// rail means restoring that page too.
 const ENABLED = false;
 
 type Props = { compact?: boolean };
@@ -20,7 +21,6 @@ const { compact = false } = Astro.props;
     <ol id="sponsor-list">
       <li class="note">Loading live bids…</li>
     </ol>
-    <a class="claim" href="/advertise">Place a bid</a>
   </aside>
 </details>
 <script is:inline>

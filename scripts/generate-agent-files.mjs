@@ -30,7 +30,6 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [${site}/learn/secure-v4-hooks](${site}/learn/secure-v4-hooks): Security checklist
 - [${site}/learn/openzeppelin-hooks](${site}/learn/openzeppelin-hooks): OpenZeppelin library guide
 - [${site}/learn/resources](${site}/learn/resources): Templates, tutorials, and tools
-- [${site}/advertise](${site}/advertise): USDC bid board
 ${cats.map((c) => `- [${site}/categories/${c}](${site}/categories/${c})`).join("\n")}
 ${chains.map((c) => `- [${site}/chains/${c}](${site}/chains/${c})`).join("\n")}
 ${props.map((p) => `- [${site}/properties/${p}](${site}/properties/${p})`).join("\n")}
