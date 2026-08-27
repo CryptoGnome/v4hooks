@@ -1,0 +1,68 @@
+slug: base-dynamic-fee
+name: BaseDynamicFee
+kind: pattern
+tagline: Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
+description: |
+  OpenZeppelin’s BaseDynamicFee (MIT) is the smallest dynamic-fee building block. afterInitialize
+  reverts unless key.fee is the dynamic-fee flag, then calls poolManager.updateDynamicLPFee with
+  _getFee(key). Inherit it, implement _getFee, and call _poke from a guarded keeper path when you
+  want to refresh. Permissions are afterInitialize only — this does not override a per-swap fee
+  in beforeSwap. Experimental library code. Copy the full file including the NotDynamicFee revert.
+  Listing is not an audit.
+source:
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
+  path: src/fee/BaseDynamicFee.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/fee/BaseDynamicFee.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  function _getFee(PoolKey calldata key) internal virtual returns (uint24);
+
+  function _afterInitialize(address, PoolKey calldata key, uint160, int24)
+      internal
+      virtual
+      override
+      returns (bytes4)
+  {
+      if (!key.fee.isDynamicFee()) revert NotDynamicFee();
+      poolManager.updateDynamicLPFee(key, _getFee(key));
+      return this.afterInitialize.selector;
+  }
+
+  function _poke(PoolKey calldata key) internal virtual {
+      poolManager.updateDynamicLPFee(key, _getFee(key));
+  }
+
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+categories:
+  - dynamic-fees
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+properties:
+  - dynamic-fee
+  - vanilla-swap
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

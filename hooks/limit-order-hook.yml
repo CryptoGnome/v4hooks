@@ -1,0 +1,67 @@
+slug: limit-order-hook
+name: LimitOrderHook
+kind: pattern
+tagline: Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
+description: |
+  OpenZeppelin’s LimitOrderHook (MIT) is the library-shaped fill-on-cross. afterInitialize stores
+  last tick; afterSwap walks crossed ticks and _fillOrder. Users call placeOrder, cancelOrder, and
+  withdraw through unlockCallback. Fees accrue per liquidity unit so late joiners do not steal
+  earlier fees. Compare with Uniswap’s UNLICENSED LimitOrder example — this file adds cancel and
+  fee accounting. Experimental library code. Copy the full file from the permalink. Listing is
+  not an audit.
+source:
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
+  path: src/general/LimitOrderHook.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/LimitOrderHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta, bytes calldata)
+      internal
+      virtual
+      override
+      returns (bytes4, int128)
+  {
+      (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);
+      if (lower > upper) return (this.afterSwap.selector, 0);
+      _tickLowerLasts[key.toId()] = tickLower;
+      bool zeroForOne = !params.zeroForOne;
+      for (; lower <= upper; lower += key.tickSpacing) {
+          _fillOrder(key, lower, zeroForOne);
+      }
+      return (this.afterSwap.selector, 0);
+  }
+categories:
+  - limit-orders
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterInitialize
+  - afterSwap
+properties:
+  - vanilla-swap
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

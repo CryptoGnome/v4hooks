@@ -87,10 +87,16 @@ function beforeSwap(...) external onlyPoolManager returns (bytes4, BeforeSwapDel
           <a href="/hooks/anti-sandwich">AntiSandwichHook</a> — top-of-block price checkpoint; resists sandwiching on one swap direction.
         </li>
         <li>
-          <code>LimitOrderHook</code> — production-shaped limit orders (see the OZ repo; compare with Uniswap’s example <a href="/hooks/limit-order">limit-order</a>).
+          <a href="/hooks/limit-order-hook">LimitOrderHook</a> — library-shaped fill-on-cross with cancel and fee accounting (compare Uniswap’s example <a href="/hooks/limit-order">limit-order</a>).
         </li>
         <li>
-          <code>LiquidityPenaltyHook</code>, <code>ReHypothecationHook</code>, <code>BaseCustomCurve</code> — study before inventing LP or NoOp-swap accounting.
+          <a href="/hooks/liquidity-penalty">LiquidityPenaltyHook</a> — JIT fee withhold and donate on early remove.
+        </li>
+        <li>
+          <a href="/hooks/rehypothecation">ReHypothecationHook</a> — idle LP in yield sources, JIT inject on swap.
+        </li>
+        <li>
+          <a href="/hooks/base-dynamic-fee">BaseDynamicFee</a> — afterInitialize + <code>_poke</code> for <code>updateDynamicLPFee</code>.
         </li>
       </ul>
 

@@ -1,0 +1,61 @@
+slug: take-profits
+name: Take profits
+kind: pattern
+tagline: After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
+description: |
+  LearnWeb3’s TakeProfitsHook is the opposite of stop-loss. afterInitialize snapshots tickLowerLast.
+  afterSwap walks ticks the swap just crossed and fills take-profit size the other way, minting
+  ERC1155 receipts users redeem. Early Hooks.Calls API (afterInitialize + afterSwap). UNLICENSED
+  tutorial with pre-v4-final signatures. Use it as the fill-on-cross take-profit pattern, not as
+  something to deploy with size. Copy the full file from the permalink. Listing is not an audit.
+source:
+  repo: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook
+  path: src/TakeProfitsHook.sol
+  url: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook/blob/main/src/TakeProfitsHook.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+      return
+          Hooks.Calls({
+              beforeInitialize: false,
+              afterInitialize: true,
+              beforeModifyPosition: false,
+              afterModifyPosition: false,
+              beforeSwap: false,
+              afterSwap: true,
+              beforeDonate: false,
+              afterDonate: false
+          });
+  }
+
+  function afterSwap(
+      address addr,
+      PoolKey calldata key,
+      IPoolManager.SwapParams calldata params,
+      BalanceDelta
+  ) external override poolManagerOnly returns (bytes4) {
+      if (addr == address(this)) {
+          return TakeProfitsHook.afterSwap.selector;
+      }
+      bool attemptToFillMoreOrders = true;
+      int24 currentTickLower;
+      while (attemptToFillMoreOrders) {
+          (attemptToFillMoreOrders, currentTickLower) = _tryFulfillingOrders(key, params);
+          tickLowerLasts[key.toId()] = currentTickLower;
+      }
+      return TakeProfitsHook.afterSwap.selector;
+  }
+categories:
+  - limit-orders
+chains:
+  - ethereum
+license: UNLICENSED
+flags:
+  - afterInitialize
+  - afterSwap
+properties:
+  - vanilla-swap
+docs: https://learnweb3.io/lessons/uniswap-v4-hooks-create-a-fully-on-chain-take-profit-orders-hook-on-uniswap-v4/
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

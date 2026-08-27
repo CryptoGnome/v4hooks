@@ -1,0 +1,124 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { SITE } from "../../lib/meta";
+
+const groups = [
+  {
+    title: "Start here",
+    items: [
+      {
+        href: "https://docs.uniswap.org/contracts/v4/overview",
+        name: "Uniswap v4 developer docs",
+        blurb: "Official overview, hooks concept page, and local testing path.",
+      },
+      {
+        href: "https://www.v4-by-example.org/",
+        name: "v4 by Example",
+        blurb: "Short Solidity snippets for initialize, swap, liquidity, and hook wiring.",
+      },
+      {
+        href: "https://github.com/fewwwww/awesome-uniswap-hooks",
+        name: "Awesome Uniswap v4 Hooks",
+        blurb: "Community index of examples, templates, and write-ups. We list permalinked files from it; we do not dump the whole table.",
+      },
+    ],
+  },
+  {
+    title: "Templates and libraries",
+    items: [
+      {
+        href: "https://github.com/uniswapfoundation/v4-template",
+        name: "Uniswap Foundation v4-template",
+        blurb: "Foundry starter for a custom hook: tests, deploy script, and BaseHook wiring.",
+      },
+      {
+        href: "https://github.com/uniswapfoundation/scaffold-hook",
+        name: "Scaffold Hook",
+        blurb: "Hook stack with testnet deploy and a minimal UI for pool create, LP, and swap.",
+      },
+      {
+        href: "/learn/openzeppelin-hooks",
+        name: "OpenZeppelin uniswap-hooks",
+        blurb: "MIT BaseHook plus fee, MEV, limit-order, JIT penalty, and rehypothecation modules.",
+      },
+    ],
+  },
+  {
+    title: "Tools",
+    items: [
+      {
+        href: "https://github.com/Uniswap/uniswap-ai/tree/main/packages/plugins/uniswap-hooks",
+        name: "Uniswap Hooks Claude plugin",
+        blurb: "Agent assistance that starts from permission bits and security checks.",
+      },
+      {
+        href: "https://v4hookaddressminer.xyz/",
+        name: "Hook address miner",
+        blurb: "CREATE2 miner so the deployed address encodes the 14 permission bits.",
+      },
+      {
+        href: "https://github.com/Uniswap/hooklist",
+        name: "Uniswap hooklist",
+        blurb: "Onchain addresses Uniswap routing may use. Not copy-paste Solidity — link it, don’t clone it here.",
+      },
+    ],
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Uniswap v4 hook resources",
+  url: `${SITE.url}/learn/resources`,
+  description:
+    "Curated Uniswap v4 hook docs, templates, and tools: v4-by-example, Foundation templates, OpenZeppelin library, address miner.",
+  hasPart: groups.flatMap((g) =>
+    g.items.map((item) => ({
+      "@type": "WebPage",
+      name: item.name,
+      url: item.href.startsWith("http") ? item.href : `${SITE.url}${item.href}`,
+      description: item.blurb,
+    })),
+  ),
+};
+---
+<Layout
+  title="Uniswap v4 hook resources"
+  description="Curated docs, Foundry templates, and tools for building Uniswap v4 hooks — not a dump of every hackathon repo."
+  jsonLd={jsonLd}
+>
+  <div class="layout">
+    <article class="prose">
+      <p class="crumbs"><a href="/learn">Learn</a> / Resources</p>
+      <p class="note">last updated 2026-08-27</p>
+      <h1>Resources</h1>
+      <p class="answer">
+        A short list of places that help you implement a hook correctly. v4hooks listings are licensed Solidity excerpts with GitHub permalinks. These links are the surrounding stack: docs, starters, and miners.
+      </p>
+      {groups.map((g) => (
+        <>
+          <h2>{g.title}</h2>
+          <ul>
+            {g.items.map((item) => (
+              <li>
+                <a href={item.href}>{item.name}</a> — {item.blurb}
+              </li>
+            ))}
+          </ul>
+        </>
+      ))}
+      <h2>What we do not list</h2>
+      <p>
+        Hackathon showcase pages, privacy mixers, and repos with no public <code>.sol</code> we can permalink. A name on the awesome list is not enough — the catalog only adds callbacks copied from a real file.
+      </p>
+      <h2>Next</h2>
+      <ul>
+        <li><a href="/learn/what-is-a-uniswap-v4-hook">What is a Uniswap v4 hook?</a></li>
+        <li><a href="/learn/secure-v4-hooks">Secure v4 hooks checklist</a></li>
+        <li><a href="/">Browse the catalog</a></li>
+      </ul>
+    </article>
+    <SponsorBoard compact />
+  </div>
+</Layout>

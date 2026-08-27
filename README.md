@@ -10,7 +10,7 @@ Licensed Solidity excerpts. GitHub permalinks. Permissions bits. Callbacks you c
 
 | | |
 |---|---|
-| **Patterns** | Copyable implementations — TWAMM, limit orders, oracles, stop-loss, anti-sandwich, … |
+| **Patterns** | Copyable implementations — TWAMM, limit orders, take-profit, oracles, dynamic fees, JIT penalty, rehypothecation, v2-on-v4, … |
 | **Products** | How live protocols wire their hooks — study the callbacks, don’t paste the factory |
 | **Agent dumps** | [`llms.txt`](https://v4hooks.com/llms.txt) · [`llm-full.txt`](https://v4hooks.com/llm-full.txt) · [`hooks.json`](https://v4hooks.com/hooks.json) |
 
@@ -24,6 +24,7 @@ Source of truth: `hooks/*.yml`. Each listing is a real public file + a licensed 
 
 - Site → [v4hooks.com](https://v4hooks.com)
 - Learn → [v4hooks.com/learn](https://v4hooks.com/learn)
+- Resources → [v4hooks.com/learn/resources](https://v4hooks.com/learn/resources)
 - Agent skill → [`SKILLS.md`](SKILLS.md)
 - Repo → [CryptoGnome/v4hooks](https://github.com/CryptoGnome/v4hooks)
 

@@ -48,6 +48,66 @@ Website: https://v4hooks.com/learn/openzeppelin-hooks
 Docs: https://github.com/OpenZeppelin/uniswap-hooks
 Page: https://v4hooks.com/hooks/anti-sandwich
 
+## BaseDynamicFee (base-dynamic-fee)
+Kind: pattern
+Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
+OpenZeppelin’s BaseDynamicFee (MIT) is the smallest dynamic-fee building block. afterInitialize
+reverts unless key.fee is the dynamic-fee flag, then calls poolManager.updateDynamicLPFee with
+_getFee(key). Inherit it, implement _getFee, and call _poke from a guarded keeper path when you
+want to refresh. Permissions are afterInitialize only — this does not override a per-swap fee
+in beforeSwap. Experimental library code. Copy the full file including the NotDynamicFee revert.
+Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+function _getFee(PoolKey calldata key) internal virtual returns (uint24);
+
+function _afterInitialize(address, PoolKey calldata key, uint160, int24)
+    internal
+    virtual
+    override
+    returns (bytes4)
+{
+    if (!key.fee.isDynamicFee()) revert NotDynamicFee();
+    poolManager.updateDynamicLPFee(key, _getFee(key));
+    return this.afterInitialize.selector;
+}
+
+function _poke(PoolKey calldata key) internal virtual {
+    poolManager.updateDynamicLPFee(key, _getFee(key));
+}
+
+function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/fee/BaseDynamicFee.sol
+Status: experimental
+License: MIT
+Categories: dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize
+Website: https://v4hooks.com/learn/openzeppelin-hooks
+Docs: https://github.com/OpenZeppelin/uniswap-hooks
+Page: https://v4hooks.com/hooks/base-dynamic-fee
+
 ## BaseHook (base-hook)
 Kind: pattern
 Inherit this, declare permissions, gate callbacks with onlyPoolManager.
@@ -428,6 +488,198 @@ Flags: afterInitialize, afterSwap
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
 Page: https://v4hooks.com/hooks/limit-order
 
+## LimitOrderHook (limit-order-hook)
+Kind: pattern
+Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
+OpenZeppelin’s LimitOrderHook (MIT) is the library-shaped fill-on-cross. afterInitialize stores
+last tick; afterSwap walks crossed ticks and _fillOrder. Users call placeOrder, cancelOrder, and
+withdraw through unlockCallback. Fees accrue per liquidity unit so late joiners do not steal
+earlier fees. Compare with Uniswap’s UNLICENSED LimitOrder example — this file adds cancel and
+fee accounting. Experimental library code. Copy the full file from the permalink. Listing is
+not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function _afterSwap(address, PoolKey calldata key, SwapParams calldata params, BalanceDelta, bytes calldata)
+    internal
+    virtual
+    override
+    returns (bytes4, int128)
+{
+    (int24 tickLower, int24 lower, int24 upper) = _getCrossedTicks(key.toId(), key.tickSpacing);
+    if (lower > upper) return (this.afterSwap.selector, 0);
+    _tickLowerLasts[key.toId()] = tickLower;
+    bool zeroForOne = !params.zeroForOne;
+    for (; lower <= upper; lower += key.tickSpacing) {
+        _fillOrder(key, lower, zeroForOne);
+    }
+    return (this.afterSwap.selector, 0);
+}
+```
+Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/LimitOrderHook.sol
+Status: experimental
+License: MIT
+Categories: limit-orders
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, afterSwap
+Website: https://v4hooks.com/learn/openzeppelin-hooks
+Docs: https://github.com/OpenZeppelin/uniswap-hooks
+Page: https://v4hooks.com/hooks/limit-order-hook
+
+## LiquidityPenaltyHook (liquidity-penalty)
+Kind: pattern
+Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
+OpenZeppelin’s LiquidityPenaltyHook (MIT) deters just-in-time liquidity. afterAddLiquidity
+records lastAddedLiquidityBlock and, if the position was topped up inside blockNumberOffset,
+takes feeDelta into the hook via afterAddLiquidityReturnDelta. afterRemoveLiquidity settles
+withheld fees, then if the offset has not elapsed, donates a linear remaining-blocks penalty
+to in-range LPs and returns the rest through afterRemoveLiquidityReturnDelta. Long-term LPs
+who add continuously must wait the offset before collecting fees. Experimental library code;
+low-liquidity pools can still be gamed. Copy the full file. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: true,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: true,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: true,
+        afterRemoveLiquidityReturnDelta: true
+    });
+}
+
+function _afterAddLiquidity(
+    address sender,
+    PoolKey calldata key,
+    ModifyLiquidityParams calldata params,
+    BalanceDelta, /* delta */
+    BalanceDelta feeDelta,
+    bytes calldata
+) internal virtual override returns (bytes4, BalanceDelta) {
+    PoolId poolId = key.toId();
+    bytes32 positionKey = Position.calculatePositionKey(sender, params.tickLower, params.tickUpper, params.salt);
+    if (_getBlockNumber() - getLastAddedLiquidityBlock(poolId, positionKey) < blockNumberOffset) {
+        _updateLastAddedLiquidityBlock(poolId, positionKey);
+        _takeFeesToHook(key, positionKey, feeDelta);
+        return (this.afterAddLiquidity.selector, feeDelta);
+    }
+    _updateLastAddedLiquidityBlock(poolId, positionKey);
+    return (this.afterAddLiquidity.selector, BalanceDeltaLibrary.ZERO_DELTA);
+}
+```
+Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/LiquidityPenaltyHook.sol
+Status: experimental
+License: MIT
+Categories: mev-protection, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterAddLiquidity, afterRemoveLiquidity, afterAddLiquidityReturnDelta, afterRemoveLiquidityReturnDelta
+Website: https://v4hooks.com/learn/openzeppelin-hooks
+Docs: https://github.com/OpenZeppelin/uniswap-hooks
+Page: https://v4hooks.com/hooks/liquidity-penalty
+
+## ReHypothecationHook (rehypothecation)
+Kind: pattern
+Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
+OpenZeppelin’s ReHypothecationHook (MIT) parks idle LP in external yield sources (ERC-4626 or
+lending) and JIT-injects a hook-owned full-range position on beforeSwap, then unwinds it on
+afterSwap and settles PoolManager deltas back to the vaults. Users mint and redeem the hook’s
+ERC20 via addReHypothecatedLiquidity; they do not add liquidity through PoolManager.
+beforeInitialize binds a single PoolKey. You implement getCurrencyYieldSource and the deposit
+or withdraw adapters. Experimental: yield-source risk, PoolManager reserve timing, and leveraged
+liquidity notes are in the file. Copy the full file. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function _beforeSwap(address, PoolKey calldata, SwapParams calldata, bytes calldata)
+    internal
+    virtual
+    override
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    uint256 liquidityToUse = _getLiquidityToUse();
+    if (liquidityToUse > 0) _modifyLiquidity(liquidityToUse.toInt256());
+    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+}
+
+function _afterSwap(address, PoolKey calldata key, SwapParams calldata, BalanceDelta, bytes calldata)
+    internal
+    virtual
+    override
+    returns (bytes4, int128)
+{
+    uint128 liquidity = _getHookPositionLiquidity();
+    if (liquidity > 0) {
+        _modifyLiquidity(-liquidity.toInt256());
+        _resolveHookDelta(key.currency0);
+        _resolveHookDelta(key.currency1);
+    }
+    return (this.afterSwap.selector, 0);
+}
+```
+Source: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/ReHypothecationHook.sol
+Status: experimental
+License: MIT
+Categories: lending, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeInitialize, beforeSwap, afterSwap
+Website: https://v4hooks.com/learn/openzeppelin-hooks
+Docs: https://github.com/OpenZeppelin/uniswap-hooks
+Page: https://v4hooks.com/hooks/rehypothecation
+
 ## Stop-loss (stop-loss)
 Kind: pattern
 After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
@@ -529,6 +781,59 @@ Chains: base, ethereum
 Flags: beforeInitialize, afterInitialize, beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap
 Website: https://superdca.org/
 Page: https://v4hooks.com/hooks/super-dca
+
+## Take profits (take-profits)
+Kind: pattern
+After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
+LearnWeb3’s TakeProfitsHook is the opposite of stop-loss. afterInitialize snapshots tickLowerLast.
+afterSwap walks ticks the swap just crossed and fills take-profit size the other way, minting
+ERC1155 receipts users redeem. Early Hooks.Calls API (afterInitialize + afterSwap). UNLICENSED
+tutorial with pre-v4-final signatures. Use it as the fill-on-cross take-profit pattern, not as
+something to deploy with size. Copy the full file from the permalink. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHooksCalls() public pure override returns (Hooks.Calls memory) {
+    return
+        Hooks.Calls({
+            beforeInitialize: false,
+            afterInitialize: true,
+            beforeModifyPosition: false,
+            afterModifyPosition: false,
+            beforeSwap: false,
+            afterSwap: true,
+            beforeDonate: false,
+            afterDonate: false
+        });
+}
+
+function afterSwap(
+    address addr,
+    PoolKey calldata key,
+    IPoolManager.SwapParams calldata params,
+    BalanceDelta
+) external override poolManagerOnly returns (bytes4) {
+    if (addr == address(this)) {
+        return TakeProfitsHook.afterSwap.selector;
+    }
+    bool attemptToFillMoreOrders = true;
+    int24 currentTickLower;
+    while (attemptToFillMoreOrders) {
+        (attemptToFillMoreOrders, currentTickLower) = _tryFulfillingOrders(key, params);
+        tickLowerLasts[key.toId()] = currentTickLower;
+    }
+    return TakeProfitsHook.afterSwap.selector;
+}
+```
+Source: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook/blob/main/src/TakeProfitsHook.sol
+Status: experimental
+License: UNLICENSED
+Categories: limit-orders
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, afterSwap
+Docs: https://learnweb3.io/lessons/uniswap-v4-hooks-create-a-fully-on-chain-take-profit-orders-hook-on-uniswap-v4/
+Page: https://v4hooks.com/hooks/take-profits
 
 ## Trading days (trading-days)
 Kind: pattern
@@ -643,6 +948,78 @@ Flags: beforeInitialize, beforeAddLiquidity, beforeSwap
 Docs: https://blog.uniswap.org/v4-twamm-hook
 Page: https://v4hooks.com/hooks/twamm
 
+## V2 pair hook (v2-pair)
+Kind: pattern
+Run xy=k inside the hook: mint LP on the ERC20, NoOp the CLAMM swap with return-delta.
+hensha256’s V2PairHook implements Uniswap v2 constant-product math inside a v4 hook instead of
+concentrating liquidity. beforeInitialize binds factory, fee 0, tickSpacing 1, and the pair
+currencies. beforeAddLiquidity always reverts so LPs mint() on the hook ERC20. beforeSwap mints
+and burns ERC-6909 claims, prices with _getAmountOut, and returns a specified delta that NoOps
+the CLAMM; afterSwap returns the unspecified delta from transient storage. Flags include both
+return-delta bits. UNLICENSED research code. Distinct from Uniswap FullRange, which still uses
+the concentrated AMM. Copy the full file. Listing is not an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: true,
+        afterSwapReturnDelta: true,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function beforeAddLiquidity(address, PoolKey calldata, IPoolManager.ModifyLiquidityParams calldata, bytes calldata)
+    external
+    pure
+    override
+    returns (bytes4)
+{
+    revert AddLiquidityDirectToHook();
+}
+
+function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata)
+    external
+    override
+    poolManagerOnly
+    returns (bytes4, int128)
+{
+    bool exactIn = (params.amountSpecified < 0);
+    uint256 amountIn;
+    uint256 amountOut;
+    if (exactIn) {
+        amountIn = uint256(-params.amountSpecified);
+        amountOut = _getAmountOut(params.zeroForOne, amountIn);
+    } else {
+        amountOut = uint256(params.amountSpecified);
+        amountIn = _getAmountIn(params.zeroForOne, amountOut);
+    }
+    (Currency inputCurrency, Currency outputCurrency) = _getInputOutput(key, params.zeroForOne);
+    poolManager.mint(address(this), CurrencyLibrary.toId(inputCurrency), amountIn);
+    poolManager.burn(address(this), CurrencyLibrary.toId(outputCurrency), amountOut);
+    return (IHooks.beforeSwap.selector, int128(-params.amountSpecified));
+}
+```
+Source: https://github.com/hensha256/v2-on-v4/blob/main/src/V2PairHook.sol
+Status: experimental
+License: UNLICENSED
+Categories: wrappers, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeInitialize, beforeAddLiquidity, beforeSwap, afterSwap, beforeSwapReturnDelta, afterSwapReturnDelta
+Page: https://v4hooks.com/hooks/v2-pair
+
 ## veLP (velp)
 Kind: pattern
 Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
@@ -696,3 +1073,61 @@ Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity
 Page: https://v4hooks.com/hooks/velp
+
+## Volatility oracle (volatility-oracle)
+Kind: pattern
+Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.
+Uniswap’s VolatilityOracle example is a teaching dynamic-fee hook, not a live volatility
+feed. beforeInitialize requires key.fee.isDynamicFee(). afterInitialize calls setFee, which
+starts at 3000 and adds 100 bps per elapsed minute via poolManager.updateDynamicLPFee.
+UNLICENSED example-contracts file. Use it to learn the initialize-plus-poke pattern; do not
+treat the contract name as an oracle. Copy the full file from the permalink. Listing is not
+an audit.
+### Solidity
+```solidity
+// SPDX-License-Identifier: UNLICENSED
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: true,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterAddLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function beforeInitialize(address, PoolKey calldata key, uint160, bytes calldata)
+    external
+    pure
+    override
+    returns (bytes4)
+{
+    if (!key.fee.isDynamicFee()) revert MustUseDynamicFee();
+    return VolatilityOracle.beforeInitialize.selector;
+}
+
+function setFee(PoolKey calldata key) public {
+    uint24 startingFee = 3000;
+    uint32 lapsed = _blockTimestamp() - deployTimestamp;
+    uint24 fee = startingFee + (uint24(lapsed) * 100) / 60; // 100 bps a minute
+    manager.updateDynamicLPFee(key, fee); // initial fee 0.30%
+}
+```
+Source: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/VolatilityOracle.sol
+Status: experimental
+License: UNLICENSED
+Categories: dynamic-fees
+Properties: dynamic-fee, vanilla-swap
+Chains: ethereum
+Flags: beforeInitialize, afterInitialize
+Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+Page: https://v4hooks.com/hooks/volatility-oracle

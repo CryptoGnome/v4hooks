@@ -19,6 +19,11 @@ const pages = [
     title: "Build with OpenZeppelin hooks",
     blurb: "forge install, BaseHook, and the modular fee / general / oracle contracts to start from.",
   },
+  {
+    href: "/learn/resources",
+    title: "Templates, tutorials, tools",
+    blurb: "v4-by-example, Foundation starters, address miner, and the awesome-hooks index — not a hackathon dump.",
+  },
 ];
 
 const jsonLd = {
@@ -26,7 +31,7 @@ const jsonLd = {
   "@type": "CollectionPage",
   name: "v4hooks learn",
   url: `${SITE.url}/learn`,
-  description: "Docs for building Uniswap v4 hooks: permission bits, security checklist, OpenZeppelin library.",
+  description: "Docs for building Uniswap v4 hooks: permission bits, security checklist, OpenZeppelin library, templates and tools.",
   hasPart: pages.map((p) => ({
     "@type": "WebPage",
     name: p.title,
@@ -37,7 +42,7 @@ const jsonLd = {
 ---
 <Layout
   title="Learn Uniswap v4 hooks"
-  description="Docs for agents and builders: what a v4 hook is, how to secure it, and how to start from OpenZeppelin’s uniswap-hooks library."
+  description="Docs for agents and builders: what a v4 hook is, how to secure it, OpenZeppelin’s uniswap-hooks library, and a short resources list."
   jsonLd={jsonLd}
 >
   <div class="layout">

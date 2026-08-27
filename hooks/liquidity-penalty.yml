@@ -1,0 +1,74 @@
+slug: liquidity-penalty
+name: LiquidityPenaltyHook
+kind: pattern
+tagline: Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
+description: |
+  OpenZeppelin’s LiquidityPenaltyHook (MIT) deters just-in-time liquidity. afterAddLiquidity
+  records lastAddedLiquidityBlock and, if the position was topped up inside blockNumberOffset,
+  takes feeDelta into the hook via afterAddLiquidityReturnDelta. afterRemoveLiquidity settles
+  withheld fees, then if the offset has not elapsed, donates a linear remaining-blocks penalty
+  to in-range LPs and returns the rest through afterRemoveLiquidityReturnDelta. Long-term LPs
+  who add continuously must wait the offset before collecting fees. Experimental library code;
+  low-liquidity pools can still be gamed. Copy the full file. Listing is not an audit.
+source:
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
+  path: src/general/LiquidityPenaltyHook.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/LiquidityPenaltyHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: true,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: true,
+          beforeSwap: false,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: true,
+          afterRemoveLiquidityReturnDelta: true
+      });
+  }
+
+  function _afterAddLiquidity(
+      address sender,
+      PoolKey calldata key,
+      ModifyLiquidityParams calldata params,
+      BalanceDelta, /* delta */
+      BalanceDelta feeDelta,
+      bytes calldata
+  ) internal virtual override returns (bytes4, BalanceDelta) {
+      PoolId poolId = key.toId();
+      bytes32 positionKey = Position.calculatePositionKey(sender, params.tickLower, params.tickUpper, params.salt);
+      if (_getBlockNumber() - getLastAddedLiquidityBlock(poolId, positionKey) < blockNumberOffset) {
+          _updateLastAddedLiquidityBlock(poolId, positionKey);
+          _takeFeesToHook(key, positionKey, feeDelta);
+          return (this.afterAddLiquidity.selector, feeDelta);
+      }
+      _updateLastAddedLiquidityBlock(poolId, positionKey);
+      return (this.afterAddLiquidity.selector, BalanceDeltaLibrary.ZERO_DELTA);
+  }
+categories:
+  - mev-protection
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterAddLiquidity
+  - afterRemoveLiquidity
+  - afterAddLiquidityReturnDelta
+  - afterRemoveLiquidityReturnDelta
+properties:
+  - vanilla-swap
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

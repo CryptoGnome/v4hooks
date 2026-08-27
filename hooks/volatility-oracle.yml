@@ -1,0 +1,67 @@
+slug: volatility-oracle
+name: Volatility oracle
+kind: pattern
+tagline: Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.
+description: |
+  Uniswap’s VolatilityOracle example is a teaching dynamic-fee hook, not a live volatility
+  feed. beforeInitialize requires key.fee.isDynamicFee(). afterInitialize calls setFee, which
+  starts at 3000 and adds 100 bps per elapsed minute via poolManager.updateDynamicLPFee.
+  UNLICENSED example-contracts file. Use it to learn the initialize-plus-poke pattern; do not
+  treat the contract name as an oracle. Copy the full file from the permalink. Listing is not
+  an audit.
+source:
+  repo: https://github.com/Uniswap/v4-periphery
+  path: contracts/hooks/examples/VolatilityOracle.sol
+  url: https://github.com/Uniswap/v4-periphery/blob/example-contracts/contracts/hooks/examples/VolatilityOracle.sol
+solidity: |
+  // SPDX-License-Identifier: UNLICENSED
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: true,
+          beforeAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterAddLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function beforeInitialize(address, PoolKey calldata key, uint160, bytes calldata)
+      external
+      pure
+      override
+      returns (bytes4)
+  {
+      if (!key.fee.isDynamicFee()) revert MustUseDynamicFee();
+      return VolatilityOracle.beforeInitialize.selector;
+  }
+
+  function setFee(PoolKey calldata key) public {
+      uint24 startingFee = 3000;
+      uint32 lapsed = _blockTimestamp() - deployTimestamp;
+      uint24 fee = startingFee + (uint24(lapsed) * 100) / 60; // 100 bps a minute
+      manager.updateDynamicLPFee(key, fee); // initial fee 0.30%
+  }
+categories:
+  - dynamic-fees
+chains:
+  - ethereum
+license: UNLICENSED
+flags:
+  - beforeInitialize
+  - afterInitialize
+properties:
+  - dynamic-fee
+  - vanilla-swap
+docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

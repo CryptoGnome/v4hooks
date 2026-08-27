@@ -1,0 +1,80 @@
+slug: rehypothecation
+name: ReHypothecationHook
+kind: pattern
+tagline: Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
+description: |
+  OpenZeppelin’s ReHypothecationHook (MIT) parks idle LP in external yield sources (ERC-4626 or
+  lending) and JIT-injects a hook-owned full-range position on beforeSwap, then unwinds it on
+  afterSwap and settles PoolManager deltas back to the vaults. Users mint and redeem the hook’s
+  ERC20 via addReHypothecatedLiquidity; they do not add liquidity through PoolManager.
+  beforeInitialize binds a single PoolKey. You implement getCurrencyYieldSource and the deposit
+  or withdraw adapters. Experimental: yield-source risk, PoolManager reserve timing, and leveraged
+  liquidity notes are in the file. Copy the full file. Listing is not an audit.
+source:
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
+  path: src/general/ReHypothecationHook.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/ReHypothecationHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: true,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  function _beforeSwap(address, PoolKey calldata, SwapParams calldata, bytes calldata)
+      internal
+      virtual
+      override
+      returns (bytes4, BeforeSwapDelta, uint24)
+  {
+      uint256 liquidityToUse = _getLiquidityToUse();
+      if (liquidityToUse > 0) _modifyLiquidity(liquidityToUse.toInt256());
+      return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, 0);
+  }
+
+  function _afterSwap(address, PoolKey calldata key, SwapParams calldata, BalanceDelta, bytes calldata)
+      internal
+      virtual
+      override
+      returns (bytes4, int128)
+  {
+      uint128 liquidity = _getHookPositionLiquidity();
+      if (liquidity > 0) {
+          _modifyLiquidity(-liquidity.toInt256());
+          _resolveHookDelta(key.currency0);
+          _resolveHookDelta(key.currency1);
+      }
+      return (this.afterSwap.selector, 0);
+  }
+categories:
+  - lending
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeInitialize
+  - beforeSwap
+  - afterSwap
+properties:
+  - vanilla-swap
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

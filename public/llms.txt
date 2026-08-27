@@ -13,6 +13,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [https://v4hooks.com/learn/what-is-a-uniswap-v4-hook](https://v4hooks.com/learn/what-is-a-uniswap-v4-hook): Explainer
 - [https://v4hooks.com/learn/secure-v4-hooks](https://v4hooks.com/learn/secure-v4-hooks): Security checklist
 - [https://v4hooks.com/learn/openzeppelin-hooks](https://v4hooks.com/learn/openzeppelin-hooks): OpenZeppelin library guide
+- [https://v4hooks.com/learn/resources](https://v4hooks.com/learn/resources): Templates, tutorials, and tools
 - [https://v4hooks.com/advertise](https://v4hooks.com/advertise): USDC bid board
 - [https://v4hooks.com/categories/compliance](https://v4hooks.com/categories/compliance)
 - [https://v4hooks.com/categories/creator-economy](https://v4hooks.com/categories/creator-economy)
@@ -35,6 +36,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 
 ## Hooks
 - [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.
+- [BaseDynamicFee](https://v4hooks.com/hooks/base-dynamic-fee) (pattern): Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
 - [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, gate callbacks with onlyPoolManager.
 - [Clanker](https://v4hooks.com/hooks/clanker) (product): Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
 - [EulerSwap](https://v4hooks.com/hooks/eulerswap) (product): Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
@@ -42,8 +44,14 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [Full range](https://v4hooks.com/hooks/full-range) (pattern): Force v2-style full-range LP: only the hook can modify liquidity, users mint a pool ERC20 instead.
 - [Geomean oracle](https://v4hooks.com/hooks/geomean-oracle) (pattern): Write a geometric-mean observation before any action that can move price or liquidity.
 - [Limit order](https://v4hooks.com/hooks/limit-order) (pattern): Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
+- [LimitOrderHook](https://v4hooks.com/hooks/limit-order-hook) (pattern): Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
+- [LiquidityPenaltyHook](https://v4hooks.com/hooks/liquidity-penalty) (pattern): Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
+- [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
 - [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
+- [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
 - [Trading days](https://v4hooks.com/hooks/trading-days) (pattern): Revert beforeSwap unless New York cash markets are open.
 - [TWAMM](https://v4hooks.com/hooks/twamm) (pattern): Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
+- [V2 pair hook](https://v4hooks.com/hooks/v2-pair) (pattern): Run xy=k inside the hook: mint LP on the ERC20, NoOp the CLAMM swap with return-delta.
 - [veLP](https://v4hooks.com/hooks/velp) (pattern): Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
+- [Volatility oracle](https://v4hooks.com/hooks/volatility-oracle) (pattern): Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.
