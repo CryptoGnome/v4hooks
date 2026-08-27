@@ -22,7 +22,8 @@
     "db:migrate:local": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --local",
     "types": "wrangler types",
     "hooklist": "node scripts/hooklist-sync.mjs",
-    "scan": "node scripts/awesome-scan.mjs"
+    "scan": "node scripts/awesome-scan.mjs",
+    "postbuild": "node scripts/generate-csp.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
