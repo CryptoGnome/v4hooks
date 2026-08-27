@@ -1,8 +1,10 @@
-# v4hooks
+# v4hooks — Uniswap v4 hooks you can build
 
 **[v4hooks.com](https://v4hooks.com)** — a builder cookbook for Uniswap v4 hooks.
 
 Licensed Solidity excerpts. GitHub permalinks. Permissions bits. Callbacks you can actually read. Built for humans *and* agents.
+
+Every listing shows the `getHookPermissions` block and the callbacks that matter, so you can see which of the 14 permission bits a hook lights up before you copy anything into Foundry.
 
 ---
 
@@ -20,10 +22,18 @@ Source of truth: `hooks/*.yml`. Each listing is a real public file + a licensed 
 
 ---
 
+## In the catalog
+
+[LP management](https://v4hooks.com/categories/lp-management) · [Dynamic fees](https://v4hooks.com/categories/dynamic-fees) · [Limit orders](https://v4hooks.com/categories/limit-orders) · [MEV protection](https://v4hooks.com/categories/mev-protection) · [Wrappers](https://v4hooks.com/categories/wrappers) · [Launchpads](https://v4hooks.com/categories/launchpads) · [Lending](https://v4hooks.com/categories/lending) · [TWAMM](https://v4hooks.com/categories/twamm) · [Vote-escrow](https://v4hooks.com/categories/ve) · [Compliance](https://v4hooks.com/categories/compliance) · [Creator economy](https://v4hooks.com/categories/creator-economy) · [Oracles](https://v4hooks.com/categories/oracles) · [RWA](https://v4hooks.com/categories/rwa)
+
+Includes AntiSandwichHook, BaseHook, LimitOrderHook, LiquidityPenaltyHook, ReHypothecationHook, TWAMM, Geomean oracle, Volatility oracle, Stop-loss, Take profits, Full range, veLP and the hooks behind Clanker, EulerSwap, Flaunch and Super DCA.
+
+---
+
 ## Browse
 
 - Site → [v4hooks.com](https://v4hooks.com)
-- Learn → [v4hooks.com/learn](https://v4hooks.com/learn)
+- Learn → [v4hooks.com/learn](https://v4hooks.com/learn) — [What is a v4 hook?](https://v4hooks.com/learn/what-is-a-uniswap-v4-hook) · [Secure v4 hooks](https://v4hooks.com/learn/secure-v4-hooks) · [OpenZeppelin hooks](https://v4hooks.com/learn/openzeppelin-hooks)
 - Resources → [v4hooks.com/learn/resources](https://v4hooks.com/learn/resources)
 - Agent skill → [`SKILLS.md`](SKILLS.md)
 - Repo → [CryptoGnome/v4hooks](https://github.com/CryptoGnome/v4hooks)
