@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "npm@10.9.2",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.8.2"
+  },
   "description": "Open directory of Uniswap v4 hooks you can actually use.",
   "scripts": {
     "dev": "astro dev",
