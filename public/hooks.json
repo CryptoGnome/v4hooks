@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T14:20:28.061Z",
+  "generated": "2026-08-27T14:26:58.770Z",
   "hooks": [
     {
       "slug": "anti-sandwich",
@@ -805,9 +805,9 @@
     {
       "slug": "purefi-verifier",
       "name": "VerifierHook",
-      "kind": "product",
+      "kind": "pattern",
       "tagline": "Gate every pool action behind an off-chain AML proof checked in the callback.",
-      "description": "PureFi's VerifierHook is a compliance gate wired into almost every callback v4 offers:\nbeforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity,\nbeforeSwap, afterSwap and beforeDonate. Seven bits is a lot of surface, and the reason\nis that a compliance rule which only covers swaps is trivially sidestepped by moving\nliquidity instead.\n\nThe hook holds an immutable IPureFiVerifier and a PureFiHookWhitelist. Callers hand it\na signed PureFi package — an off-chain AML/KYC attestation — which the callback decodes\nthrough PureFiDataLibrary and checks against a ruleId mapping before letting the action\nthrough. Roles are OpenZeppelin AccessControl: ISSUER, MARKET_MAKER, ROUTER and QUOTER,\nplus a routersWhitelist so only sanctioned routers can reach the pool at all.\n\nThat last part is the important structural detail. The proof travels as hookData, and\nthe repo ships its own PureFiSwapRouter and PureFiModifyLiquidityRouter to carry it, so\nthis is not a pool you can trade against with a stock router — the swap path is part of\nthe product. Read the routers alongside the hook; the hook alone will not tell you how\nthe proof gets there.\n\nTreat this as a reference for how a permissioned pool is actually assembled — the\nverifier is PureFi's own service, so the pattern is portable but the dependency is not.\nGating all four liquidity callbacks and both swap callbacks is the transferable idea.\n\nUnaudited in this repository.\n",
+      "description": "PureFi's VerifierHook is a compliance gate wired into almost every callback v4 offers:\nbeforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity,\nbeforeSwap, afterSwap and beforeDonate. Seven bits is a lot of surface, and the reason\nis that a compliance rule which only covers swaps is trivially sidestepped by moving\nliquidity instead.\n\nThe hook holds an immutable IPureFiVerifier and a PureFiHookWhitelist. Callers hand it\na signed PureFi package — an off-chain AML/KYC attestation — which the callback decodes\nthrough PureFiDataLibrary and checks against a ruleId mapping before letting the action\nthrough. Roles are OpenZeppelin AccessControl: ISSUER, MARKET_MAKER, ROUTER and QUOTER,\nplus a routersWhitelist so only sanctioned routers can reach the pool at all.\n\nThat last part is the important structural detail. The proof travels as hookData, and\nthe repo ships its own PureFiSwapRouter and PureFiModifyLiquidityRouter to carry it, so\nthis is not a pool you can trade against with a stock router — the swap path is part of\nthe product. Read the routers alongside the hook; the hook alone will not tell you how\nthe proof gets there.\n\nCopy the shape, not the dependency. Gating all four liquidity callbacks plus both swap\ncallbacks is the transferable idea; swap IPureFiVerifier for whatever attestation source\nyou actually trust and the rest of the structure still holds.\n\nUnaudited in this repository.\n",
       "source": {
         "repo": "https://github.com/purefiprotocol/purefi-verifier-hook",
         "path": "src/VerifierHook.sol",

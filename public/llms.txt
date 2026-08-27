@@ -59,5 +59,5 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [TWAMM](https://v4hooks.com/hooks/twamm) (pattern): Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
 - [V2 pair hook](https://v4hooks.com/hooks/v2-pair) (pattern): Run xy=k inside the hook: mint LP on the ERC20, NoOp the CLAMM swap with return-delta.
 - [veLP](https://v4hooks.com/hooks/velp) (pattern): Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
-- [VerifierHook](https://v4hooks.com/hooks/purefi-verifier) (product): Gate every pool action behind an off-chain AML proof checked in the callback.
+- [VerifierHook](https://v4hooks.com/hooks/purefi-verifier) (pattern): Gate every pool action behind an off-chain AML proof checked in the callback.
 - [Volatility oracle](https://v4hooks.com/hooks/volatility-oracle) (pattern): Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.

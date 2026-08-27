@@ -84,23 +84,31 @@ const jsonLd = {
       </div>
       <div class="chips" id="chips"></div>
       <BitLegend />
-      <section class="kind-block" data-kind="pattern">
-        <h2 class="kind-head">Patterns</h2>
+      <div class="tabs" role="tablist" aria-label="Listing kind">
+        <button type="button" class="tab" role="tab" id="tab-pattern" aria-controls="panel-pattern" aria-selected="true" data-kind="pattern">
+          Patterns <span class="tab-count" data-count="pattern">{patterns.length}</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-product" aria-controls="panel-product" aria-selected="false" tabindex="-1" data-kind="product">
+          Products <span class="tab-count" data-count="product">{products.length}</span>
+        </button>
+      </div>
+      <section class="kind-block" id="panel-pattern" role="tabpanel" aria-labelledby="tab-pattern" data-kind="pattern">
+        <h2 class="sr-only">Patterns</h2>
         <p class="kind-note">Copy the full source file to implement these.</p>
         <div class="index-list">
           {patterns.map((hook) => (
-            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
+            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")} data-kind={hook.kind}>
               <CutSheet hook={hook} heading="h3" />
             </div>
           ))}
         </div>
       </section>
-      <section class="kind-block" data-kind="product">
-        <h2 class="kind-head">Products</h2>
+      <section class="kind-block" id="panel-product" role="tabpanel" aria-labelledby="tab-product" data-kind="product" hidden>
+        <h2 class="sr-only">Products</h2>
         <p class="kind-note">Study the callbacks. Do not paste the factory.</p>
         <div class="index-list">
           {products.map((hook) => (
-            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
+            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")} data-kind={hook.kind}>
               <CutSheet hook={hook} heading="h3" />
             </div>
           ))}
@@ -120,13 +128,16 @@ const jsonLd = {
   const empty = document.getElementById("empty");
   const shown = document.getElementById("shown");
   const chips = document.getElementById("chips");
-  const blocks = [...document.querySelectorAll(".kind-block")];
+  const tabs = [...document.querySelectorAll(".tab")];
+  const panels = new Map([...document.querySelectorAll(".kind-block")].map((el) => [el.dataset.kind, el]));
+  const counts = new Map([...document.querySelectorAll(".tab-count")].map((el) => [el.dataset.count, el]));
 
   const params = new URLSearchParams(location.search);
   q.value = params.get("q") ?? "";
   chain.value = params.get("chain") ?? "";
   cat.value = params.get("cat") ?? "";
   prop.value = params.get("prop") ?? "";
+  let kind = params.get("kind") === "product" ? "product" : "pattern";
 
   function syncUrl() {
     const p = new URLSearchParams();
@@ -134,6 +145,7 @@ const jsonLd = {
     if (chain.value) p.set("chain", chain.value);
     if (cat.value) p.set("cat", cat.value);
     if (prop.value) p.set("prop", prop.value);
+    if (kind !== "pattern") p.set("kind", kind);
     const qs = p.toString();
     history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
   }
@@ -143,7 +155,7 @@ const jsonLd = {
     const ch = chain.value;
     const category = cat.value;
     const property = prop.value;
-    let n = 0;
+    const perKind = { pattern: 0, product: 0 };
     for (const row of rows) {
       const okQ = !query || row.dataset.name.includes(query) || row.dataset.tagline.includes(query);
       const okC = !ch || row.dataset.chains.split(" ").includes(ch);
@@ -151,13 +163,24 @@ const jsonLd = {
       const okP = !property || row.dataset.props.split(" ").includes(property);
       const on = okQ && okC && okK && okP;
       row.hidden = !on;
-      if (on) n += 1;
+      if (on) perKind[row.dataset.kind] += 1;
     }
-    empty.hidden = n !== 0;
-    if (shown) shown.textContent = String(n);
-    for (const block of blocks) {
-      block.hidden = ![...block.querySelectorAll(".row")].some((r) => !r.hidden);
+
+    // Counts sit on the tabs so a filter that only matches the other kind is visible
+    // rather than looking like zero results.
+    for (const [k, el] of counts) {
+      el.textContent = String(perKind[k]);
+      el.dataset.empty = perKind[k] === 0 ? "true" : "false";
     }
+    for (const tab of tabs) {
+      const on = tab.dataset.kind === kind;
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+      tab.tabIndex = on ? 0 : -1;
+    }
+    for (const [k, panel] of panels) panel.hidden = k !== kind;
+
+    empty.hidden = perKind[kind] !== 0;
+    if (shown) shown.textContent = String(perKind[kind]);
     renderChips();
     syncUrl();
   }
@@ -196,6 +219,27 @@ const jsonLd = {
       });
       chips.append(all);
     }
+  }
+
+  function selectTab(next, focus) {
+    kind = next;
+    apply();
+    if (focus) tabs.find((t) => t.dataset.kind === next)?.focus();
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => selectTab(tab.dataset.kind, false));
+    tab.addEventListener("keydown", (e) => {
+      const i = tabs.indexOf(tab);
+      let j = -1;
+      if (e.key === "ArrowRight") j = (i + 1) % tabs.length;
+      else if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
+      else if (e.key === "Home") j = 0;
+      else if (e.key === "End") j = tabs.length - 1;
+      if (j < 0) return;
+      e.preventDefault();
+      selectTab(tabs[j].dataset.kind, true);
+    });
   }
 
   q.addEventListener("input", apply);

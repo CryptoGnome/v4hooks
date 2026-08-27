@@ -1,6 +1,6 @@
 slug: purefi-verifier
 name: VerifierHook
-kind: product
+kind: pattern
 tagline: Gate every pool action behind an off-chain AML proof checked in the callback.
 description: |
   PureFi's VerifierHook is a compliance gate wired into almost every callback v4 offers:
@@ -21,9 +21,9 @@ description: |
   the product. Read the routers alongside the hook; the hook alone will not tell you how
   the proof gets there.
 
-  Treat this as a reference for how a permissioned pool is actually assembled — the
-  verifier is PureFi's own service, so the pattern is portable but the dependency is not.
-  Gating all four liquidity callbacks and both swap callbacks is the transferable idea.
+  Copy the shape, not the dependency. Gating all four liquidity callbacks plus both swap
+  callbacks is the transferable idea; swap IPureFiVerifier for whatever attestation source
+  you actually trust and the rest of the structure still holds.
 
   Unaudited in this repository.
 source:
