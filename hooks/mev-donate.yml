@@ -1,0 +1,48 @@
+slug: mev-donate
+name: MEV donate
+kind: pattern
+tagline: Skim swap output to pending, then flush() donates to in-range LPs.
+description: |
+  First-party rewrite inspired by FairArbooors (EthLondon) and Detox. afterSwapReturnDelta takes
+  skimBps of swap output into pending balances per pool; flush() unlocks a donate + settle path
+  so in-range LPs receive the skim (same unlock pattern as LpRewards). Skims both swap
+  directions. Teaching cut of MEV-to-LP redistribution — not a production MEV auction. Experimental.
+  Listing is not an audit. Forge tests under test/MevDonate.t.sol.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/MevDonate.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MevDonate.sol
+solidity: |
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: true,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+categories:
+  - mev-protection
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterSwap
+  - afterSwapReturnDelta
+properties:
+  - vanilla-swap
+docs: https://github.com/LVooooors/ETHGlobalLondon
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

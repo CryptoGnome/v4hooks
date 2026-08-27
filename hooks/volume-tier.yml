@@ -1,27 +1,27 @@
-slug: trading-days
-name: Trading days
+slug: volume-tier
+name: Volume tier
 kind: pattern
-tagline: Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+tagline: Cumulative swap notional unlocks lower dynamic fees for high-volume traders.
 description: |
-  First-party rewrite inspired by horsefacts trading-days (MIT). beforeSwap reverts on weekends
-  or outside the cash session. First open swap of the day emits DingDingDing. Simplified vs the
-  original: no holiday/DST libraries — weekday + hour gate only. 14 permission fields, OpenZeppelin
-  BaseHook. Listing is not an audit. Forge tests under test/TradingDays.t.sol.
+  First-party rewrite inspired by EthLondon Royalty Swap (Keinberger/royalty-swap). afterSwap
+  accumulates amountSpecified notional per trader (hookData address). beforeSwap returns tiered
+  fee with OVERRIDE_FEE_FLAG at tier1/tier2 breakpoints. Distinct from SuckerPunch hold-time fees
+  and SurgeFee size/liquidity scaling. Experimental. Listing is not an audit.
 source:
   repo: https://github.com/CryptoGnome/v4hooks
-  path: contracts/TradingDays.sol
-  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TradingDays.sol
+  path: contracts/VolumeTier.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/VolumeTier.sol
 solidity: |
   function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
       return Hooks.Permissions({
           beforeInitialize: false,
-          afterInitialize: false,
+          afterInitialize: true,
           beforeAddLiquidity: false,
           afterAddLiquidity: false,
           beforeRemoveLiquidity: false,
           afterRemoveLiquidity: false,
           beforeSwap: true,
-          afterSwap: false,
+          afterSwap: true,
           beforeDonate: false,
           afterDonate: false,
           beforeSwapReturnDelta: false,
@@ -31,16 +31,19 @@ solidity: |
       });
   }
 categories:
-  - rwa
-  - compliance
+  - dynamic-fees
 chains:
   - ethereum
 license: MIT
 flags:
+  - afterInitialize
   - beforeSwap
+  - afterSwap
 properties:
+  - dynamic-fee
+  - custom-swap-data
   - vanilla-swap
-docs: https://github.com/horsefacts/trading-days
+docs: https://github.com/Keinberger/royalty-swap
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

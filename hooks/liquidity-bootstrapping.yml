@@ -1,0 +1,47 @@
+slug: liquidity-bootstrapping
+name: Liquidity bootstrapping
+kind: pattern
+tagline: Linear-decay token sale via beforeSwapReturnDelta (LBP-style custom curve).
+description: |
+  First-party rewrite inspired by kadenzipfel uni-lbp (AGPL). configureSale sets start/end time
+  and price bounds. beforeSwapReturnDelta mints/burns ERC-6909 for ETH→token sales at currentPrice.
+  beforeAddLiquidity reverts — no v4 LP during the sale phase. Teaching cut of an LBP launch curve.
+  Listing is not an audit. Forge tests under test/LiquidityBootstrapping.t.sol.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/LiquidityBootstrapping.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LiquidityBootstrapping.sol
+solidity: |
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: true,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: true,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+categories:
+  - launchpads
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeAddLiquidity
+  - beforeSwap
+  - beforeSwapReturnDelta
+properties:
+  - vanilla-swap
+docs: https://github.com/kadenzipfel/uni-lbp
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

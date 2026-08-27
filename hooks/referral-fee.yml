@@ -1,21 +1,20 @@
-slug: take-profits
-name: Take profits
+slug: referral-fee
+name: Referral fee
 kind: pattern
-tagline: Tick-walk fill-on-cross take profit on upward price crosses.
+tagline: abi.encode(referrer) in hookData pays refBps of swap output to the referrer.
 description: |
-  First-party rewrite inspired by LearnWeb3 take-profits hook. Mirror of StopLoss: registerProfit
-  at a tick, afterSwap fills on upward crosses with unlock-wrapped swaps. 14 permission fields,
-  OpenZeppelin BaseHook, current v4 API. No ERC1155 layer in this teaching cut. Listing is not
-  an audit. Forge tests under test/TakeProfit.t.sol.
+  First-party rewrite inspired by mergd/ref-fee-hook (MIT). afterSwapReturnDelta takes refBps of
+  output token and transfers to the referrer decoded from hookData. Zero referrer skips the skim.
+  Experimental referral split pattern. Listing is not an audit. Forge tests under test/ReferralFee.t.sol.
 source:
   repo: https://github.com/CryptoGnome/v4hooks
-  path: contracts/TakeProfit.sol
-  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TakeProfit.sol
+  path: contracts/ReferralFee.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/ReferralFee.sol
 solidity: |
   function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
       return Hooks.Permissions({
           beforeInitialize: false,
-          afterInitialize: true,
+          afterInitialize: false,
           beforeAddLiquidity: false,
           afterAddLiquidity: false,
           beforeRemoveLiquidity: false,
@@ -25,22 +24,23 @@ solidity: |
           beforeDonate: false,
           afterDonate: false,
           beforeSwapReturnDelta: false,
-          afterSwapReturnDelta: false,
+          afterSwapReturnDelta: true,
           afterAddLiquidityReturnDelta: false,
           afterRemoveLiquidityReturnDelta: false
       });
   }
 categories:
-  - limit-orders
+  - creator-economy
 chains:
   - ethereum
 license: MIT
 flags:
-  - afterInitialize
   - afterSwap
+  - afterSwapReturnDelta
 properties:
+  - custom-swap-data
   - vanilla-swap
-docs: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook
+docs: https://github.com/mergd/ref-fee-hook
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

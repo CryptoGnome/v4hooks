@@ -1,46 +1,35 @@
 slug: stop-loss
 name: Stop-loss
 kind: pattern
-tagline: After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
+tagline: Tick-walk fill-on-cross stop loss via unlock-wrapped market sells.
 description: |
-  saucepoint’s StopLoss stores amounts per pool/tick/direction. afterInitialize snapshots
-  the tick. afterSwap walks from the previous tick to the new one and fillStopLoss for
-  the opposite swap direction, then users redeem ERC1155 receipts. Early v4 API
-  (getHooksCalls). MIT hackathon code — the file still has TODOs. Use it as the fill-on-cross
-  pattern, not as something to deploy with size. Full file at the permalink. Listing is not
-  an audit.
+  First-party rewrite of saucepoint v4-stoploss (MIT). afterInitialize snapshots tickLowerLast.
+  registerStop records size at a trigger tick. afterSwap walks downward crosses and fillStopLoss
+  runs an unlock-wrapped market sell. Uses 14 permission fields and OpenZeppelin BaseHook.
+  Simplified vs original: no ERC1155 receipts. Experimental teaching hook. Listing is not an audit.
+  Forge tests under test/StopLoss.t.sol.
 source:
-  repo: https://github.com/saucepoint/v4-stoploss
-  path: src/StopLoss.sol
-  url: https://github.com/saucepoint/v4-stoploss/blob/main/src/StopLoss.sol
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/StopLoss.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/StopLoss.sol
 solidity: |
-  // SPDX-License-Identifier: MIT
-  function getHooksCalls() public pure override returns (Hooks.Calls memory) {
-      return Hooks.Calls({
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
           beforeInitialize: false,
           afterInitialize: true,
-          beforeModifyPosition: false,
-          afterModifyPosition: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
           beforeSwap: false,
           afterSwap: true,
           beforeDonate: false,
-          afterDonate: false
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
       });
-  }
-
-  function afterSwap(
-      address,
-      IPoolManager.PoolKey calldata key,
-      IPoolManager.SwapParams calldata params,
-      BalanceDelta
-  ) external override returns (bytes4) {
-      int24 prevTick = tickLowerLasts[key.toId()];
-      (, int24 tick,) = poolManager.getSlot0(key.toId());
-      int24 currentTick = getTickLower(tick, key.tickSpacing);
-      bool stopLossZeroForOne = !params.zeroForOne;
-      // walk ticks between prevTick and currentTick; fillStopLoss when amount > 0
-      tickLowerLasts[key.toId()] = currentTick;
-      return StopLoss.afterSwap.selector;
   }
 categories:
   - limit-orders
@@ -52,6 +41,7 @@ flags:
   - afterSwap
 properties:
   - vanilla-swap
+docs: https://github.com/saucepoint/v4-stoploss
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

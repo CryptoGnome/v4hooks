@@ -27,11 +27,23 @@ See `CONTRIBUTING.md` → First-party hooks.
 
 ## Catalogued examples
 
-| Contract | Listing | Spark-inspired behavior |
-|----------|---------|------------------------|
-| `SuckerPunch.sol` | `sucker-punch` | Hold-time / MEV sell fees |
-| `AntiSnipe.sol` | `anti-snipe` | Guard window, max buy, snipe tax |
-| `SurgeFee.sol` | `surge-fee` | Size-vs-liquidity surge fee |
-| `AutoBurn.sol` | `auto-burn` | Burn buy output (return delta) |
-| `LpRewards.sol` | `lp-rewards` | Donate buy cut to LPs (`flush`) |
-| `NthBuyPot.sol` | `nth-buy-pot` | Nth-buy jackpot + claim |
+| Contract | Listing | Hackathon / inspiration |
+|----------|---------|-------------------------|
+| `SuckerPunch.sol` | `sucker-punch` | EthLondon PopFendi |
+| `AntiSnipe.sol` | `anti-snipe` | Spark launchpad |
+| `SurgeFee.sol` | `surge-fee` | Spark launchpad |
+| `AutoBurn.sol` | `auto-burn` | Spark launchpad |
+| `LpRewards.sol` | `lp-rewards` | Spark launchpad |
+| `NthBuyPot.sol` | `nth-buy-pot` | Spark launchpad |
+| `StopLoss.sol` | `stop-loss` | saucepoint v4-stoploss |
+| `TakeProfit.sol` | `take-profits` | LearnWeb3 take-profits |
+| `TrailingStop.sol` | `trailing-stop` | Hookathon C1 Trailing Hook |
+| `TradingDays.sol` | `trading-days` | horsefacts trading-days |
+| `LiquidityBootstrapping.sol` | `liquidity-bootstrapping` | kadenzipfel uni-lbp |
+| `SellGuard.sol` | `sell-guard` | FairTrade / SafeSwap |
+| `VolumeTier.sol` | `volume-tier` | EthLondon Royalty Swap |
+| `MevDonate.sol` | `mev-donate` | FairArbooors / Detox |
+| `LiquidityLock.sol` | `liquidity-lock` | Hookathon C1 LiquidityLock |
+| `MedianOracle.sol` | `median-oracle` | saucepoint median-oracles |
+| `ReferralFee.sol` | `referral-fee` | mergd/ref-fee-hook |
+| `Buyback.sol` | `buyback` | atj3097/buyback-hook |

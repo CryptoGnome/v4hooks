@@ -1,0 +1,45 @@
+slug: liquidity-lock
+name: Liquidity lock
+kind: pattern
+tagline: afterAddLiquidity sets unlock time; beforeRemoveLiquidity reverts until lock expires.
+description: |
+  First-party rewrite inspired by Hookathon C1 LiquidityLock / timelock LP. lockDuration is added
+  to block.timestamp on each net add keyed by the liquidity sender (router in tests). Removes
+  revert with StillLocked until unlock. Launchpad LP commitment pattern. Listing is not an audit.
+source:
+  repo: https://github.com/CryptoGnome/v4hooks
+  path: contracts/LiquidityLock.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LiquidityLock.sol
+solidity: |
+  function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: true,
+          beforeRemoveLiquidity: true,
+          afterRemoveLiquidity: false,
+          beforeSwap: false,
+          afterSwap: false,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: false,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+categories:
+  - launchpads
+  - lp-management
+chains:
+  - ethereum
+license: MIT
+flags:
+  - afterAddLiquidity
+  - beforeRemoveLiquidity
+properties:
+  - vanilla-swap
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

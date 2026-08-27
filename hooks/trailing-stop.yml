@@ -1,27 +1,26 @@
-slug: trading-days
-name: Trading days
+slug: trailing-stop
+name: Trailing stop
 kind: pattern
-tagline: Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+tagline: Peak-tick trailing stop with trail fee on sells after retrace.
 description: |
-  First-party rewrite inspired by horsefacts trading-days (MIT). beforeSwap reverts on weekends
-  or outside the cash session. First open swap of the day emits DingDingDing. Simplified vs the
-  original: no holiday/DST libraries — weekday + hour gate only. 14 permission fields, OpenZeppelin
-  BaseHook. Listing is not an audit. Forge tests under test/TradingDays.t.sol.
+  First-party rewrite inspired by Hookathon C1 Trailing Hook. armTrail sets peak tick per trader.
+  afterSwap updates peak on buys; beforeSwap applies TRAIL_FEE when a sell retraces trailDistance
+  ticks from peak. Dynamic fee pool with OVERRIDE_FEE_FLAG. Experimental. Listing is not an audit.
 source:
   repo: https://github.com/CryptoGnome/v4hooks
-  path: contracts/TradingDays.sol
-  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TradingDays.sol
+  path: contracts/TrailingStop.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TrailingStop.sol
 solidity: |
   function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
       return Hooks.Permissions({
           beforeInitialize: false,
-          afterInitialize: false,
+          afterInitialize: true,
           beforeAddLiquidity: false,
           afterAddLiquidity: false,
           beforeRemoveLiquidity: false,
           afterRemoveLiquidity: false,
           beforeSwap: true,
-          afterSwap: false,
+          afterSwap: true,
           beforeDonate: false,
           afterDonate: false,
           beforeSwapReturnDelta: false,
@@ -31,16 +30,18 @@ solidity: |
       });
   }
 categories:
-  - rwa
-  - compliance
+  - limit-orders
 chains:
   - ethereum
 license: MIT
 flags:
+  - afterInitialize
   - beforeSwap
+  - afterSwap
 properties:
+  - dynamic-fee
+  - custom-swap-data
   - vanilla-swap
-docs: https://github.com/horsefacts/trading-days
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

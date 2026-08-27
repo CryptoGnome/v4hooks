@@ -1,27 +1,27 @@
-slug: trading-days
-name: Trading days
+slug: sell-guard
+name: Sell guard
 kind: pattern
-tagline: Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+tagline: Sell cooldown blocks rapid dumps; repeat sells in a window pay ramp fee.
 description: |
-  First-party rewrite inspired by horsefacts trading-days (MIT). beforeSwap reverts on weekends
-  or outside the cash session. First open swap of the day emits DingDingDing. Simplified vs the
-  original: no holiday/DST libraries — weekday + hour gate only. 14 permission fields, OpenZeppelin
-  BaseHook. Listing is not an audit. Forge tests under test/TradingDays.t.sol.
+  First-party rewrite inspired by FairTrade (ETHNYC) and SafeSwap. Native-pair dynamic fee pool.
+  beforeSwap enforces cooldownBlocks between sells and ramps fee after repeat sells in windowBlocks.
+  Trader keyed via abi.encode(trader) in hookData. Complements buy-side AntiSnipe. Experimental.
+  Listing is not an audit. Forge tests under test/SellGuard.t.sol.
 source:
   repo: https://github.com/CryptoGnome/v4hooks
-  path: contracts/TradingDays.sol
-  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TradingDays.sol
+  path: contracts/SellGuard.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SellGuard.sol
 solidity: |
   function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
       return Hooks.Permissions({
           beforeInitialize: false,
-          afterInitialize: false,
+          afterInitialize: true,
           beforeAddLiquidity: false,
           afterAddLiquidity: false,
           beforeRemoveLiquidity: false,
           afterRemoveLiquidity: false,
           beforeSwap: true,
-          afterSwap: false,
+          afterSwap: true,
           beforeDonate: false,
           afterDonate: false,
           beforeSwapReturnDelta: false,
@@ -31,16 +31,19 @@ solidity: |
       });
   }
 categories:
-  - rwa
-  - compliance
+  - launchpads
+  - mev-protection
 chains:
   - ethereum
 license: MIT
 flags:
+  - afterInitialize
   - beforeSwap
+  - afterSwap
 properties:
+  - dynamic-fee
+  - custom-swap-data
   - vanilla-swap
-docs: https://github.com/horsefacts/trading-days
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

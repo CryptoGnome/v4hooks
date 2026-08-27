@@ -1,16 +1,15 @@
-slug: trading-days
-name: Trading days
+slug: median-oracle
+name: Median oracle
 kind: pattern
-tagline: Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+tagline: Ring buffer of post-swap ticks with onchain medianTick view.
 description: |
-  First-party rewrite inspired by horsefacts trading-days (MIT). beforeSwap reverts on weekends
-  or outside the cash session. First open swap of the day emits DingDingDing. Simplified vs the
-  original: no holiday/DST libraries — weekday + hour gate only. 14 permission fields, OpenZeppelin
-  BaseHook. Listing is not an audit. Forge tests under test/TradingDays.t.sol.
+  First-party rewrite inspired by saucepoint median-oracles (MIT). afterSwap pushes floored tick
+  into a 16-sample ring per pool. medianTick sorts the active window on read — teaching cut of a
+  manipulation-resistant oracle vs TWAP geomean examples. Experimental. Listing is not an audit.
 source:
   repo: https://github.com/CryptoGnome/v4hooks
-  path: contracts/TradingDays.sol
-  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TradingDays.sol
+  path: contracts/MedianOracle.sol
+  url: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MedianOracle.sol
 solidity: |
   function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
       return Hooks.Permissions({
@@ -20,8 +19,8 @@ solidity: |
           afterAddLiquidity: false,
           beforeRemoveLiquidity: false,
           afterRemoveLiquidity: false,
-          beforeSwap: true,
-          afterSwap: false,
+          beforeSwap: false,
+          afterSwap: true,
           beforeDonate: false,
           afterDonate: false,
           beforeSwapReturnDelta: false,
@@ -31,16 +30,15 @@ solidity: |
       });
   }
 categories:
-  - rwa
-  - compliance
+  - oracles
 chains:
   - ethereum
 license: MIT
 flags:
-  - beforeSwap
+  - afterSwap
 properties:
   - vanilla-swap
-docs: https://github.com/horsefacts/trading-days
+docs: https://github.com/saucepoint/median-oracles
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

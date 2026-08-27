@@ -41,6 +41,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [BaseDynamicFee](https://v4hooks.com/hooks/base-dynamic-fee) (pattern): Set the pool LP fee afterInitialize, then poke updateDynamicLPFee when conditions change.
 - [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, gate callbacks with onlyPoolManager.
 - [BaseV4Hook](https://v4hooks.com/hooks/base-v4-hook) (pattern): Abstract base that re-implements v4 pool internals inside the hook for custom curves.
+- [Buyback](https://v4hooks.com/hooks/buyback) (pattern): Treasury-funded market buy when pool tick is at or below thresholdTick.
 - [Clanker](https://v4hooks.com/hooks/clanker) (product): Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
 - [Constant sum](https://v4hooks.com/hooks/constant-sum) (pattern): Replace xy=k with x+y=k so every swap fills exactly 1:1, using a NoOp beforeSwap.
 - [EulerSwap](https://v4hooks.com/hooks/eulerswap) (product): Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
@@ -50,19 +51,27 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [Iceberg](https://v4hooks.com/hooks/iceberg-order) (pattern): Encrypted limit orders — size and direction stay hidden until the tick is crossed.
 - [Limit order](https://v4hooks.com/hooks/limit-order) (pattern): Rest liquidity at a tick and fill it in afterSwap when the pool trades through that price.
 - [LimitOrderHook](https://v4hooks.com/hooks/limit-order-hook) (pattern): Place out-of-range liquidity, fill on afterSwap tick cross, cancel or withdraw via unlock.
+- [Liquidity bootstrapping](https://v4hooks.com/hooks/liquidity-bootstrapping) (pattern): Linear-decay token sale via beforeSwapReturnDelta (LBP-style custom curve).
+- [Liquidity lock](https://v4hooks.com/hooks/liquidity-lock) (pattern): afterAddLiquidity sets unlock time; beforeRemoveLiquidity reverts until lock expires.
 - [LiquidityPenaltyHook](https://v4hooks.com/hooks/liquidity-penalty) (pattern): Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
 - [LpRewards](https://v4hooks.com/hooks/lp-rewards) (pattern): Pull buy-side token rewards, then flush() donates pending balance to in-range LPs.
+- [Median oracle](https://v4hooks.com/hooks/median-oracle) (pattern): Ring buffer of post-swap ticks with onchain medianTick view.
+- [MEV donate](https://v4hooks.com/hooks/mev-donate) (pattern): Skim swap output to pending, then flush() donates to in-range LPs.
 - [NthBuyPot](https://v4hooks.com/hooks/nth-buy-pot) (pattern): Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
+- [Referral fee](https://v4hooks.com/hooks/referral-fee) (pattern): abi.encode(referrer) in hookData pays refBps of swap output to the referrer.
 - [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
+- [Sell guard](https://v4hooks.com/hooks/sell-guard) (pattern): Sell cooldown blocks rapid dumps; repeat sells in a window pay ramp fee.
 - [SlippageFeeHook](https://v4hooks.com/hooks/slippage-fee) (pattern): Simulate the swap, measure the tick it would move, then price the fee off that slippage.
-- [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
+- [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): Tick-walk fill-on-cross stop loss via unlock-wrapped market sells.
 - [SuckerPunch](https://v4hooks.com/hooks/sucker-punch) (pattern): Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
 - [SurgeFee](https://v4hooks.com/hooks/surge-fee) (pattern): LP fee scales with swap size vs pool liquidity — no simulate-and-revert.
-- [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
-- [Trading days](https://v4hooks.com/hooks/trading-days) (pattern): Revert beforeSwap unless New York cash markets are open.
+- [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): Tick-walk fill-on-cross take profit on upward price crosses.
+- [Trading days](https://v4hooks.com/hooks/trading-days) (pattern): Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+- [Trailing stop](https://v4hooks.com/hooks/trailing-stop) (pattern): Peak-tick trailing stop with trail fee on sells after retrace.
 - [TWAMM](https://v4hooks.com/hooks/twamm) (pattern): Execute large orders over time by settling virtual TWAMM flow before each swap and LP change.
 - [V2 pair hook](https://v4hooks.com/hooks/v2-pair) (pattern): Run xy=k inside the hook: mint LP on the ERC20, NoOp the CLAMM swap with return-delta.
 - [veLP](https://v4hooks.com/hooks/velp) (pattern): Curve-style vote-escrow on a v4 position: lock ticks, block early withdraw in beforeModifyPosition.
 - [VerifierHook](https://v4hooks.com/hooks/purefi-verifier) (pattern): Gate every pool action behind an off-chain AML proof checked in the callback.
 - [Volatility oracle](https://v4hooks.com/hooks/volatility-oracle) (pattern): Require a dynamic fee on initialize, then ramp LP fee by elapsed time after deploy.
+- [Volume tier](https://v4hooks.com/hooks/volume-tier) (pattern): Cumulative swap notional unlocks lower dynamic fees for high-volume traders.

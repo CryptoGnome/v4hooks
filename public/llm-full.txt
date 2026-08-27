@@ -440,6 +440,43 @@ Chains: ethereum
 Flags: beforeAddLiquidity, beforeSwap, beforeSwapReturnDelta
 Page: https://v4hooks.com/hooks/base-v4-hook
 
+## Buyback (buyback)
+Kind: pattern
+Treasury-funded market buy when pool tick is at or below thresholdTick.
+First-party rewrite inspired by atj3097/buyback-hook. Native-pair pool; fund the hook with ETH.
+setThreshold stores a tick floor; buyback() unlocks a zeroForOne swap when current tick <= threshold.
+Fixed ungated-callback issues from the legacy repo. Experimental. Listing is not an audit.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/Buyback.sol
+Status: experimental
+License: MIT
+Categories: launchpads
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterInitialize
+Docs: https://github.com/atj3097/buyback-hook
+Page: https://v4hooks.com/hooks/buyback
+
 ## Clanker (clanker)
 Kind: product
 Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
@@ -1003,6 +1040,80 @@ Website: https://v4hooks.com/learn/openzeppelin-hooks
 Docs: https://github.com/OpenZeppelin/uniswap-hooks
 Page: https://v4hooks.com/hooks/limit-order-hook
 
+## Liquidity bootstrapping (liquidity-bootstrapping)
+Kind: pattern
+Linear-decay token sale via beforeSwapReturnDelta (LBP-style custom curve).
+First-party rewrite inspired by kadenzipfel uni-lbp (AGPL). configureSale sets start/end time
+and price bounds. beforeSwapReturnDelta mints/burns ERC-6909 for ETH→token sales at currentPrice.
+beforeAddLiquidity reverts — no v4 LP during the sale phase. Teaching cut of an LBP launch curve.
+Listing is not an audit. Forge tests under test/LiquidityBootstrapping.t.sol.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: true,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: true,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LiquidityBootstrapping.sol
+Status: experimental
+License: MIT
+Categories: launchpads
+Properties: vanilla-swap
+Chains: ethereum
+Flags: beforeAddLiquidity, beforeSwap, beforeSwapReturnDelta
+Docs: https://github.com/kadenzipfel/uni-lbp
+Page: https://v4hooks.com/hooks/liquidity-bootstrapping
+
+## Liquidity lock (liquidity-lock)
+Kind: pattern
+afterAddLiquidity sets unlock time; beforeRemoveLiquidity reverts until lock expires.
+First-party rewrite inspired by Hookathon C1 LiquidityLock / timelock LP. lockDuration is added
+to block.timestamp on each net add keyed by the liquidity sender (router in tests). Removes
+revert with StillLocked until unlock. Launchpad LP commitment pattern. Listing is not an audit.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: true,
+        beforeRemoveLiquidity: true,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: false,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/LiquidityLock.sol
+Status: experimental
+License: MIT
+Categories: launchpads, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterAddLiquidity, beforeRemoveLiquidity
+Page: https://v4hooks.com/hooks/liquidity-lock
+
 ## LiquidityPenaltyHook (liquidity-penalty)
 Kind: pattern
 Withhold JIT LP fees in afterAddLiquidity and donate a linear penalty on early remove.
@@ -1105,6 +1216,82 @@ Chains: ethereum
 Flags: afterInitialize, afterSwap, afterSwapReturnDelta
 Page: https://v4hooks.com/hooks/lp-rewards
 
+## Median oracle (median-oracle)
+Kind: pattern
+Ring buffer of post-swap ticks with onchain medianTick view.
+First-party rewrite inspired by saucepoint median-oracles (MIT). afterSwap pushes floored tick
+into a 16-sample ring per pool. medianTick sorts the active window on read — teaching cut of a
+manipulation-resistant oracle vs TWAP geomean examples. Experimental. Listing is not an audit.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MedianOracle.sol
+Status: experimental
+License: MIT
+Categories: oracles
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterSwap
+Docs: https://github.com/saucepoint/median-oracles
+Page: https://v4hooks.com/hooks/median-oracle
+
+## MEV donate (mev-donate)
+Kind: pattern
+Skim swap output to pending, then flush() donates to in-range LPs.
+First-party rewrite inspired by FairArbooors (EthLondon) and Detox. afterSwapReturnDelta takes
+skimBps of swap output into pending balances per pool; flush() unlocks a donate + settle path
+so in-range LPs receive the skim (same unlock pattern as LpRewards). Skims both swap
+directions. Teaching cut of MEV-to-LP redistribution — not a production MEV auction. Experimental.
+Listing is not an audit. Forge tests under test/MevDonate.t.sol.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: true,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/MevDonate.sol
+Status: experimental
+License: MIT
+Categories: mev-protection, lp-management
+Properties: vanilla-swap
+Chains: ethereum
+Flags: afterSwap, afterSwapReturnDelta
+Docs: https://github.com/LVooooors/ETHGlobalLondon
+Page: https://v4hooks.com/hooks/mev-donate
+
 ## NthBuyPot (nth-buy-pot)
 Kind: pattern
 Deterministic Nth-buy jackpot — potBps per buy, counter advances once per block, claim-backed.
@@ -1145,6 +1332,43 @@ Properties: custom-swap-data, vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap, afterSwapReturnDelta
 Page: https://v4hooks.com/hooks/nth-buy-pot
+
+## Referral fee (referral-fee)
+Kind: pattern
+abi.encode(referrer) in hookData pays refBps of swap output to the referrer.
+First-party rewrite inspired by mergd/ref-fee-hook (MIT). afterSwapReturnDelta takes refBps of
+output token and transfers to the referrer decoded from hookData. Zero referrer skips the skim.
+Experimental referral split pattern. Listing is not an audit. Forge tests under test/ReferralFee.t.sol.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: true,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/ReferralFee.sol
+Status: experimental
+License: MIT
+Categories: creator-economy
+Properties: custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterSwap, afterSwapReturnDelta
+Docs: https://github.com/mergd/ref-fee-hook
+Page: https://v4hooks.com/hooks/referral-fee
 
 ## ReHypothecationHook (rehypothecation)
 Kind: pattern
@@ -1215,6 +1439,43 @@ Flags: beforeInitialize, beforeSwap, afterSwap
 Website: https://v4hooks.com/learn/openzeppelin-hooks
 Docs: https://github.com/OpenZeppelin/uniswap-hooks
 Page: https://v4hooks.com/hooks/rehypothecation
+
+## Sell guard (sell-guard)
+Kind: pattern
+Sell cooldown blocks rapid dumps; repeat sells in a window pay ramp fee.
+First-party rewrite inspired by FairTrade (ETHNYC) and SafeSwap. Native-pair dynamic fee pool.
+beforeSwap enforces cooldownBlocks between sells and ramps fee after repeat sells in windowBlocks.
+Trader keyed via abi.encode(trader) in hookData. Complements buy-side AntiSnipe. Experimental.
+Listing is not an audit. Forge tests under test/SellGuard.t.sol.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SellGuard.sol
+Status: experimental
+License: MIT
+Categories: launchpads, mev-protection
+Properties: dynamic-fee, custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap, afterSwap
+Page: https://v4hooks.com/hooks/sell-guard
 
 ## SlippageFeeHook (slippage-fee)
 Kind: pattern
@@ -1326,51 +1587,41 @@ Page: https://v4hooks.com/hooks/slippage-fee
 
 ## Stop-loss (stop-loss)
 Kind: pattern
-After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
-saucepoint’s StopLoss stores amounts per pool/tick/direction. afterInitialize snapshots
-the tick. afterSwap walks from the previous tick to the new one and fillStopLoss for
-the opposite swap direction, then users redeem ERC1155 receipts. Early v4 API
-(getHooksCalls). MIT hackathon code — the file still has TODOs. Use it as the fill-on-cross
-pattern, not as something to deploy with size. Full file at the permalink. Listing is not
-an audit.
+Tick-walk fill-on-cross stop loss via unlock-wrapped market sells.
+First-party rewrite of saucepoint v4-stoploss (MIT). afterInitialize snapshots tickLowerLast.
+registerStop records size at a trigger tick. afterSwap walks downward crosses and fillStopLoss
+runs an unlock-wrapped market sell. Uses 14 permission fields and OpenZeppelin BaseHook.
+Simplified vs original: no ERC1155 receipts. Experimental teaching hook. Listing is not an audit.
+Forge tests under test/StopLoss.t.sol.
 ### Solidity
 ```solidity
-// SPDX-License-Identifier: MIT
-function getHooksCalls() public pure override returns (Hooks.Calls memory) {
-    return Hooks.Calls({
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
         beforeInitialize: false,
         afterInitialize: true,
-        beforeModifyPosition: false,
-        afterModifyPosition: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
         beforeSwap: false,
         afterSwap: true,
         beforeDonate: false,
-        afterDonate: false
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
     });
 }
-
-function afterSwap(
-    address,
-    IPoolManager.PoolKey calldata key,
-    IPoolManager.SwapParams calldata params,
-    BalanceDelta
-) external override returns (bytes4) {
-    int24 prevTick = tickLowerLasts[key.toId()];
-    (, int24 tick,) = poolManager.getSlot0(key.toId());
-    int24 currentTick = getTickLower(tick, key.tickSpacing);
-    bool stopLossZeroForOne = !params.zeroForOne;
-    // walk ticks between prevTick and currentTick; fillStopLoss when amount > 0
-    tickLowerLasts[key.toId()] = currentTick;
-    return StopLoss.afterSwap.selector;
-}
 ```
-Source: https://github.com/saucepoint/v4-stoploss/blob/main/src/StopLoss.sol
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/StopLoss.sol
 Status: experimental
 License: MIT
 Categories: limit-orders
 Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap
+Docs: https://github.com/saucepoint/v4-stoploss
 Page: https://v4hooks.com/hooks/stop-loss
 
 ## SuckerPunch (sucker-punch)
@@ -1528,108 +1779,115 @@ Page: https://v4hooks.com/hooks/surge-fee
 
 ## Take profits (take-profits)
 Kind: pattern
-After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
-LearnWeb3’s TakeProfitsHook is the opposite of stop-loss. afterInitialize snapshots tickLowerLast.
-afterSwap walks ticks the swap just crossed and fills take-profit size the other way, minting
-ERC1155 receipts users redeem. Early Hooks.Calls API (afterInitialize + afterSwap). UNLICENSED
-tutorial with pre-v4-final signatures. Use it as the fill-on-cross take-profit pattern, not as
-something to deploy with size. Copy the full file from the permalink. Listing is not an audit.
+Tick-walk fill-on-cross take profit on upward price crosses.
+First-party rewrite inspired by LearnWeb3 take-profits hook. Mirror of StopLoss: registerProfit
+at a tick, afterSwap fills on upward crosses with unlock-wrapped swaps. 14 permission fields,
+OpenZeppelin BaseHook, current v4 API. No ERC1155 layer in this teaching cut. Listing is not
+an audit. Forge tests under test/TakeProfit.t.sol.
 ### Solidity
 ```solidity
-// SPDX-License-Identifier: UNLICENSED
-function getHooksCalls() public pure override returns (Hooks.Calls memory) {
-    return
-        Hooks.Calls({
-            beforeInitialize: false,
-            afterInitialize: true,
-            beforeModifyPosition: false,
-            afterModifyPosition: false,
-            beforeSwap: false,
-            afterSwap: true,
-            beforeDonate: false,
-            afterDonate: false
-        });
-}
-
-function afterSwap(
-    address addr,
-    PoolKey calldata key,
-    IPoolManager.SwapParams calldata params,
-    BalanceDelta
-) external override poolManagerOnly returns (bytes4) {
-    if (addr == address(this)) {
-        return TakeProfitsHook.afterSwap.selector;
-    }
-    bool attemptToFillMoreOrders = true;
-    int24 currentTickLower;
-    while (attemptToFillMoreOrders) {
-        (attemptToFillMoreOrders, currentTickLower) = _tryFulfillingOrders(key, params);
-        tickLowerLasts[key.toId()] = currentTickLower;
-    }
-    return TakeProfitsHook.afterSwap.selector;
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: false,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
 }
 ```
-Source: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook/blob/main/src/TakeProfitsHook.sol
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TakeProfit.sol
 Status: experimental
-License: UNLICENSED
+License: MIT
 Categories: limit-orders
 Properties: vanilla-swap
 Chains: ethereum
 Flags: afterInitialize, afterSwap
-Docs: https://learnweb3.io/lessons/uniswap-v4-hooks-create-a-fully-on-chain-take-profit-orders-hook-on-uniswap-v4/
+Docs: https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook
 Page: https://v4hooks.com/hooks/take-profits
 
 ## Trading days (trading-days)
 Kind: pattern
-Revert beforeSwap unless New York cash markets are open.
-horsefacts’ TradingDaysHook is the canonical calendar gate: beforeSwap reads State
-(OPEN, HOLIDAY, WEEKEND, AFTER_HOURS) from NY time, holidays, and DST, then reverts
-when closed. The first swap of an open day emits DingDingDing. Older Hooks.Calls API
-(beforeSwap only). MIT. Copy TradingDays.sol plus the calendar libraries from the repo;
-this excerpt is the hook surface. Timezone and L2 sequencer lag still apply. Listing
-is not an audit.
+Revert beforeSwap outside NY weekday cash hours (9:30–16:00 ET, fixed UTC-5).
+First-party rewrite inspired by horsefacts trading-days (MIT). beforeSwap reverts on weekends
+or outside the cash session. First open swap of the day emits DingDingDing. Simplified vs the
+original: no holiday/DST libraries — weekday + hour gate only. 14 permission fields, OpenZeppelin
+BaseHook. Listing is not an audit. Forge tests under test/TradingDays.t.sol.
 ### Solidity
 ```solidity
-// SPDX-License-Identifier: MIT
-function getHooksCalls() public pure override returns (Hooks.Calls memory) {
-    return Hooks.Calls({
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
         beforeInitialize: false,
         afterInitialize: false,
-        beforeModifyPosition: false,
-        afterModifyPosition: false,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
         beforeSwap: true,
         afterSwap: false,
         beforeDonate: false,
-        afterDonate: false
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
     });
 }
-
-function beforeSwap(address sender, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata)
-    external
-    override
-    returns (bytes4)
-{
-    State s = state();
-    if (s == State.OPEN) {
-        _ringOpeningBell(sender);
-    } else if (s == State.HOLIDAY) {
-        revert ClosedForHoliday(getHoliday());
-    } else if (s == State.WEEKEND) {
-        revert ClosedForWeekend();
-    } else if (s == State.AFTER_HOURS) {
-        revert AfterHours();
-    }
-    return BaseHook.beforeSwap.selector;
-}
 ```
-Source: https://github.com/horsefacts/trading-days/blob/main/src/TradingDaysHook.sol
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TradingDays.sol
 Status: experimental
 License: MIT
 Categories: rwa, compliance
 Properties: vanilla-swap
 Chains: ethereum
 Flags: beforeSwap
+Docs: https://github.com/horsefacts/trading-days
 Page: https://v4hooks.com/hooks/trading-days
+
+## Trailing stop (trailing-stop)
+Kind: pattern
+Peak-tick trailing stop with trail fee on sells after retrace.
+First-party rewrite inspired by Hookathon C1 Trailing Hook. armTrail sets peak tick per trader.
+afterSwap updates peak on buys; beforeSwap applies TRAIL_FEE when a sell retraces trailDistance
+ticks from peak. Dynamic fee pool with OVERRIDE_FEE_FLAG. Experimental. Listing is not an audit.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/TrailingStop.sol
+Status: experimental
+License: MIT
+Categories: limit-orders
+Properties: dynamic-fee, custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap, afterSwap
+Page: https://v4hooks.com/hooks/trailing-stop
 
 ## TWAMM (twamm)
 Kind: pattern
@@ -1951,3 +2209,41 @@ Chains: ethereum
 Flags: beforeInitialize, afterInitialize
 Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
 Page: https://v4hooks.com/hooks/volatility-oracle
+
+## Volume tier (volume-tier)
+Kind: pattern
+Cumulative swap notional unlocks lower dynamic fees for high-volume traders.
+First-party rewrite inspired by EthLondon Royalty Swap (Keinberger/royalty-swap). afterSwap
+accumulates amountSpecified notional per trader (hookData address). beforeSwap returns tiered
+fee with OVERRIDE_FEE_FLAG at tier1/tier2 breakpoints. Distinct from SuckerPunch hold-time fees
+and SurgeFee size/liquidity scaling. Experimental. Listing is not an audit.
+### Solidity
+```solidity
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/VolumeTier.sol
+Status: experimental
+License: MIT
+Categories: dynamic-fees
+Properties: dynamic-fee, custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap, afterSwap
+Docs: https://github.com/Keinberger/royalty-swap
+Page: https://v4hooks.com/hooks/volume-tier
