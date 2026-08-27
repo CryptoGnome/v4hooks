@@ -1,43 +1,62 @@
 # v4hooks
 
-Example **Uniswap v4 hook** contracts and Solidity snippets. Site: [v4hooks.com](https://v4hooks.com).
+**[v4hooks.com](https://v4hooks.com)** — a builder cookbook for Uniswap v4 hooks.
 
-This is not Uniswap’s official registry. [Uniswap/hooklist](https://github.com/Uniswap/hooklist) is the address book. v4hooks is how to **build** a hook: `getHookPermissions`, the callbacks, a licensed excerpt, and a permalink to the full file.
+Licensed Solidity excerpts. GitHub permalinks. Permissions bits. Callbacks you can actually read. Built for humans *and* agents.
 
-- **pattern** — copy the source to implement the job (TWAMM, limit order, oracle, …).
-- **product** — a live protocol’s hook, excerpted so you can see how they wired bits. Do not paste it as your factory.
+---
 
-## Use the catalog
+## What you get
 
-- Browse: https://v4hooks.com
-- Agents: https://v4hooks.com/llms.txt · [llm-full.txt](https://v4hooks.com/llm-full.txt) · [hooks.json](https://v4hooks.com/hooks.json)
-- Skill: [SKILLS.md](SKILLS.md)
-- Source: https://github.com/CryptoGnome/v4hooks
+| | |
+|---|---|
+| **Patterns** | Copyable implementations — TWAMM, limit orders, oracles, stop-loss, anti-sandwich, … |
+| **Products** | How live protocols wire their hooks — study the callbacks, don’t paste the factory |
+| **Agent dumps** | [`llms.txt`](https://v4hooks.com/llms.txt) · [`llm-full.txt`](https://v4hooks.com/llm-full.txt) · [`hooks.json`](https://v4hooks.com/hooks.json) |
 
-A listing is not an audit. “Confirmed” means we pointed at a real public file, not that you should deploy it with funds.
+Source of truth: `hooks/*.yml`. Each listing is a real public file + a licensed excerpt. Nothing invented.
 
-## Add a hook
+> **Not an audit.** “Confirmed” means the source file exists in public. It does **not** mean safe to deploy with funds.
 
-1. Copy [`hooks/_template.yml`](hooks/_template.yml) to `hooks/{slug}.yml`. Filename must match `slug`.
-2. Required: `kind`, `source.url` (GitHub permalink), `solidity` excerpt, `flags`, `license`. Follow [`schema/hook.schema.json`](schema/hook.schema.json).
-3. Open a pull request. CI must pass. A maintainer merges.
+---
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+## Browse
+
+- Site → [v4hooks.com](https://v4hooks.com)
+- Learn → [v4hooks.com/learn](https://v4hooks.com/learn)
+- Agent skill → [`SKILLS.md`](SKILLS.md)
+- Repo → [CryptoGnome/v4hooks](https://github.com/CryptoGnome/v4hooks)
+
+---
+
+## Add a listing
+
+```bash
+cp hooks/_template.yml hooks/{slug}.yml
+# fill kind, source.url, solidity, flags, license
+npm run validate
+```
+
+Filename must match `slug`. Schema: [`schema/hook.schema.json`](schema/hook.schema.json). Open a PR — CI must pass. Details in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+---
 
 ## Develop
 
 ```bash
 npm install
 npm run validate
-npm run dev
+npm run dev        # local site
+npm run build      # Astro + agent files
+npm run deploy     # build + wrangler (manual)
 ```
 
-```bash
-npm run deploy
-```
+Push to `main` deploys via **Cloudflare Workers Builds**. GitHub Actions still runs validate.
 
-Set Worker secrets for live ads: `HELIO_PAYLINK_ID`, `HELIO_WEBHOOK_SECRET`. Copy `.dev.vars.example` to `.dev.vars` for local `wrangler dev`.
+For the ads rail, set Worker secrets `HELIO_PAYLINK_ID` and `HELIO_WEBHOOK_SECRET`. Local: copy `.dev.vars.example` → `.dev.vars`.
+
+---
 
 ## Stack
 
-Astro static site, Cloudflare Workers assets, D1 for the outbid rail. Deploys via Cloudflare Workers Builds on push to `main`; GitHub Actions still runs validate.
+Astro · Cloudflare Workers (assets + API) · D1 (`v4hooks-ads`) · Workers Builds on `main`
