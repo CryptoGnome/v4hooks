@@ -40,4 +40,4 @@ Set Worker secrets for live ads: `HELIO_PAYLINK_ID`, `HELIO_WEBHOOK_SECRET`. Cop
 
 ## Stack
 
-Astro static site, Cloudflare Workers assets, D1 for the outbid rail, GitHub Actions for validate + deploy.
+Astro static site, Cloudflare Workers assets, D1 for the outbid rail. Deploys via Cloudflare Workers Builds on push to `main`; GitHub Actions still runs validate.
