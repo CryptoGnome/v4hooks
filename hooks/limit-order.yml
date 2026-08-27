@@ -1,0 +1,24 @@
+slug: limit-order
+name: Limit order hook
+tagline: Place onchain limit orders that fill when the pool trades through a tick.
+description: |
+  Uniswap’s v4 limit-order example lets a user rest liquidity at a tick so a swap that crosses that price fills the order. It is the default answer to “does v4 have native limit orders?” — yes, as a hook, not as a core PoolManager feature.
+
+  Use this when you want an onchain resting order rather than an intent sent to a solver. The example contract is a starting point; production limit-order hooks add cancellations, partial fills, and gas accounting. Check the live address and flags on Uniswap/hooklist before you post size.
+categories:
+  - limit-orders
+chains:
+  - ethereum
+  - base
+  - unichain
+  - robinhood
+repo: https://github.com/Uniswap/v4-periphery
+docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+license: MIT
+status: experimental
+flags:
+  - beforeSwap
+  - afterSwap
+  - afterInitialize
+added: 2026-08-27
+updated: 2026-08-27

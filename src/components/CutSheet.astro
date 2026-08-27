@@ -1,0 +1,34 @@
+---
+import { FLAG_ORDER, type Hook } from "../lib/meta";
+import { categoryBySlug, chainBySlug } from "../lib/meta";
+
+type Props = { hook: Hook; heading?: "h2" | "h3" };
+const { hook, heading = "h2" } = Astro.props;
+const Tag = heading;
+---
+<a class="sheet" href={`/hooks/${hook.slug}`}>
+  <div class="sheet-top">
+    <div>
+      <Tag>{hook.name}</Tag>
+      <p class="tagline">{hook.tagline}</p>
+      <div class="stamps">
+        <span class:list={["stamp", hook.status === "production" && "live", hook.status === "deprecated" && "warn"]}>
+          {hook.status}
+        </span>
+        {hook.categories.map((c) => (
+          <span class="stamp">{categoryBySlug(c)?.name ?? c}</span>
+        ))}
+        {hook.chains.map((c) => (
+          <span class="stamp">{chainBySlug(c)?.name ?? c}</span>
+        ))}
+        {hook.audit_url && <span class="stamp live">audit</span>}
+        {hook.repo && <span class="stamp">repo</span>}
+      </div>
+    </div>
+    <div class="bits" title="Hook permission bits">
+      {FLAG_ORDER.map((flag) => (
+        <span class:list={["bit", hook.flags?.includes(flag) && "on"]} title={flag}></span>
+      ))}
+    </div>
+  </div>
+</a>

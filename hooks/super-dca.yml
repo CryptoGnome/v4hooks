@@ -1,0 +1,23 @@
+slug: super-dca
+name: Super DCA
+tagline: TWAMM-style DCA with dynamic fees and a Curve-like gauge for rewards.
+description: |
+  Super DCA combines time-weighted execution with dynamic fees and a gauge so reward tokens can be directed across pools. It is aimed at people who want recurring onchain buys without running a bot, while LPs still have a fee and emissions story.
+
+  If you searched for a Uniswap v4 DCA or gauge hook, start here, then read the Super DCA docs for which chains are live. Emissions hooks can brick withdrawals if misconfigured — confirm pause paths and audits independently. v4hooks will not call this safe; it will tell you what job the hook claims to do.
+categories:
+  - twamm
+  - dynamic-fees
+  - ve
+chains:
+  - base
+  - ethereum
+website: https://superdca.org/
+status: production
+flags:
+  - beforeSwap
+  - afterSwap
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+added: 2026-08-27
+updated: 2026-08-27

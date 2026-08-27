@@ -1,0 +1,21 @@
+slug: flaunch
+name: Flaunch
+tagline: Fair launchpad that routes 100% of trading fees to creators and buybacks.
+description: |
+  Flaunch is a meme-coin launchpad built around a Uniswap v4 hook that can set initial price, take swap fees, and split those fees toward creators and buybacks without a separate off-chain accountant. If you are searching for a v4 hook that turns a launch into a fee stream, this is the pattern: initializer plus swap callbacks, not a fork of v3.
+
+  Use the public site and any published repo to verify the current deployment. v4hooks groups Flaunch as one product across chains rather than one JSON file per address. Always match the hook address against Uniswap/hooklist before you route or LP.
+categories:
+  - launchpads
+  - creator-economy
+chains:
+  - base
+website: https://flaunch.gg/
+status: production
+flags:
+  - beforeInitialize
+  - afterInitialize
+  - beforeSwap
+  - afterSwap
+added: 2026-08-27
+updated: 2026-08-27

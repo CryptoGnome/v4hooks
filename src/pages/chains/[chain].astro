@@ -1,0 +1,39 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import CutSheet from "../../components/CutSheet.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { hooksForChain, usedChains } from "../../lib/catalog";
+import { chainBySlug } from "../../lib/meta";
+
+export function getStaticPaths() {
+  return usedChains().map((c) => ({ params: { chain: c.slug } }));
+}
+
+const chain = chainBySlug(Astro.params.chain!);
+if (!chain) throw new Error("missing chain");
+const hooks = hooksForChain(chain.slug);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: `Uniswap v4 hooks on ${chain.name}`,
+  numberOfItems: hooks.length,
+};
+---
+<Layout
+  title={`Uniswap v4 hooks on ${chain.name}`}
+  description={`Curated Uniswap v4 hooks deployed or documented on ${chain.name}, including products you can actually integrate — not a raw address dump.`}
+  jsonLd={jsonLd}
+>
+  <div class="layout">
+    <main>
+      <section class="lede">
+        <h1>Uniswap v4 hooks on {chain.name}</h1>
+        <p class="answer">
+          These listings are v4 hook products that report {chain.name} (chain id {chain.id}). Use them to find a hook to integrate; confirm the live address on Uniswap hooklist before you route.
+        </p>
+      </section>
+      {hooks.map((hook) => <CutSheet hook={hook} />)}
+    </main>
+    <SponsorBoard />
+  </div>
+</Layout>

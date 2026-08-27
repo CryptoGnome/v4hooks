@@ -1,0 +1,43 @@
+---
+name: Submit a hook
+description: Propose a Uniswap v4 hook product for the directory. One product per issue, not a raw address dump.
+title: "[hook] "
+labels: ["hook"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Prefer a pull request that adds `hooks/{slug}.yml`. This form is for discussion. Listing is not an audit.
+  - type: input
+    id: name
+    attributes:
+      label: Hook name
+    validations:
+      required: true
+  - type: textarea
+    id: job
+    attributes:
+      label: What job does it do?
+      description: Launchpad, TWAMM, LP manager, etc. Unique prose, not a slogan.
+    validations:
+      required: true
+  - type: input
+    id: website
+    attributes:
+      label: Website or repo (https)
+    validations:
+      required: true
+  - type: input
+    id: chains
+    attributes:
+      label: Chains
+      placeholder: base, ethereum, robinhood
+  - type: checkboxes
+    id: not-hooklist
+    attributes:
+      label: Confirm
+      options:
+        - label: This is a product listing, not a Uniswap/hooklist address dump.
+          required: true
+        - label: I have not invented contract addresses.
+          required: true

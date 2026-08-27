@@ -1,0 +1,21 @@
+slug: trading-days
+name: New York trading hours
+tagline: Revert swaps while New York equity markets are closed.
+description: |
+  horsefacts’ trading-days hook refuses pool actions outside New York market hours. It is the canonical “RWA hours” example: a Uniswap v4 hook that encodes a calendar so onchain FX or equity-like pairs do not trade through the US close.
+
+  Use it as prior art for compliance calendars, not as a drop-in for every asset. Timezone, holidays, and L2 sequencer quirks all matter. Confirm the deployed bytecode if you actually gate a pool with it. v4hooks keeps this listing because people search for market-hours hooks and should find a real implementation instead of a tweet.
+categories:
+  - rwa
+  - compliance
+chains:
+  - ethereum
+repo: https://github.com/horsefacts/trading-days
+license: MIT
+status: experimental
+flags:
+  - beforeSwap
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+added: 2026-08-27
+updated: 2026-08-27

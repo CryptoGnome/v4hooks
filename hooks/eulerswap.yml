@@ -1,0 +1,21 @@
+slug: eulerswap
+name: EulerSwap
+tagline: AMM hooked into Euler lending so swaps tap the same inventory LPs already posted.
+description: |
+  EulerSwap is a DEX that uses Uniswap v4 hooks so swap inventory can sit inside Euler’s lending markets instead of a dead pool. The hook is the join between AMM pricing and isolated lending risk — useful when you want a v4 pool that is also a credit venue.
+
+  Evaluate oracle assumptions and liquidation paths before you treat it as a vanilla Uniswap pool. This directory records EulerSwap as a lending + AMM product. Canonical addresses belong on hooklist; this page is for the question “which hook do I use if I want Euler-backed swaps?”
+categories:
+  - lending
+  - lp-management
+chains:
+  - ethereum
+website: https://app.euler.finance/swap
+status: production
+flags:
+  - beforeSwap
+  - afterSwap
+  - beforeAddLiquidity
+  - afterAddLiquidity
+added: 2026-08-27
+updated: 2026-08-27

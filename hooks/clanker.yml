@@ -1,0 +1,20 @@
+slug: clanker
+name: Clanker
+tagline: Meme coin launchpad with protocol fee routing and MEV-aware modules.
+description: |
+  Clanker is a token launchpad that uses Uniswap v4 hooks so a newly created coin can graduate into a v4 pool with protocol fees and optional MEV modules already attached. Builders looking for a production launch surface on Base (and related Uniswap deployments) start here instead of rolling a custom initializer hook from scratch.
+
+  Treat this as a product to evaluate, not a bytecode oracle. Confirm the live hook address on Uniswap/hooklist, read whatever audit is published, and assume listing on v4hooks is a map rather than a safety rating. Clanker is useful when you want a launchpad that already speaks v4 callbacks rather than a generic bonding-curve app glued on after the fact.
+categories:
+  - launchpads
+  - creator-economy
+chains:
+  - base
+  - ethereum
+website: https://www.clanker.world/
+status: production
+flags:
+  - beforeSwap
+  - afterSwap
+added: 2026-08-27
+updated: 2026-08-27

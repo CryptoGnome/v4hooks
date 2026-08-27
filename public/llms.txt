@@ -1,0 +1,55 @@
+# v4hooks
+
+> Curated directory of Uniswap v4 hooks you can use. Not the official Uniswap hooklist address registry.
+
+Site: https://v4hooks.com
+Catalog JSON: https://v4hooks.com/hooks.json
+Full dump: https://v4hooks.com/llm-full.txt
+Contribute: https://github.com/v4hooks.com (see CONTRIBUTING.md)
+
+## Pages
+- [https://v4hooks.com/](https://v4hooks.com/): Directory home
+- [https://v4hooks.com/advertise](https://v4hooks.com/advertise): USDC bid board
+- [https://v4hooks.com/learn/what-is-a-uniswap-v4-hook](https://v4hooks.com/learn/what-is-a-uniswap-v4-hook): Explainer
+- [https://v4hooks.com/categories/auctions](https://v4hooks.com/categories/auctions)
+- [https://v4hooks.com/categories/compliance](https://v4hooks.com/categories/compliance)
+- [https://v4hooks.com/categories/creator-economy](https://v4hooks.com/categories/creator-economy)
+- [https://v4hooks.com/categories/dynamic-fees](https://v4hooks.com/categories/dynamic-fees)
+- [https://v4hooks.com/categories/gaming](https://v4hooks.com/categories/gaming)
+- [https://v4hooks.com/categories/launchpads](https://v4hooks.com/categories/launchpads)
+- [https://v4hooks.com/categories/lending](https://v4hooks.com/categories/lending)
+- [https://v4hooks.com/categories/limit-orders](https://v4hooks.com/categories/limit-orders)
+- [https://v4hooks.com/categories/lp-management](https://v4hooks.com/categories/lp-management)
+- [https://v4hooks.com/categories/mev-protection](https://v4hooks.com/categories/mev-protection)
+- [https://v4hooks.com/categories/oracles](https://v4hooks.com/categories/oracles)
+- [https://v4hooks.com/categories/rwa](https://v4hooks.com/categories/rwa)
+- [https://v4hooks.com/categories/twamm](https://v4hooks.com/categories/twamm)
+- [https://v4hooks.com/categories/ve](https://v4hooks.com/categories/ve)
+- [https://v4hooks.com/categories/wrappers](https://v4hooks.com/categories/wrappers)
+- [https://v4hooks.com/chains/arbitrum](https://v4hooks.com/chains/arbitrum)
+- [https://v4hooks.com/chains/base](https://v4hooks.com/chains/base)
+- [https://v4hooks.com/chains/ethereum](https://v4hooks.com/chains/ethereum)
+- [https://v4hooks.com/chains/robinhood](https://v4hooks.com/chains/robinhood)
+- [https://v4hooks.com/chains/unichain](https://v4hooks.com/chains/unichain)
+- [https://v4hooks.com/chains/zora](https://v4hooks.com/chains/zora)
+
+## Hooks
+- [Angstrom](https://v4hooks.com/hooks/angstrom): LP-defending DEX that gates swaps through a staked validator set.
+- [Arrakis](https://v4hooks.com/hooks/arrakis): Private and managed Uniswap v4 inventory with vault-style LP hooks.
+- [Bunni](https://v4hooks.com/hooks/bunni): Shapeshifting LP manager that pairs swap fees with lending yield.
+- [Clanker](https://v4hooks.com/hooks/clanker): Meme coin launchpad with protocol fee routing and MEV-aware modules.
+- [EulerSwap](https://v4hooks.com/hooks/eulerswap): AMM hooked into Euler lending so swaps tap the same inventory LPs already posted.
+- [Flaunch](https://v4hooks.com/hooks/flaunch): Fair launchpad that routes 100% of trading fees to creators and buybacks.
+- [Full range](https://v4hooks.com/hooks/full-range): v2-style full-range liquidity as a Uniswap v4 hook.
+- [Geomean oracle](https://v4hooks.com/hooks/geomean-oracle): Turn a Uniswap v4 pool into a geometric-mean price oracle.
+- [Limit order hook](https://v4hooks.com/hooks/limit-order): Place onchain limit orders that fill when the pool trades through a tick.
+- [New York trading hours](https://v4hooks.com/hooks/trading-days): Revert swaps while New York equity markets are closed.
+- [Pubhouse](https://v4hooks.com/hooks/pubhouse): Permissionless prediction markets whose trading rails are a Uniswap v4 hook.
+- [SafeSwap](https://v4hooks.com/hooks/safeswap): Anti-rug and anti-whale v4 hook with sell limits, cooldowns, and launch mode.
+- [Stop-loss hook](https://v4hooks.com/hooks/stop-loss): Close a position automatically when the pool trades through a stop price.
+- [Super DCA](https://v4hooks.com/hooks/super-dca): TWAMM-style DCA with dynamic fees and a Curve-like gauge for rewards.
+- [TWAMM](https://v4hooks.com/hooks/twamm): Time-weighted average market maker for slicing large orders onchain.
+- [Unimon](https://v4hooks.com/hooks/unimon): NFT battle game whose mint and state live inside a Uniswap v4 hook.
+- [veLP](https://v4hooks.com/hooks/velp): Curve-style vote-escrow for Uniswap v4 liquidity positions.
+- [Volatility fee hook](https://v4hooks.com/hooks/volatility-fee): Dynamic swap fees driven by realized volatility to protect LPs.
+- [Zora creator hook](https://v4hooks.com/hooks/zora-creator): Creator-coin launch rails with fee conversion and reward split.

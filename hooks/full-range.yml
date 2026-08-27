@@ -1,0 +1,26 @@
+slug: full-range
+name: Full range
+tagline: v2-style full-range liquidity as a Uniswap v4 hook.
+description: |
+  Full Range is the example hook that makes a v4 pool behave like a constant-product v2 market: liquidity across the entire price curve instead of a tick range. Teams porting v2 inventory or wanting a simpler LP UX use this instead of teaching every LP concentrated positions.
+
+  It is an official Uniswap example, not a growth-stage product. If you need production wrapping, look at community “v2 on v4” deployments and still confirm addresses on hooklist. This sheet exists so “full range uniswap v4 hook” resolves to a real explanation rather than a random bytecode dump.
+categories:
+  - lp-management
+  - wrappers
+chains:
+  - ethereum
+  - base
+  - unichain
+  - robinhood
+repo: https://github.com/Uniswap/v4-periphery
+license: MIT
+status: experimental
+flags:
+  - beforeAddLiquidity
+  - afterAddLiquidity
+  - beforeRemoveLiquidity
+  - afterRemoveLiquidity
+  - beforeSwap
+added: 2026-08-27
+updated: 2026-08-27

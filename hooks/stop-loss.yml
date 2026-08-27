@@ -1,0 +1,20 @@
+slug: stop-loss
+name: Stop-loss hook
+tagline: Close a position automatically when the pool trades through a stop price.
+description: |
+  saucepoint’s v4 stop-loss hook is the usual answer to “can Uniswap v4 run a stop order onchain?” It watches price during swap callbacks and exits when the stop is touched, without an off-chain keeper for the trigger itself (you still pay gas on the hitting swap).
+
+  Stop hooks can fail closed or fail open depending on how reverts are handled — read the repo before you size it. This listing is prior art for limit-order adjacent products. Contribute a production fork as its own slug if you maintain one.
+categories:
+  - limit-orders
+chains:
+  - ethereum
+  - base
+repo: https://github.com/saucepoint/v4-stoploss
+license: MIT
+status: experimental
+flags:
+  - beforeSwap
+  - afterSwap
+added: 2026-08-27
+updated: 2026-08-27

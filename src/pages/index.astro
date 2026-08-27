@@ -1,0 +1,100 @@
+---
+import Layout from "../layouts/Layout.astro";
+import CutSheet from "../components/CutSheet.astro";
+import SponsorBoard from "../components/SponsorBoard.astro";
+import { loadHooks, latestUpdate, usedCategories, usedChains } from "../lib/catalog";
+import { SITE } from "../lib/meta";
+
+const hooks = loadHooks();
+const updated = latestUpdate(hooks);
+const chains = usedChains(hooks);
+const categories = usedCategories(hooks);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: SITE.name,
+      url: SITE.url,
+      description: SITE.description,
+    },
+    {
+      "@type": "ItemList",
+      name: "Uniswap v4 hooks directory",
+      numberOfItems: hooks.length,
+      itemListElement: hooks.map((h, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${SITE.url}/hooks/${h.slug}`,
+        name: h.name,
+      })),
+    },
+  ],
+};
+---
+<Layout title="Uniswap v4 hooks directory" description={SITE.description} jsonLd={jsonLd}>
+  <div class="layout">
+    <main>
+      <section class="lede">
+        <h1>Uniswap v4 hooks you can use</h1>
+        <p class="answer">
+          v4hooks is a curated directory of Uniswap v4 hook <em>products</em> — launchpads, TWAMMs, dynamic fees, LP managers — grouped so you can pick one. It is not Uniswap’s official on-chain address registry.
+        </p>
+        <p>
+          Each cut sheet is one project, not one deployment. Addresses, when we have them, link out to <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a>. Listing is not an audit.
+        </p>
+        <div class="meta-row">
+          <span><b>{hooks.length}</b> listings</span>
+          <span>Updated <b>{updated}</b></span>
+          <span><a href="/learn/what-is-a-uniswap-v4-hook">What is a v4 hook?</a></span>
+        </div>
+      </section>
+      <div class="filters">
+        <input id="q" type="search" placeholder="Search name or job" />
+        <select id="chain">
+          <option value="">All chains</option>
+          {chains.map((c) => <option value={c.slug}>{c.name}</option>)}
+        </select>
+        <select id="cat">
+          <option value="">All categories</option>
+          {categories.map((c) => <option value={c.slug}>{c.name}</option>)}
+        </select>
+      </div>
+      <div id="index">
+        {hooks.map((hook) => (
+          <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")}>
+            <CutSheet hook={hook} />
+          </div>
+        ))}
+      </div>
+      <p class="note" id="empty" hidden>No listings match those filters.</p>
+    </main>
+    <SponsorBoard />
+  </div>
+</Layout>
+<script>
+  const q = document.getElementById("q");
+  const chain = document.getElementById("chain");
+  const cat = document.getElementById("cat");
+  const rows = [...document.querySelectorAll(".row")];
+  const empty = document.getElementById("empty");
+  function apply() {
+    const query = q.value.toLowerCase().trim();
+    const ch = chain.value;
+    const category = cat.value;
+    let shown = 0;
+    for (const row of rows) {
+      const okQ = !query || row.dataset.name.includes(query) || row.dataset.tagline.includes(query);
+      const okC = !ch || row.dataset.chains.split(" ").includes(ch);
+      const okK = !category || row.dataset.cats.split(" ").includes(category);
+      const on = okQ && okC && okK;
+      row.hidden = !on;
+      if (on) shown += 1;
+    }
+    empty.hidden = shown !== 0;
+  }
+  q.addEventListener("input", apply);
+  chain.addEventListener("change", apply);
+  cat.addEventListener("change", apply);
+</script>

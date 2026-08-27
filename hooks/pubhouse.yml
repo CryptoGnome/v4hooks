@@ -1,0 +1,19 @@
+slug: pubhouse
+name: Pubhouse
+tagline: Permissionless prediction markets whose trading rails are a Uniswap v4 hook.
+description: |
+  Pubhouse lets anyone create a belief or prediction market and trade it. The v4 hook is the matching and fee layer so each market can be a pool instead of a custom CLOB. If you want prior art for prediction markets on Uniswap v4, this is a live product page, not a hackathon leftover only.
+
+  Prediction markets have resolution and oracle risk that the hook cannot hide. Read the app, then verify contracts. v4hooks lists Pubhouse as a product you can try, with the usual disclaimer that listing is not an audit.
+categories:
+  - auctions
+chains:
+  - base
+website: https://www.pubhouse.xyz/
+status: experimental
+flags:
+  - beforeSwap
+  - afterSwap
+  - afterInitialize
+added: 2026-08-27
+updated: 2026-08-27

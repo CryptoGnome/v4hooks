@@ -1,0 +1,37 @@
+---
+---
+<aside class="board" id="sponsor-board">
+  <h2>Sponsor rail</h2>
+  <p class="hint">Highest USDC bid sits on top. Rank is the bid — nothing else.</p>
+  <ol id="sponsor-list">
+    <li class="note">Loading live bids…</li>
+  </ol>
+  <a class="claim" href="/advertise">Place a bid</a>
+</aside>
+<script>
+  async function load() {
+    const list = document.getElementById("sponsor-list");
+    if (!list) return;
+    try {
+      const res = await fetch("/api/ads");
+      const data = await res.json();
+      const rows = data.listings ?? [];
+      if (!rows.length) {
+        list.innerHTML = "<li class=\"note\">No live bids yet. First slot is 5 USDC.</li>";
+        return;
+      }
+      list.innerHTML = rows
+        .map(
+          (row) => `<li>
+            <div class="rank"><span>#${row.rank}</span><span class="bid">${row.bid_usdc.toFixed(0)} USDC</span></div>
+            <a class="name" href="${row.url}" rel="noopener sponsored">${row.name}</a>
+            <p class="why">${row.tagline}</p>
+          </li>`,
+        )
+        .join("");
+    } catch {
+      list.innerHTML = "<li class=\"note\">Bid board wakes once the Worker API is deployed.</li>";
+    }
+  }
+  load();
+</script>

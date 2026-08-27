@@ -1,0 +1,21 @@
+slug: arrakis
+name: Arrakis
+tagline: Private and managed Uniswap v4 inventory with vault-style LP hooks.
+description: |
+  Arrakis has shipped private v4 hooks so market makers and vaults can control who trades a pool and how inventory is managed. If you are looking for a production LP-management hook used by professional liquidity, Arrakis is one of the names that already appears across Base and Ethereum deployments.
+
+  Private hooks are not public AMMs. Read the vault docs, confirm the allowlist, and match addresses on Uniswap/hooklist. v4hooks records the product so “arrakis uniswap v4 hook” lands on a human page instead of a block explorer.
+categories:
+  - lp-management
+chains:
+  - ethereum
+  - base
+website: https://arrakis.finance/
+status: production
+flags:
+  - beforeSwap
+  - afterSwap
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+added: 2026-08-27
+updated: 2026-08-27

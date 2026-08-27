@@ -1,0 +1,107 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import CutSheet from "../../components/CutSheet.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { getHook, loadHooks, paragraph } from "../../lib/catalog";
+import { FLAG_ORDER, SITE } from "../../lib/meta";
+import { categoryBySlug, chainBySlug } from "../../lib/meta";
+
+export function getStaticPaths() {
+  return loadHooks().map((hook) => ({ params: { slug: hook.slug } }));
+}
+
+const { slug } = Astro.params;
+const hook = getHook(slug!);
+if (!hook) throw new Error("missing hook");
+const desc = paragraph(hook.description).slice(0, 158);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: hook.name,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "EVM",
+      description: hook.tagline,
+      url: `${SITE.url}/hooks/${hook.slug}`,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "v4hooks", item: SITE.url },
+        { "@type": "ListItem", position: 2, name: hook.name, item: `${SITE.url}/hooks/${hook.slug}` },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: `What does the ${hook.name} Uniswap v4 hook do?`,
+          acceptedAnswer: { "@type": "Answer", text: hook.tagline },
+        },
+        {
+          "@type": "Question",
+          name: `Which chains run ${hook.name}?`,
+          acceptedAnswer: { "@type": "Answer", text: hook.chains.map((c) => chainBySlug(c)?.name ?? c).join(", ") },
+        },
+      ],
+    },
+  ],
+};
+---
+<Layout title={`${hook.name} — Uniswap v4 hook`} description={desc} jsonLd={jsonLd}>
+  <div class="layout">
+    <article class="prose">
+      <p class="note">Cut sheet · last updated {hook.updated}</p>
+      <h1>{hook.name}</h1>
+      <p class="answer">{hook.tagline}</p>
+      <CutSheet hook={hook} heading="h3" />
+      {hook.description.split(/\n\n+/).map((p) => <p>{p.trim()}</p>)}
+      <h2>Spec</h2>
+      <table>
+        <tbody>
+          <tr><th>Status</th><td>{hook.status}</td></tr>
+          <tr><th>Categories</th><td>{hook.categories.map((c) => <a href={`/categories/${c}`}>{categoryBySlug(c)?.name}</a>)}</td></tr>
+          <tr><th>Chains</th><td>{hook.chains.map((c) => <a href={`/chains/${c}`}>{chainBySlug(c)?.name}</a>)}</td></tr>
+          {hook.license && <tr><th>License</th><td>{hook.license}</td></tr>}
+          {hook.website && <tr><th>Website</th><td><a href={hook.website}>{hook.website}</a></td></tr>}
+          {hook.repo && <tr><th>Repo</th><td><a href={hook.repo}>{hook.repo}</a></td></tr>}
+          {hook.docs && <tr><th>Docs</th><td><a href={hook.docs}>{hook.docs}</a></td></tr>}
+          {hook.audit_url && <tr><th>Audit</th><td><a href={hook.audit_url}>{hook.audit_url}</a></td></tr>}
+        </tbody>
+      </table>
+      {hook.flags?.length ? (
+        <>
+          <h2>Permission bits</h2>
+          <p>These are the Uniswap v4 hook flags this product reports. Confirm on-chain before you route.</p>
+          <ul>
+            {FLAG_ORDER.filter((f) => hook.flags?.includes(f)).map((f) => <li><code>{f}</code></li>)}
+          </ul>
+        </>
+      ) : null}
+      {hook.deployments?.length ? (
+        <>
+          <h2>Known deployments</h2>
+          <p>v4hooks is not the canonical address book. Prefer <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a> for bytecode-at-address.</p>
+          <table>
+            <thead><tr><th>Chain</th><th>Address</th></tr></thead>
+            <tbody>
+              {hook.deployments.map((d) => (
+                <tr>
+                  <td>{chainBySlug(d.chain)?.name ?? d.chain}</td>
+                  <td><code>{d.address}</code>{d.hooklist ? " · hooklist" : ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : null}
+      <h2>FAQ</h2>
+      <p><strong>Is this the official Uniswap registry?</strong> No. This page helps you decide whether to use {hook.name}. Official deployment records live in hooklist.</p>
+      <p><strong>Should I trust it with funds?</strong> Read the audit if one exists, verify the address yourself, and treat this listing as a map, not a guarantee.</p>
+    </article>
+    <SponsorBoard />
+  </div>
+</Layout>

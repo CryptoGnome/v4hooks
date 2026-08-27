@@ -1,0 +1,27 @@
+{
+  "name": "v4hooks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Open directory of Uniswap v4 hooks you can actually use.",
+  "scripts": {
+    "dev": "astro dev",
+    "prebuild": "node scripts/generate-agent-files.mjs",
+    "build": "astro build",
+    "preview": "astro preview",
+    "validate": "node scripts/validate.mjs",
+    "deploy": "npm run build && wrangler deploy",
+    "db:migrate": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --remote",
+    "db:migrate:local": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --local",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "astro": "^7.2.8",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.127.0",
+    "yaml": "^2.9.0"
+  }
+}

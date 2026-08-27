@@ -1,0 +1,240 @@
+# v4hooks full catalog
+
+## Angstrom (angstrom)
+LP-defending DEX that gates swaps through a staked validator set.
+Angstrom uses a Uniswap v4 hook so only staked Angstrom validators can execute swaps, turning the pool into an onchain DEX with an explicit sequencing rule. The stated goal is to defend LPs from toxic flow by refusing unauthenticated takers instead of relying on a static fee.
+
+Pick this sheet if you want MEV protection at the hook layer rather than an RFQ overlay. Verify validator economics, audits, and the live address on hooklist. A gated swap callback is a powerful foot-gun if the allowlist bricks retail flow — read the spec before you point a frontend at it.
+Status: production
+Categories: mev-protection, auctions
+Chains: ethereum
+Flags: beforeSwap, afterSwap
+Website: https://x.com/angstromxyz
+Page: https://v4hooks.com/hooks/angstrom
+
+## Arrakis (arrakis)
+Private and managed Uniswap v4 inventory with vault-style LP hooks.
+Arrakis has shipped private v4 hooks so market makers and vaults can control who trades a pool and how inventory is managed. If you are looking for a production LP-management hook used by professional liquidity, Arrakis is one of the names that already appears across Base and Ethereum deployments.
+
+Private hooks are not public AMMs. Read the vault docs, confirm the allowlist, and match addresses on Uniswap/hooklist. v4hooks records the product so “arrakis uniswap v4 hook” lands on a human page instead of a block explorer.
+Status: production
+Categories: lp-management
+Chains: ethereum, base
+Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
+Website: https://arrakis.finance/
+Page: https://v4hooks.com/hooks/arrakis
+
+## Bunni (bunni)
+Shapeshifting LP manager that pairs swap fees with lending yield.
+Bunni is an LP management hook for Uniswap v4 that rehypothecates idle liquidity into lending vaults while still collecting swap fees. The job it solves is capital efficiency: concentrated liquidity that would otherwise sit idle can earn a base APY, then snap back when the pool needs depth.
+
+This is the listing to open if you searched for a v4 hook for LP management or rehypothecation rather than a raw pool address. Confirm current vault integrations and audits yourself. v4hooks does not certify Bunni’s risk; it only records that the product exists as a hook you can evaluate.
+Status: production
+Categories: lp-management, lending
+Chains: ethereum, unichain, base
+Flags: beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity, beforeSwap, afterSwap
+Website: https://bunni.pro/
+Page: https://v4hooks.com/hooks/bunni
+
+## Clanker (clanker)
+Meme coin launchpad with protocol fee routing and MEV-aware modules.
+Clanker is a token launchpad that uses Uniswap v4 hooks so a newly created coin can graduate into a v4 pool with protocol fees and optional MEV modules already attached. Builders looking for a production launch surface on Base (and related Uniswap deployments) start here instead of rolling a custom initializer hook from scratch.
+
+Treat this as a product to evaluate, not a bytecode oracle. Confirm the live hook address on Uniswap/hooklist, read whatever audit is published, and assume listing on v4hooks is a map rather than a safety rating. Clanker is useful when you want a launchpad that already speaks v4 callbacks rather than a generic bonding-curve app glued on after the fact.
+Status: production
+Categories: launchpads, creator-economy
+Chains: base, ethereum
+Flags: beforeSwap, afterSwap
+Website: https://www.clanker.world/
+Page: https://v4hooks.com/hooks/clanker
+
+## EulerSwap (eulerswap)
+AMM hooked into Euler lending so swaps tap the same inventory LPs already posted.
+EulerSwap is a DEX that uses Uniswap v4 hooks so swap inventory can sit inside Euler’s lending markets instead of a dead pool. The hook is the join between AMM pricing and isolated lending risk — useful when you want a v4 pool that is also a credit venue.
+
+Evaluate oracle assumptions and liquidation paths before you treat it as a vanilla Uniswap pool. This directory records EulerSwap as a lending + AMM product. Canonical addresses belong on hooklist; this page is for the question “which hook do I use if I want Euler-backed swaps?”
+Status: production
+Categories: lending, lp-management
+Chains: ethereum
+Flags: beforeSwap, afterSwap, beforeAddLiquidity, afterAddLiquidity
+Website: https://app.euler.finance/swap
+Page: https://v4hooks.com/hooks/eulerswap
+
+## Flaunch (flaunch)
+Fair launchpad that routes 100% of trading fees to creators and buybacks.
+Flaunch is a meme-coin launchpad built around a Uniswap v4 hook that can set initial price, take swap fees, and split those fees toward creators and buybacks without a separate off-chain accountant. If you are searching for a v4 hook that turns a launch into a fee stream, this is the pattern: initializer plus swap callbacks, not a fork of v3.
+
+Use the public site and any published repo to verify the current deployment. v4hooks groups Flaunch as one product across chains rather than one JSON file per address. Always match the hook address against Uniswap/hooklist before you route or LP.
+Status: production
+Categories: launchpads, creator-economy
+Chains: base
+Flags: beforeInitialize, afterInitialize, beforeSwap, afterSwap
+Website: https://flaunch.gg/
+Page: https://v4hooks.com/hooks/flaunch
+
+## Full range (full-range)
+v2-style full-range liquidity as a Uniswap v4 hook.
+Full Range is the example hook that makes a v4 pool behave like a constant-product v2 market: liquidity across the entire price curve instead of a tick range. Teams porting v2 inventory or wanting a simpler LP UX use this instead of teaching every LP concentrated positions.
+
+It is an official Uniswap example, not a growth-stage product. If you need production wrapping, look at community “v2 on v4” deployments and still confirm addresses on hooklist. This sheet exists so “full range uniswap v4 hook” resolves to a real explanation rather than a random bytecode dump.
+Status: experimental
+Categories: lp-management, wrappers
+Chains: ethereum, base, unichain, robinhood
+Flags: beforeAddLiquidity, afterAddLiquidity, beforeRemoveLiquidity, afterRemoveLiquidity, beforeSwap
+Repo: https://github.com/Uniswap/v4-periphery
+License: MIT
+Page: https://v4hooks.com/hooks/full-range
+
+## Geomean oracle (geomean-oracle)
+Turn a Uniswap v4 pool into a geometric-mean price oracle.
+The geomean oracle hook records pool prices so downstream contracts can read a time-weighted geometric mean instead of a spot tick. That is the v4 version of “use Uniswap as an oracle,” with hooks writing observations on swap rather than a separate accumulator contract bolted on.
+
+Oracle hooks are easy to misuse: low-liquidity pools, truncated windows, and manipulation across the observation interval all still apply. Read Uniswap’s oracle research and verify the deployed flags. v4hooks lists the pattern so agents can find it; you still have to choose a pool that is safe to read.
+Status: experimental
+Categories: oracles
+Chains: ethereum, base, unichain
+Flags: afterInitialize, afterSwap
+Repo: https://github.com/Uniswap/v4-periphery
+Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+License: MIT
+Page: https://v4hooks.com/hooks/geomean-oracle
+
+## Limit order hook (limit-order)
+Place onchain limit orders that fill when the pool trades through a tick.
+Uniswap’s v4 limit-order example lets a user rest liquidity at a tick so a swap that crosses that price fills the order. It is the default answer to “does v4 have native limit orders?” — yes, as a hook, not as a core PoolManager feature.
+
+Use this when you want an onchain resting order rather than an intent sent to a solver. The example contract is a starting point; production limit-order hooks add cancellations, partial fills, and gas accounting. Check the live address and flags on Uniswap/hooklist before you post size.
+Status: experimental
+Categories: limit-orders
+Chains: ethereum, base, unichain, robinhood
+Flags: beforeSwap, afterSwap, afterInitialize
+Repo: https://github.com/Uniswap/v4-periphery
+Docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+License: MIT
+Page: https://v4hooks.com/hooks/limit-order
+
+## New York trading hours (trading-days)
+Revert swaps while New York equity markets are closed.
+horsefacts’ trading-days hook refuses pool actions outside New York market hours. It is the canonical “RWA hours” example: a Uniswap v4 hook that encodes a calendar so onchain FX or equity-like pairs do not trade through the US close.
+
+Use it as prior art for compliance calendars, not as a drop-in for every asset. Timezone, holidays, and L2 sequencer quirks all matter. Confirm the deployed bytecode if you actually gate a pool with it. v4hooks keeps this listing because people search for market-hours hooks and should find a real implementation instead of a tweet.
+Status: experimental
+Categories: rwa, compliance
+Chains: ethereum
+Flags: beforeSwap, beforeAddLiquidity, beforeRemoveLiquidity
+Repo: https://github.com/horsefacts/trading-days
+License: MIT
+Page: https://v4hooks.com/hooks/trading-days
+
+## Pubhouse (pubhouse)
+Permissionless prediction markets whose trading rails are a Uniswap v4 hook.
+Pubhouse lets anyone create a belief or prediction market and trade it. The v4 hook is the matching and fee layer so each market can be a pool instead of a custom CLOB. If you want prior art for prediction markets on Uniswap v4, this is a live product page, not a hackathon leftover only.
+
+Prediction markets have resolution and oracle risk that the hook cannot hide. Read the app, then verify contracts. v4hooks lists Pubhouse as a product you can try, with the usual disclaimer that listing is not an audit.
+Status: experimental
+Categories: auctions
+Chains: base
+Flags: beforeSwap, afterSwap, afterInitialize
+Website: https://www.pubhouse.xyz/
+Page: https://v4hooks.com/hooks/pubhouse
+
+## SafeSwap (safeswap)
+Anti-rug and anti-whale v4 hook with sell limits, cooldowns, and launch mode.
+SafeSwap is a production-oriented protection hook: sell-rate limits, cooldowns, progressive fees, and a launch protection mode with an immutable per-pool config. It is aimed at token teams who want Uniswap v4 without unbounded dumps on day one.
+
+Protection hooks can trap LPs or look like honeypots — read the parameters, not the marketing. Confirm the Arbitrum (and any later) address on hooklist. This sheet exists so “anti whale uniswap v4 hook” has a concrete project, not a generic blog post.
+Status: production
+Categories: mev-protection, launchpads
+Chains: arbitrum
+Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
+Repo: https://github.com/zontak/SafeSwap
+Page: https://v4hooks.com/hooks/safeswap
+
+## Stop-loss hook (stop-loss)
+Close a position automatically when the pool trades through a stop price.
+saucepoint’s v4 stop-loss hook is the usual answer to “can Uniswap v4 run a stop order onchain?” It watches price during swap callbacks and exits when the stop is touched, without an off-chain keeper for the trigger itself (you still pay gas on the hitting swap).
+
+Stop hooks can fail closed or fail open depending on how reverts are handled — read the repo before you size it. This listing is prior art for limit-order adjacent products. Contribute a production fork as its own slug if you maintain one.
+Status: experimental
+Categories: limit-orders
+Chains: ethereum, base
+Flags: beforeSwap, afterSwap
+Repo: https://github.com/saucepoint/v4-stoploss
+License: MIT
+Page: https://v4hooks.com/hooks/stop-loss
+
+## Super DCA (super-dca)
+TWAMM-style DCA with dynamic fees and a Curve-like gauge for rewards.
+Super DCA combines time-weighted execution with dynamic fees and a gauge so reward tokens can be directed across pools. It is aimed at people who want recurring onchain buys without running a bot, while LPs still have a fee and emissions story.
+
+If you searched for a Uniswap v4 DCA or gauge hook, start here, then read the Super DCA docs for which chains are live. Emissions hooks can brick withdrawals if misconfigured — confirm pause paths and audits independently. v4hooks will not call this safe; it will tell you what job the hook claims to do.
+Status: production
+Categories: twamm, dynamic-fees, ve
+Chains: base, ethereum
+Flags: beforeSwap, afterSwap, beforeAddLiquidity, beforeRemoveLiquidity
+Website: https://superdca.org/
+Page: https://v4hooks.com/hooks/super-dca
+
+## TWAMM (twamm)
+Time-weighted average market maker for slicing large orders onchain.
+The Uniswap v4 TWAMM example hook executes large orders over time instead of dumping them into a single swap. Searchers looking for “uniswap v4 twamm hook” want this pattern: virtual orders accrue between blocks, then settle against the pool, reducing price impact and some sandwich surface.
+
+The reference lives in v4-periphery example contracts and Uniswap’s TWAMM research post. Production forks exist; this sheet is the canonical idea, not a promise that a specific address is the one Uniswap routes. Verify bytecode and flags on hooklist before you schedule a TWAMM order.
+Status: experimental
+Categories: twamm
+Chains: ethereum, unichain, base, robinhood
+Flags: beforeSwap, afterSwap, beforeAddLiquidity, afterAddLiquidity
+Repo: https://github.com/Uniswap/v4-periphery
+Docs: https://blog.uniswap.org/v4-twamm-hook
+License: MIT
+Page: https://v4hooks.com/hooks/twamm
+
+## Unimon (unimon)
+NFT battle game whose mint and state live inside a Uniswap v4 hook.
+Unimon is a game that uses a v4 hook so swapping a specific pool can mint or manage NFTs. That is a different job than a fee or oracle hook: the pool is the game loop. Builders looking for prior art on “can a hook mint an NFT on swap?” should read this before inventing a new callback maze.
+
+Gaming hooks are experimental by nature. Check the live app, chain, and whether the NFT contract still matches the hook. Listing here does not mean the game is maintained — it means the pattern shipped and is searchable.
+Status: experimental
+Categories: gaming
+Chains: base
+Flags: afterSwap, afterInitialize
+Website: https://www.unimon.app/
+Page: https://v4hooks.com/hooks/unimon
+
+## veLP (velp)
+Curve-style vote-escrow for Uniswap v4 liquidity positions.
+veLP is a vote-escrow hook that locks LP value and directs influence the way Curve veCRV directs gauges. Search “uniswap v4 ve hook” and this is the community reference: lock, decay, vote — implemented as v4 callbacks rather than a separate gauge controller only.
+
+Vote-escrow designs have governance and unlock edge cases. Read the repo, check whether anyone still maintains a deployment, and never assume emissions are funded. v4hooks keeps the pattern so agents can recommend it as prior art.
+Status: experimental
+Categories: ve, lp-management
+Chains: ethereum
+Flags: beforeAddLiquidity, beforeRemoveLiquidity, afterSwap
+Repo: https://github.com/kadenzipfel/veLP
+License: MIT
+Page: https://v4hooks.com/hooks/velp
+
+## Volatility fee hook (volatility-fee)
+Dynamic swap fees driven by realized volatility to protect LPs.
+Volatility fee hooks raise or lower Uniswap v4 swap fees as realized volatility moves, a standard answer to “how do I protect LPs on violent pairs without a 3% static fee?” Implementations differ (onchain EWMA, Brevis proofs, external oracles) but they all sit on beforeSwap and the dynamic-fee flag.
+
+This sheet is the category prototype rather than a single startup’s brand. When you contribute a specific production fee oracle, add a new listing with its own slug. Until then, use this page to understand the job and compare community repos such as umbrellaresearch and 0xrhsmt examples.
+Status: experimental
+Categories: dynamic-fees, mev-protection
+Chains: ethereum, base
+Flags: beforeSwap, afterSwap
+Repo: https://github.com/umbrellaresearch/uni-v4-hooks-tutorial
+License: MIT
+Page: https://v4hooks.com/hooks/volatility-fee
+
+## Zora creator hook (zora-creator)
+Creator-coin launch rails with fee conversion and reward split.
+Zora’s creator hook is the v4 surface behind creator coins: it converts swap fees into a payout token and distributes rewards without a custom off-chain splitter. If you are looking for a Uniswap v4 hook already used by a large creator network, this is the reference, not a toy example from a hackathon.
+
+Deployments span Zora’s own chain and other Uniswap v4 venues. Confirm which address your app should call via Uniswap/hooklist and Zora docs. v4hooks lists the product once so agents and humans do not have to dedupe a dozen Post Hook versions by hand.
+Status: production
+Categories: creator-economy, launchpads
+Chains: base, zora
+Flags: afterSwap, afterInitialize
+Website: https://zora.co/
+Page: https://v4hooks.com/hooks/zora-creator

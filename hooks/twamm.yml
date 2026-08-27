@@ -1,0 +1,25 @@
+slug: twamm
+name: TWAMM
+tagline: Time-weighted average market maker for slicing large orders onchain.
+description: |
+  The Uniswap v4 TWAMM example hook executes large orders over time instead of dumping them into a single swap. Searchers looking for “uniswap v4 twamm hook” want this pattern: virtual orders accrue between blocks, then settle against the pool, reducing price impact and some sandwich surface.
+
+  The reference lives in v4-periphery example contracts and Uniswap’s TWAMM research post. Production forks exist; this sheet is the canonical idea, not a promise that a specific address is the one Uniswap routes. Verify bytecode and flags on hooklist before you schedule a TWAMM order.
+categories:
+  - twamm
+chains:
+  - ethereum
+  - unichain
+  - base
+  - robinhood
+repo: https://github.com/Uniswap/v4-periphery
+docs: https://blog.uniswap.org/v4-twamm-hook
+license: MIT
+status: experimental
+flags:
+  - beforeSwap
+  - afterSwap
+  - beforeAddLiquidity
+  - afterAddLiquidity
+added: 2026-08-27
+updated: 2026-08-27

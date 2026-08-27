@@ -1,0 +1,21 @@
+slug: volatility-fee
+name: Volatility fee hook
+tagline: Dynamic swap fees driven by realized volatility to protect LPs.
+description: |
+  Volatility fee hooks raise or lower Uniswap v4 swap fees as realized volatility moves, a standard answer to “how do I protect LPs on violent pairs without a 3% static fee?” Implementations differ (onchain EWMA, Brevis proofs, external oracles) but they all sit on beforeSwap and the dynamic-fee flag.
+
+  This sheet is the category prototype rather than a single startup’s brand. When you contribute a specific production fee oracle, add a new listing with its own slug. Until then, use this page to understand the job and compare community repos such as umbrellaresearch and 0xrhsmt examples.
+categories:
+  - dynamic-fees
+  - mev-protection
+chains:
+  - ethereum
+  - base
+repo: https://github.com/umbrellaresearch/uni-v4-hooks-tutorial
+license: MIT
+status: experimental
+flags:
+  - beforeSwap
+  - afterSwap
+added: 2026-08-27
+updated: 2026-08-27

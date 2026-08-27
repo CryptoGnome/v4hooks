@@ -1,0 +1,21 @@
+slug: velp
+name: veLP
+tagline: Curve-style vote-escrow for Uniswap v4 liquidity positions.
+description: |
+  veLP is a vote-escrow hook that locks LP value and directs influence the way Curve veCRV directs gauges. Search “uniswap v4 ve hook” and this is the community reference: lock, decay, vote — implemented as v4 callbacks rather than a separate gauge controller only.
+
+  Vote-escrow designs have governance and unlock edge cases. Read the repo, check whether anyone still maintains a deployment, and never assume emissions are funded. v4hooks keeps the pattern so agents can recommend it as prior art.
+categories:
+  - ve
+  - lp-management
+chains:
+  - ethereum
+repo: https://github.com/kadenzipfel/veLP
+license: MIT
+status: experimental
+flags:
+  - beforeAddLiquidity
+  - beforeRemoveLiquidity
+  - afterSwap
+added: 2026-08-27
+updated: 2026-08-27
