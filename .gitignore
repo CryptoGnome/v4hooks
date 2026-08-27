@@ -8,3 +8,8 @@ dist/
 *.log
 .DS_Store
 worker-configuration.d.ts
+
+# Foundry
+out/
+cache/
+broadcast/

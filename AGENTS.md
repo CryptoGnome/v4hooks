@@ -5,12 +5,13 @@ You are helping with **v4hooks**, a directory of Uniswap v4 hook example contrac
 ## What this repo is
 
 - Source of truth: `hooks/*.yml` — each file is a licensed Solidity excerpt + GitHub permalink
+- First-party examples: `contracts/*.sol` + `test/*.t.sol` (Foundry). May rewrite legacy hooks for current v4.
 - `kind: pattern` = implement this. `kind: product` = study a live protocol’s callbacks
 - `properties`: `dynamic-fee` | `upgradeable` | `custom-swap-data` | `vanilla-swap`
 - Site: Astro static pages in `src/pages`
 - Ads API: `src/worker.ts` + D1 `v4hooks-ads`
 - Do **not** clone Uniswap/hooklist. Link to it for addresses.
-- Do **not** invent Solidity or contract addresses.
+- Do **not** invent Solidity or contract addresses (YAML excerpts must match a real file).
 
 ## Read first
 
@@ -23,7 +24,8 @@ If a change affects how humans or agents use the site, update docs **in the same
 
 ## Tasks
 
-- Add a hook: copy `hooks/_template.yml` to `hooks/{slug}.yml`, then `npm run validate`. Files starting with `_` are not listings.
+- Add a hook listing: copy `hooks/_template.yml` to `hooks/{slug}.yml`, then `npm run validate`. Files starting with `_` are not listings.
+- Add a first-party hook: write `contracts/{Name}.sol` + `test/{Name}.t.sol`, `forge test`, then add the YAML listing.
 - Change copy/SEO: edit the page under `src/pages` and keep JSON-LD accurate.
 - Ads: Worker routes `/api/ads`, `/api/ads/intent`, `/api/ads/webhook`. Min bid 5 USDC.
 
@@ -32,6 +34,8 @@ If a change affects how humans or agents use the site, update docs **in the same
 ```
 npm run validate
 npm run build
+forge build
+forge test
 ```
 
 ## Do not

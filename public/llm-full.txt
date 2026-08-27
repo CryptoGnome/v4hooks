@@ -1205,6 +1205,63 @@ Chains: ethereum
 Flags: afterInitialize, afterSwap
 Page: https://v4hooks.com/hooks/stop-loss
 
+## SuckerPunch (sucker-punch)
+Kind: pattern
+Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.
+First-party rewrite of PopFendi’s EthLondon 2024 SuckerPunch (MIT). afterInitialize
+requires a native currency0 pair and a dynamic fee pool. beforeSwap returns a per-swap
+fee with OVERRIDE_FEE_FLAG: buys are free, same-block sells pay MEV_FEE, never-bought
+sells pay BASE_FEE, and holders decay linearly to MIN_FEE over 90 days. afterSwap
+records buy inventory keyed by abi.encode(trader) in hookData (else the swap sender).
+Fixes vs the original: 14 permission fields, OpenZeppelin BaseHook onlyPoolManager,
+no tx.origin, no updateDynamicSwapFee, and hold-fee math that does not underflow.
+Experimental. Listing is not an audit. Forge tests live under test/SuckerPunch.t.sol.
+### Solidity
+```solidity
+// SPDX-License-Identifier: MIT
+// v4hooks first-party rewrite — excerpt. Full file: source.url
+function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
+    return Hooks.Permissions({
+        beforeInitialize: false,
+        afterInitialize: true,
+        beforeAddLiquidity: false,
+        afterAddLiquidity: false,
+        beforeRemoveLiquidity: false,
+        afterRemoveLiquidity: false,
+        beforeSwap: true,
+        afterSwap: true,
+        beforeDonate: false,
+        afterDonate: false,
+        beforeSwapReturnDelta: false,
+        afterSwapReturnDelta: false,
+        afterAddLiquidityReturnDelta: false,
+        afterRemoveLiquidityReturnDelta: false
+    });
+}
+
+function _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
+    internal
+    view
+    override
+    returns (bytes4, BeforeSwapDelta, uint24)
+{
+    if (!key.currency0.isAddressZero()) revert NotNativePair();
+    address trader = traderOf(sender, hookData);
+    bool isBuy = params.zeroForOne;
+    uint24 fee = feeFor(key.toId(), trader, isBuy);
+    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);
+}
+```
+Source: https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SuckerPunch.sol
+Status: experimental
+License: MIT
+Categories: dynamic-fees, mev-protection
+Properties: dynamic-fee, custom-swap-data, vanilla-swap
+Chains: ethereum
+Flags: afterInitialize, beforeSwap, afterSwap
+Docs: https://github.com/popfendi/suckerpunch
+Page: https://v4hooks.com/hooks/sucker-punch
+
 ## Super DCA (super-dca)
 Kind: product
 Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.

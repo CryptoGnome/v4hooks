@@ -1,0 +1,14 @@
+---
+description: When contracts/ or forge.toml change, run forge test and keep CI green
+alwaysApply: true
+---
+
+# Foundry gates for this repo
+
+If the session touches `contracts/`, `test/`, `foundry.toml`, `remappings.txt`, or `lib/`:
+
+1. Run `forge build` and `forge test` before asking to commit.
+2. Do not commit with failing forge tests.
+3. New first-party hook → matching `test/*.t.sol` in the same change.
+4. Listing a first-party hook → `hooks/{slug}.yml` + `npm run validate` + regenerate agent files (`npm run build` or `node scripts/generate-agent-files.mjs`).
+5. Still follow `sync-user-facing-docs` and `confirm-commit-push`.

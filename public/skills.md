@@ -13,4 +13,4 @@ Copy this skill into an agent. Canonical site: https://v4hooks.com
 4. Read https://v4hooks.com/learn/secure-v4-hooks, https://v4hooks.com/learn/openzeppelin-hooks, and https://v4hooks.com/learn/resources
 5. Pick a slug, then read https://v4hooks.com/hooks/{slug}
 
-`kind: pattern` = copy the source file. `kind: product` = study callbacks. Listing is not an audit.
+`kind: pattern` = copy the source file. `kind: product` = study callbacks. First-party rewrites live under https://github.com/CryptoGnome/v4hooks/tree/main/contracts. Listing is not an audit.

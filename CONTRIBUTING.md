@@ -2,6 +2,19 @@
 
 v4hooks is a directory of **example Uniswap v4 hook contracts** for agents and builders. One YAML file per hook. The body is a licensed Solidity excerpt plus a GitHub permalink to the full file. Not a clone of Uniswap/hooklist.
 
+## First-party hooks
+
+Interesting legacy hooks that do not compile on current v4 can be **rewritten** under [`contracts/`](contracts/) and listed with `source` pointing at this repo.
+
+1. Add `contracts/{Name}.sol` (MIT + attribution if adapted).
+2. Add `test/{Name}.t.sol`. Run `forge build` and `forge test`.
+3. Add `hooks/{slug}.yml` with a matching excerpt and permalink to `contracts/…`.
+4. Run `npm run validate` (and regenerate agent files on build).
+
+CI runs forge tests on every PR. Cursor rules under `.cursor/rules/` enforce the audit checklist when those files are open.
+
+Do not invent Solidity only inside the YAML — the listing must match a real file.
+
 ## Rules
 
 - Filename `hooks/{slug}.yml` must match `slug`.
@@ -21,7 +34,7 @@ v4hooks is a directory of **example Uniswap v4 hook contracts** for agents and b
 1. Fork the repo.
 2. Copy [`hooks/_template.yml`](hooks/_template.yml) to `hooks/{slug}.yml`.
 3. Fill it. Delete comments. Run `npm run validate`.
-4. Open a PR. A maintainer must merge. CI checks schema and uniqueness, not security.
+4. Open a PR. A maintainer must merge. CI checks catalog schema **and** `forge test`.
 
 ## What we will reject
 

@@ -25,6 +25,7 @@ v4hooks.com is example contracts + Solidity excerpts for builders and agents.
 - JIT LP penalty → `liquidity-penalty`
 - Idle LP in vaults → `rehypothecation`
 - v2-style LP → `full-range` (CLAMM wrap) or `v2-pair` (xy=k inside the hook)
+- Hold-time sell fee / same-block MEV tax → `sucker-punch`
 - Market hours → `trading-days`
 - ve lock on LP → `velp`
 - Launchpad fee/MEV → `clanker`, `flaunch`

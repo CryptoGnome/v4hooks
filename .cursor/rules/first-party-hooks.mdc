@@ -1,0 +1,24 @@
+---
+description: Audit and test first-party hooks under contracts/ before listing them
+globs: contracts/**/*.sol
+alwaysApply: false
+---
+
+# First-party Uniswap v4 hooks
+
+`contracts/` holds hooks we publish and list from this repo. Treat every change as production-shaped example code — still **not an audit**, but it must compile and be tested.
+
+## Before you finish any `contracts/` edit
+
+1. **Permissions** — `getHookPermissions` has all **14** fields. Flags match implemented `_before*` / `_after*` overrides.
+2. **Caller gate** — inherit OpenZeppelin `BaseHook` (or equivalent `onlyPoolManager`). No ungated external callbacks.
+3. **No banned patterns** — no `tx.origin` for identity; no `updateDynamicSwapFee` (use `OVERRIDE_FEE_FLAG` or `updateDynamicLPFee`); no pre-launch 10-field `Hooks.Permissions` / `getHooksCalls`.
+4. **Fee pools** — dynamic-fee hooks require `key.fee.isDynamicFee()` in `afterInitialize` (or document why not).
+5. **Tests** — add/update `test/*.t.sol`. Cover permissions, happy path, and at least one failure / edge (wrong fee flag, same-block MEV path, etc.).
+6. **Run** — `forge build` and `forge test` must pass. Then `npm run validate` if a `hooks/*.yml` listing changed.
+7. **Listing** — if this file is catalogued, `hooks/{slug}.yml` excerpt must match the Solidity; `source.url` points at `CryptoGnome/v4hooks` on this path. Description notes provenance if adapted from another repo.
+8. **Docs** — update `CONTRIBUTING.md` / `AGENTS.md` / `README.md` when the first-party workflow changes.
+
+## Rewrites of legacy hooks
+
+Allowed. Keep SPDX + attribution comment. Fix API gaps deliberately; call out behavior changes (e.g. replaced `tx.origin` with `hookData` trader) in the YAML description. Do not claim the original author audited our rewrite.

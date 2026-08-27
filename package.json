@@ -10,6 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "validate": "node scripts/validate.mjs",
+    "forge:build": "forge build",
+    "forge:test": "forge test",
     "deploy": "npm run build && wrangler deploy",
     "db:migrate": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --remote",
     "db:migrate:local": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --local",

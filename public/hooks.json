@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-27T14:29:15.204Z",
+  "generated": "2026-08-27T15:10:29.241Z",
   "hooks": [
     {
       "slug": "anti-sandwich",
@@ -598,6 +598,41 @@
       "properties": [
         "vanilla-swap"
       ],
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
+    {
+      "slug": "sucker-punch",
+      "name": "SuckerPunch",
+      "kind": "pattern",
+      "tagline": "Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.",
+      "description": "First-party rewrite of PopFendi’s EthLondon 2024 SuckerPunch (MIT). afterInitialize\nrequires a native currency0 pair and a dynamic fee pool. beforeSwap returns a per-swap\nfee with OVERRIDE_FEE_FLAG: buys are free, same-block sells pay MEV_FEE, never-bought\nsells pay BASE_FEE, and holders decay linearly to MIN_FEE over 90 days. afterSwap\nrecords buy inventory keyed by abi.encode(trader) in hookData (else the swap sender).\nFixes vs the original: 14 permission fields, OpenZeppelin BaseHook onlyPoolManager,\nno tx.origin, no updateDynamicSwapFee, and hold-fee math that does not underflow.\nExperimental. Listing is not an audit. Forge tests live under test/SuckerPunch.t.sol.\n",
+      "source": {
+        "repo": "https://github.com/CryptoGnome/v4hooks",
+        "path": "contracts/SuckerPunch.sol",
+        "url": "https://github.com/CryptoGnome/v4hooks/blob/main/contracts/SuckerPunch.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// v4hooks first-party rewrite — excerpt. Full file: source.url\nfunction getHookPermissions() public pure override returns (Hooks.Permissions memory) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: true,\n        beforeAddLiquidity: false,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: false,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\nfunction _beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)\n    internal\n    view\n    override\n    returns (bytes4, BeforeSwapDelta, uint24)\n{\n    if (!key.currency0.isAddressZero()) revert NotNativePair();\n    address trader = traderOf(sender, hookData);\n    bool isBuy = params.zeroForOne;\n    uint24 fee = feeFor(key.toId(), trader, isBuy);\n    return (this.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee | LPFeeLibrary.OVERRIDE_FEE_FLAG);\n}\n",
+      "categories": [
+        "dynamic-fees",
+        "mev-protection"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "afterInitialize",
+        "beforeSwap",
+        "afterSwap"
+      ],
+      "properties": [
+        "dynamic-fee",
+        "custom-swap-data",
+        "vanilla-swap"
+      ],
+      "docs": "https://github.com/popfendi/suckerpunch",
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"

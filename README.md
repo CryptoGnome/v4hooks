@@ -12,7 +12,8 @@ Every listing shows the `getHookPermissions` block and the callbacks that matter
 
 | | |
 |---|---|
-| **Patterns** | Copyable implementations — TWAMM, limit orders, take-profit, oracles, dynamic fees, JIT penalty, rehypothecation, v2-on-v4, … |
+| **Patterns** | Copyable implementations — TWAMM, limit orders, take-profit, oracles, dynamic fees, JIT penalty, rehypothecation, v2-on-v4, first-party rewrites, … |
+| **First-party** | [`contracts/`](contracts/) — hooks we maintain here (Foundry + tests). Legacy ideas rewritten for current v4. |
 | **Products** | How live protocols wire their hooks — study the callbacks, don’t paste the factory |
 | **Agent dumps** | [`llms.txt`](https://v4hooks.com/llms.txt) · [`llm-full.txt`](https://v4hooks.com/llm-full.txt) · [`hooks.json`](https://v4hooks.com/hooks.json) |
 
@@ -59,10 +60,11 @@ npm install
 npm run validate
 npm run dev        # local site
 npm run build      # Astro + agent files
+forge build && forge test   # first-party contracts/
 npm run deploy     # build + wrangler (manual)
 ```
 
-Push to `main` deploys via **Cloudflare Workers Builds**. GitHub Actions still runs validate.
+Push to `main` deploys via **Cloudflare Workers Builds**. GitHub Actions runs catalog validate **and** `forge test`.
 
 For the ads rail, set Worker secrets `HELIO_PAYLINK_ID` and `HELIO_WEBHOOK_SECRET`. Local: copy `.dev.vars.example` → `.dev.vars`.
 

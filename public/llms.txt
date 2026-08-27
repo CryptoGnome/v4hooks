@@ -52,6 +52,7 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [ReHypothecationHook](https://v4hooks.com/hooks/rehypothecation) (pattern): Park idle LP in yield sources, JIT a hook-owned position on beforeSwap, unwind afterSwap.
 - [SlippageFeeHook](https://v4hooks.com/hooks/slippage-fee) (pattern): Simulate the swap, measure the tick it would move, then price the fee off that slippage.
 - [Stop-loss](https://v4hooks.com/hooks/stop-loss) (pattern): After a swap crosses a tick, the hook market-sells a stored stop-loss size the other way.
+- [SuckerPunch](https://v4hooks.com/hooks/sucker-punch) (pattern): Free ETH-pair buys, hold-time sell fee decay, same-block sell taxed as MEV.
 - [Super DCA](https://v4hooks.com/hooks/super-dca) (product): Dynamic LP fee in beforeSwap from who is swapping; pool must include the DCA token.
 - [Take profits](https://v4hooks.com/hooks/take-profits) (pattern): After a swap crosses a tick, fill stored take-profit size the other way and mint ERC1155 receipts.
 - [Trading days](https://v4hooks.com/hooks/trading-days) (pattern): Revert beforeSwap unless New York cash markets are open.

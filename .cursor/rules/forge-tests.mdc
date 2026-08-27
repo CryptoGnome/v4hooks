@@ -1,0 +1,17 @@
+---
+description: Forge tests for first-party hooks must stay green with contracts/
+globs: test/**/*.sol
+alwaysApply: false
+---
+
+# First-party hook tests
+
+Tests under `test/` gate everything in `contracts/`.
+
+## Requirements
+
+- Prefer Foundry + `@uniswap/v4-core/test/utils/Deployers.sol` (or OZ `HookTest` patterns).
+- Deploy hooks with `deployCodeTo` at an address whose bits match `getHookPermissions`.
+- Assert permission flags, fee / callback behavior, and reverts for invalid pool keys.
+- Do not delete failing tests to “make CI green” — fix the contract or change the assertion with a reason in the commit message.
+- After edits: `forge test`. If listings changed: `npm run validate`.
