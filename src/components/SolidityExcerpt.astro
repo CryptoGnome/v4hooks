@@ -1,12 +1,13 @@
 ---
 import { Code } from "astro:components";
+import { solidityTheme, booleanEmphasis } from "../lib/code-theme";
 
 type Props = { code: string; lang?: "solidity" | "bash" };
 const { code, lang = "solidity" } = Astro.props;
 ---
 <div class="sol-wrap">
   <button type="button" class="copy">Copy</button>
-  <Code code={code} lang={lang} theme="css-variables" />
+  <Code code={code} lang={lang} theme={solidityTheme} transformers={[booleanEmphasis]} />
 </div>
 <script>
   document.querySelectorAll(".sol-wrap").forEach((el) => {

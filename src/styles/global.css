@@ -49,9 +49,20 @@
   --danger: #ff6b84;
   --on-accent: #fff;
   --grid-line: rgba(255, 255, 255, 0.028);
-  --code-str: #c5c9d4;
-  --code-com: #7a7f8a;
-  --code-kw: #d2d6e0;
+  /* syntax — see src/lib/code-theme.ts for what each one means */
+  --c-fg: #d7dbe4;
+  --c-comment: #868c99;
+  --c-perm: #ff5c9d;
+  --c-type: #6fc7dd;
+  --c-key: #b99cf0;
+  --c-lit: #e8b07a;
+  --c-err: #ff6b84;
+  --c-fn: #ececef;
+  --c-var: #b6bcc7;
+  --c-op: #9aa0ab;
+  --c-punc: #868b95;
+  --c-true: #ececef;
+  --c-false: #8a8f99;
 
   /* light palette — single source of truth, applied by the two switch blocks below */
   --l-ink: #ecece8;
@@ -65,22 +76,20 @@
   --l-mute: #5c5d62;
   --l-danger: #c01a3a;
   --l-grid-line: rgba(0, 0, 0, 0.035);
-  --l-code-str: #3a3d46;
-  --l-code-com: #7a7b80;
-  --l-code-kw: #2a2c32;
+  --l-c-fg: #2c2f36;
+  --l-c-comment: #6f7075;
+  --l-c-perm: #c40062;
+  --l-c-type: #0d6c80;
+  --l-c-key: #6b32b8;
+  --l-c-lit: #97570a;
+  --l-c-err: #c01a3a;
+  --l-c-fn: #161616;
+  --l-c-var: #3f434c;
+  --l-c-op: #55575e;
+  --l-c-punc: #6d6f75;
+  --l-c-true: #161616;
+  --l-c-false: #6f7075;
 
-  /* Shiki — derived from the palette, so it never needs theme switching */
-  --astro-code-color-background: transparent;
-  --astro-code-color-text: var(--paper);
-  --astro-code-token-constant: var(--paper);
-  --astro-code-token-parameter: var(--paper);
-  --astro-code-token-function: var(--paper);
-  --astro-code-token-link: var(--paper);
-  --astro-code-token-punctuation: var(--mute);
-  --astro-code-token-string: var(--code-str);
-  --astro-code-token-string-expression: var(--code-str);
-  --astro-code-token-comment: var(--code-com);
-  --astro-code-token-keyword: var(--code-kw);
 }
 
 html[data-theme="dark"] {
@@ -100,9 +109,19 @@ html[data-theme="light"] {
   --mute: var(--l-mute);
   --danger: var(--l-danger);
   --grid-line: var(--l-grid-line);
-  --code-str: var(--l-code-str);
-  --code-com: var(--l-code-com);
-  --code-kw: var(--l-code-kw);
+  --c-fg: var(--l-c-fg);
+  --c-comment: var(--l-c-comment);
+  --c-perm: var(--l-c-perm);
+  --c-type: var(--l-c-type);
+  --c-key: var(--l-c-key);
+  --c-lit: var(--l-c-lit);
+  --c-err: var(--l-c-err);
+  --c-fn: var(--l-c-fn);
+  --c-var: var(--l-c-var);
+  --c-op: var(--l-c-op);
+  --c-punc: var(--l-c-punc);
+  --c-true: var(--l-c-true);
+  --c-false: var(--l-c-false);
 }
 
 @media (prefers-color-scheme: light) {
@@ -119,9 +138,19 @@ html[data-theme="light"] {
     --mute: var(--l-mute);
     --danger: var(--l-danger);
     --grid-line: var(--l-grid-line);
-    --code-str: var(--l-code-str);
-    --code-com: var(--l-code-com);
-    --code-kw: var(--l-code-kw);
+    --c-fg: var(--l-c-fg);
+    --c-comment: var(--l-c-comment);
+    --c-perm: var(--l-c-perm);
+    --c-type: var(--l-c-type);
+    --c-key: var(--l-c-key);
+    --c-lit: var(--l-c-lit);
+    --c-err: var(--l-c-err);
+    --c-fn: var(--l-c-fn);
+    --c-var: var(--l-c-var);
+    --c-op: var(--l-c-op);
+    --c-punc: var(--l-c-punc);
+    --c-true: var(--l-c-true);
+    --c-false: var(--l-c-false);
   }
 }
 
