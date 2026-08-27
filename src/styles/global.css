@@ -282,10 +282,13 @@ nav a:hover, nav a[aria-current="page"] { color: var(--accent); }
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-6);
   margin-top: var(--s-6);
 }
+/* The rail column only exists when a rail does, so pausing the sponsor board reflows to
+   full width with no CSS change and restoring it needs none either. */
+.layout:has(> .rail) { grid-template-columns: minmax(0, 1fr) 280px; }
 .layout > main, .layout > article { min-width: 0; }
 
 .lede { max-width: 42rem; }

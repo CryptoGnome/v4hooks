@@ -1,7 +1,13 @@
 ---
+// The sponsor rail is paused. Flip this to true to bring it back — every call site, the
+// /advertise page, the /api/ads Worker route and the D1 table are deliberately left intact,
+// and .layout re-widens on its own via :has(> .rail).
+const ENABLED = false;
+
 type Props = { compact?: boolean };
 const { compact = false } = Astro.props;
 ---
+{ENABLED && (
 <details class:list={["rail", compact && "compact"]} open>
   <summary>Sponsor rail</summary>
   <aside class="board" id="sponsor-board">
@@ -17,7 +23,7 @@ const { compact = false } = Astro.props;
     <a class="claim" href="/advertise">Place a bid</a>
   </aside>
 </details>
-<script>
+<script is:inline>
   async function load() {
     const list = document.getElementById("sponsor-list");
     const rail = list?.closest(".rail");
@@ -61,3 +67,4 @@ const { compact = false } = Astro.props;
   mq.addEventListener("change", syncRail);
   syncRail();
 </script>
+)}
