@@ -13,7 +13,8 @@
     "deploy": "npm run build && wrangler deploy",
     "db:migrate": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --remote",
     "db:migrate:local": "wrangler d1 execute v4hooks-ads --file=migrations/0001_ads.sql --local",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "hooklist": "node scripts/hooklist-sync.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

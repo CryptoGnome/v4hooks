@@ -92,7 +92,7 @@ export const CHAINS = [
   { slug: "soneium", name: "Soneium", id: 1868 },
   { slug: "linea", name: "Linea", id: 59144 },
   { slug: "monad", name: "Monad", id: 143 },
-  { slug: "robinhood", name: "Robinhood Chain", id: 202599 },
+  { slug: "robinhood", name: "Robinhood Chain", id: 4663 },
   { slug: "megaeth", name: "MegaETH", id: 4326 },
   { slug: "tempo", name: "Tempo", id: 4217 },
   { slug: "xlayer", name: "X Layer", id: 196 },
