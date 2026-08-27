@@ -1,0 +1,66 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { SITE } from "../../lib/meta";
+
+const pages = [
+  {
+    href: "/learn/what-is-a-uniswap-v4-hook",
+    title: "What is a Uniswap v4 hook?",
+    blurb: "Callbacks, permission bits, and how PoolManager decides what to call.",
+  },
+  {
+    href: "/learn/secure-v4-hooks",
+    title: "Secure v4 hooks checklist",
+    blurb: "Caller checks, pool allowlists, accounting, and permission-bit mistakes — for agents and builders.",
+  },
+  {
+    href: "/learn/openzeppelin-hooks",
+    title: "Build with OpenZeppelin hooks",
+    blurb: "forge install, BaseHook, and the modular fee / general / oracle contracts to start from.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "v4hooks learn",
+  url: `${SITE.url}/learn`,
+  description: "Docs for building Uniswap v4 hooks: permission bits, security checklist, OpenZeppelin library.",
+  hasPart: pages.map((p) => ({
+    "@type": "WebPage",
+    name: p.title,
+    url: `${SITE.url}${p.href}`,
+    description: p.blurb,
+  })),
+};
+---
+<Layout
+  title="Learn Uniswap v4 hooks"
+  description="Docs for agents and builders: what a v4 hook is, how to secure it, and how to start from OpenZeppelin’s uniswap-hooks library."
+  jsonLd={jsonLd}
+>
+  <div class="layout">
+    <main>
+      <section class="lede">
+        <h1>Learn</h1>
+        <p class="answer">
+          Short docs so agents and people can implement hooks correctly — not just find a name. Read these before you paste an excerpt into a Foundry project.
+        </p>
+      </section>
+      <div id="index">
+        {pages.map((p) => (
+          <a class="sheet" href={p.href}>
+            <h2>{p.title}</h2>
+            <p class="tagline">{p.blurb}</p>
+          </a>
+        ))}
+      </div>
+      <p class="note">
+        Machine index: <a href="/llms.txt">llms.txt</a> · full Solidity dump: <a href="/llm-full.txt">llm-full.txt</a> ·
+        catalog: <a href="/hooks.json">hooks.json</a>
+      </p>
+    </main>
+    <SponsorBoard />
+  </div>
+</Layout>

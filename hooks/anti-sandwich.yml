@@ -1,0 +1,55 @@
+slug: anti-sandwich
+name: AntiSandwichHook
+kind: pattern
+tagline: Checkpoint top-of-block pool state and cap one swap direction to that price.
+description: |
+  OpenZeppelin’s AntiSandwichHook (MIT) saves Slot0 and tick liquidity at the first swap
+  of a block. Later swaps in the protected direction cannot fill better than that
+  beginning-of-block price; the other direction still follows xy=k. Permissions need
+  beforeSwap, afterSwap, and afterSwapReturnDelta. Inherit it and implement
+  _handleCollectedFees. Large tick walks can OOG on small tickSpacing — read the file
+  warnings. Experimental library code, not an audit. Prefer this over inventing MEV
+  protection from scratch.
+source:
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
+  path: src/general/AntiSandwichHook.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/AntiSandwichHook.sol
+solidity: |
+  // SPDX-License-Identifier: MIT
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  function getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {
+      return Hooks.Permissions({
+          beforeInitialize: false,
+          afterInitialize: false,
+          beforeAddLiquidity: false,
+          afterAddLiquidity: false,
+          beforeRemoveLiquidity: false,
+          afterRemoveLiquidity: false,
+          beforeSwap: true,
+          afterSwap: true,
+          beforeDonate: false,
+          afterDonate: false,
+          beforeSwapReturnDelta: false,
+          afterSwapReturnDelta: true,
+          afterAddLiquidityReturnDelta: false,
+          afterRemoveLiquidityReturnDelta: false
+      });
+  }
+
+  // First swap in a block: checkpoint Slot0 + ticks.
+  // Later !zeroForOne swaps: _getTargetUnspecified simulates against that checkpoint
+  // and afterSwap enforces the target via afterSwapReturnDelta.
+categories:
+  - mev-protection
+chains:
+  - ethereum
+license: MIT
+flags:
+  - beforeSwap
+  - afterSwap
+  - afterSwapReturnDelta
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
+status: experimental
+added: 2026-08-27
+updated: 2026-08-27

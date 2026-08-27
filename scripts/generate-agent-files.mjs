@@ -15,7 +15,7 @@ const chains = [...new Set(hooks.flatMap((h) => h.chains))].sort();
 
 const llms = `# v4hooks
 
-> Example Uniswap v4 hook contracts and Solidity snippets for builders and agents. Not the official Uniswap hooklist address registry.
+> Example Uniswap v4 hook contracts and Solidity snippets for builders and agents.
 
 Site: ${site}
 Catalog JSON: ${site}/hooks.json
@@ -24,8 +24,11 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 
 ## Pages
 - [${site}/](${site}/): Directory home
-- [${site}/advertise](${site}/advertise): USDC bid board
+- [${site}/learn](${site}/learn): Docs hub for builders and agents
 - [${site}/learn/what-is-a-uniswap-v4-hook](${site}/learn/what-is-a-uniswap-v4-hook): Explainer
+- [${site}/learn/secure-v4-hooks](${site}/learn/secure-v4-hooks): Security checklist
+- [${site}/learn/openzeppelin-hooks](${site}/learn/openzeppelin-hooks): OpenZeppelin library guide
+- [${site}/advertise](${site}/advertise): USDC bid board
 ${cats.map((c) => `- [${site}/categories/${c}](${site}/categories/${c})`).join("\n")}
 ${chains.map((c) => `- [${site}/chains/${c}](${site}/chains/${c})`).join("\n")}
 

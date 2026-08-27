@@ -1,0 +1,128 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { SITE } from "../../lib/meta";
+
+const checklist = [
+  {
+    title: "Gate every callback and unlock path",
+    body: "Hook callbacks are external. Without onlyPoolManager (or equivalent), anyone can call them with crafted PoolKey data. Use BaseHook for entrypoints and SafeCallback for unlockCallback; add caller checks on any path those bases do not cover.",
+  },
+  {
+    title: "Allowlist pools, not just tokens",
+    body: "Pool creation is permissionless. Unless beforeInitialize restricts who can attach your hook, an attacker can create a pool with currencies they control. Bind to known PoolKey values or re-check PoolId on every user-controlled path.",
+  },
+  {
+    title: "Custom accounting can leak even when settlement passes",
+    body: "PoolManager only checks that session deltas settle to zero. It does not validate your internal balances, fee buckets, or rounding. Keep LP funds, fees, and incentives in separate buckets. For NoOp / beforeSwapReturnDelta hooks, treat the hook as a custom AMM and test conservation.",
+  },
+  {
+    title: "Put logic in the right callback",
+    body: "beforeSwap sees pre-swap state; afterSwap sees post-swap state. Fee or JIT penalties that need final results must run after the action. Wrong timing looks correct in isolation and fails in production.",
+  },
+  {
+    title: "Address bits are part of the API",
+    body: "The hook address encodes which callbacks PoolManager will call. Bit set + function missing reverts; function implemented + bit missing means silent skip; return-delta bit missing means your returned delta is treated as zero. Keep getHookPermissions in sync and validate at deploy.",
+  },
+  {
+    title: "Hook failures can brick exits",
+    body: "Callbacks share the user’s transaction. Optional reward, oracle, or cleanup code that reverts inside afterRemoveLiquidity or afterSwap can trap LPs. Keep non-essential work out of the critical path; use try/catch or a separate claim function.",
+  },
+  {
+    title: "State can change between before and after",
+    body: "One hook can serve many pools. Nested unlocks and external calls can mutate shared storage before afterSwap runs. Key temporary state by PoolId and caller, reject overlapping ops, and clear after use.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How do I secure a Uniswap v4 hook?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Use BaseHook caller checks, allowlist pools, keep accounting buckets separate, match address permission bits to implemented callbacks, keep optional logic off the exit path, and isolate state across nested callbacks.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does PoolManager settlement mean my hook accounting is correct?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No. Settlement only requires session currency deltas to resolve. Internal rounding, fee buckets, and NoOp swap accounting can still leak value while settlement succeeds.",
+      },
+    },
+    ...checklist.map((c) => ({
+      "@type": "Question",
+      name: c.title,
+      acceptedAnswer: { "@type": "Answer", text: c.body },
+    })),
+  ],
+};
+---
+<Layout
+  title="Secure Uniswap v4 hooks checklist"
+  description="Security checklist for Uniswap v4 hook builders and agents: caller checks, pool allowlists, accounting leaks, permission bits, and callback DoS. Based on public Trail of Bits guidance."
+  jsonLd={jsonLd}
+>
+  <div class="layout">
+    <article class="prose">
+      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27</p>
+      <h1>Secure Uniswap v4 hooks</h1>
+      <p class="answer">
+        PoolManager enforces pool math and end-of-session settlement. Your hook owns authorization, which pools are legitimate, how deltas and fees are accounted for, and whether external calls can brick swaps or exits.
+      </p>
+      <p>
+        Cork and Bunni-scale losses came from application and hook code, not from a broken PoolManager. Agents implementing a listing from this site should run this checklist before treating an excerpt as production-ready.
+      </p>
+
+      <h2>Builder checklist</h2>
+      <ol>
+        {checklist.map((c) => (
+          <li>
+            <strong>{c.title}.</strong> {c.body}
+          </li>
+        ))}
+      </ol>
+
+      <h2>Quick fuzz targets</h2>
+      <ul>
+        <li>Direct calls to every external callback with a malicious <code>PoolKey</code>.</li>
+        <li>Fee extremes, NoOp / return-delta paths, and same-tx round trips that should not mint value.</li>
+        <li>Nested swaps across multiple pools that share the hook.</li>
+        <li>Fee-on-transfer, rebasing, and callback tokens if you claim to support them.</li>
+        <li>Oracle / reward failure during <code>afterRemoveLiquidity</code> — exits must still work.</li>
+      </ul>
+
+      <h2>Start from known-good bases</h2>
+      <p>
+        Prefer <a href="/hooks/base-hook">OpenZeppelin BaseHook</a> (or Uniswap’s BaseHook) so <code>onlyPoolManager</code> and permission validation are not reinvented. See <a href="/learn/openzeppelin-hooks">Build with OpenZeppelin hooks</a> for modular fee and MEV patterns.
+      </p>
+
+      <h2>Sources</h2>
+      <p>
+        This page summarizes public guidance for agents and SEO; read the originals for full examples and audit questions:
+      </p>
+      <ul>
+        <li>
+          <a href="https://blog.trailofbits.com/2026/07/30/building-secure-uniswap-v4-hooks/">Trail of Bits — Building secure Uniswap v4 hooks</a>
+        </li>
+        <li>
+          <a href="https://hacken.io/discover/auditing-uniswap-v4-hooks/">Hacken — Auditing Uniswap v4 hooks</a>
+        </li>
+        <li>
+          <a href="https://github.com/OpenZeppelin/uniswap-hooks">OpenZeppelin/uniswap-hooks</a>
+        </li>
+        <li>
+          <a href="https://docs.uniswap.org/contracts/v4/concepts/hooks">Uniswap docs — Hooks</a>
+        </li>
+      </ul>
+      <p class="note">
+        v4hooks is not an auditor. A listing here is not a security review. For the full catalog see <a href={SITE.url}>{SITE.url}</a>.
+      </p>
+    </article>
+    <SponsorBoard />
+  </div>
+</Layout>

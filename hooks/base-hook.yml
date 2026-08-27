@@ -1,35 +1,39 @@
 slug: base-hook
 name: BaseHook
 kind: pattern
-tagline: Inherit this, declare permissions, override only the callbacks you actually implement.
+tagline: Inherit this, declare permissions, gate callbacks with onlyPoolManager.
 description: |
-  Every custom Uniswap v4 hook should start from BaseHook. PoolManager only calls the
-  functions whose bits are set in the hook address. BaseHook stores the PoolManager,
-  checks msg.sender, and routes each IHooks entrypoint to an internal _callback that
-  reverts with HookNotImplemented until you override it. getHookPermissions must match
-  those overrides or the constructor’s validateHookAddress fails. Copy this pattern,
-  flip the permission bits you need, and implement the matching _beforeSwap (or other)
-  function. This is the Uniswap v4-hooks-public MIT file, not a full AMM. Listing is
-  not an audit. Confirm the import path against the v4-periphery version you compile.
+  Start every custom Uniswap v4 hook from OpenZeppelin’s BaseHook (MIT). PoolManager
+  only calls functions whose bits are set in the hook address. BaseHook stores the
+  PoolManager, reverts NotPoolManager unless msg.sender is that singleton, and routes
+  each IHooks entrypoint to an internal _callback that reverts HookNotImplemented until
+  you override it. getHookPermissions must match those overrides or constructor
+  validation fails. Flip the bits you need, implement the matching _beforeSwap (or other)
+  function, and keep return-delta flags in sync. Listing is not an audit. The library is
+  experimental — still run the secure-hooks checklist before you ship.
 source:
-  repo: https://github.com/Uniswap/v4-hooks-public
+  repo: https://github.com/OpenZeppelin/uniswap-hooks
   path: src/base/BaseHook.sol
-  url: https://github.com/Uniswap/v4-hooks-public/blob/main/src/base/BaseHook.sol
+  url: https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/base/BaseHook.sol
 solidity: |
   // SPDX-License-Identifier: MIT
-  // Excerpt: constructor + swap dispatch. Full file: source.url
-  abstract contract BaseHook is IHooks, ImmutableState {
+  // OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url
+  abstract contract BaseHook is IHooks {
+      IPoolManager public immutable poolManager;
       error HookNotImplemented();
+      error NotPoolManager();
 
-      constructor(IPoolManager _manager) ImmutableState(_manager) {
-          validateHookAddress(this);
+      constructor(IPoolManager _poolManager) {
+          poolManager = _poolManager;
+          _validateHookAddress(this);
       }
 
-      function getHookPermissions() public pure virtual returns (Hooks.Permissions memory);
-
-      function validateHookAddress(BaseHook _this) internal pure virtual {
-          Hooks.validateHookPermissions(_this, getHookPermissions());
+      modifier onlyPoolManager() {
+          if (msg.sender != address(poolManager)) revert NotPoolManager();
+          _;
       }
+
+      function getHookPermissions() public pure virtual returns (Hooks.Permissions memory permissions);
 
       function beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)
           external
@@ -54,7 +58,8 @@ chains:
 license: MIT
 flags:
   - beforeSwap
-docs: https://docs.uniswap.org/contracts/v4/concepts/hooks
+docs: https://github.com/OpenZeppelin/uniswap-hooks
+website: https://v4hooks.com/learn/openzeppelin-hooks
 status: experimental
 added: 2026-08-27
 updated: 2026-08-27

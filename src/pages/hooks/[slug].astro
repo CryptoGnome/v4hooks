@@ -86,7 +86,7 @@ const jsonLd = {
       {hook.deployments?.length ? (
         <>
           <h2>Known deployments</h2>
-          <p>v4hooks is not the address book. Prefer <a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a> for bytecode-at-address.</p>
+          <p>Verify bytecode yourself before routing. Addresses here are optional hints, not a guarantee.</p>
           <table>
             <thead><tr><th>Chain</th><th>Address</th></tr></thead>
             <tbody>
@@ -102,7 +102,7 @@ const jsonLd = {
       ) : null}
       <h2>FAQ</h2>
       <p><strong>Can I paste this into production?</strong> The snippet is an excerpt. Use the full file at the source URL, match flags to the address, and treat this page as a map, not a guarantee.</p>
-      <p><strong>Is this Uniswap hooklist?</strong> No. Hooklist is bytecode at an address. This page is how the hook is written.</p>
+      <p><strong>How do I build this safely?</strong> Start with <a href="/learn/secure-v4-hooks">secure v4 hooks</a> and the <a href="/learn/openzeppelin-hooks">OpenZeppelin hooks</a> guide.</p>
     </article>
     <SponsorBoard />
   </div>

@@ -19,10 +19,10 @@ const jsonLd = {
     },
     {
       "@type": "Question",
-      name: "Is v4hooks the official Uniswap registry?",
+      name: "Where should I start building a v4 hook?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No. Uniswap/hooklist is the official on-chain deployment registry. v4hooks is a directory of example hook contracts and Solidity snippets for builders and agents.",
+        text: "Start from OpenZeppelin BaseHook or Uniswap BaseHook so onlyPoolManager and permission validation are in place, then match getHookPermissions to the callbacks you implement.",
       },
     },
   ],
@@ -30,12 +30,12 @@ const jsonLd = {
 ---
 <Layout
   title="What is a Uniswap v4 hook?"
-  description="A Uniswap v4 hook is a contract attached to a pool that runs at defined points in swap and liquidity lifecycle. How flags, addresses, and directories differ."
+  description="A Uniswap v4 hook is a contract attached to a pool that runs at defined points in swap and liquidity lifecycle. How flags, addresses, and callbacks work."
   jsonLd={jsonLd}
 >
   <div class="layout">
     <article class="prose">
-      <p class="note">Last updated 2026-08-27 · {count} listings on v4hooks</p>
+      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27 · {count} listings</p>
       <h1>What is a Uniswap v4 hook?</h1>
       <p class="answer">
         A Uniswap v4 hook is an external smart contract attached to a liquidity pool. It can run custom logic before or after pool actions — initialize, swap, add or remove liquidity, and donate — so a pool can charge dynamic fees, fill limit orders, or launch a token without forking the AMM.
@@ -47,28 +47,22 @@ const jsonLd = {
       <p>
         before/after initialize, add liquidity, remove liquidity, swap, donate, plus return-delta variants on swap and liquidity. If the bit is off, PoolManager skips that callback. Always verify the deployed address matches the flags you think you are calling.
       </p>
-      <h2>Directory vs registry</h2>
-      <table>
-        <thead>
-          <tr><th>Surface</th><th>Job</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><a href="https://github.com/Uniswap/hooklist">Uniswap/hooklist</a></td><td>Canonical address + flags per chain</td></tr>
-          <tr><td><a href="https://hookrank.io/">HookRank</a></td><td>Analytics and ranking</td></tr>
-          <tr><td><a href="https://hookatlas.com/">Hook Atlas</a></td><td>Builder inspiration</td></tr>
-          <tr><td><a href={SITE.url}>v4hooks</a></td><td>Example contracts and Solidity snippets to implement hooks</td></tr>
-        </tbody>
-      </table>
-      <h2>How to pick a hook</h2>
+      <h2>How to pick a pattern</h2>
       <ol>
-        <li>Match the job (TWAMM, limit order, oracle, launchpad).</li>
+        <li>Match the job (TWAMM, limit order, oracle, launchpad, MEV).</li>
         <li>Read the Solidity excerpt and the full file at the source URL.</li>
         <li>Match <code>getHookPermissions</code> to the bits in the deployed address.</li>
-        <li>Listing here is not an audit. Confirm bytecode on hooklist before you route.</li>
+        <li>Run the <a href="/learn/secure-v4-hooks">security checklist</a> before you treat it as production-ready.</li>
       </ol>
+      <h2>Next</h2>
+      <ul>
+        <li><a href="/learn/openzeppelin-hooks">Build with OpenZeppelin hooks</a></li>
+        <li><a href="/learn/secure-v4-hooks">Secure v4 hooks checklist</a></li>
+        <li><a href="/">Browse the catalog</a></li>
+      </ul>
       <h2>For agents</h2>
       <p>
-        Start at <a href="/llms.txt">/llms.txt</a>, dump <a href="/llm-full.txt">/llm-full.txt</a>, or fetch <a href="/hooks.json">/hooks.json</a>. Contribute with a YAML file and a pull request; see CONTRIBUTING.md.
+        Start at <a href="/llms.txt">/llms.txt</a>, dump <a href="/llm-full.txt">/llm-full.txt</a>, or fetch <a href="/hooks.json">/hooks.json</a>. Contribute with a YAML file and a pull request.
       </p>
     </article>
     <SponsorBoard />

@@ -1,6 +1,6 @@
 # v4hooks
 
-> Example Uniswap v4 hook contracts and Solidity snippets for builders and agents. Not the official Uniswap hooklist address registry.
+> Example Uniswap v4 hook contracts and Solidity snippets for builders and agents.
 
 Site: https://v4hooks.com
 Catalog JSON: https://v4hooks.com/hooks.json
@@ -9,8 +9,11 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 
 ## Pages
 - [https://v4hooks.com/](https://v4hooks.com/): Directory home
-- [https://v4hooks.com/advertise](https://v4hooks.com/advertise): USDC bid board
+- [https://v4hooks.com/learn](https://v4hooks.com/learn): Docs hub for builders and agents
 - [https://v4hooks.com/learn/what-is-a-uniswap-v4-hook](https://v4hooks.com/learn/what-is-a-uniswap-v4-hook): Explainer
+- [https://v4hooks.com/learn/secure-v4-hooks](https://v4hooks.com/learn/secure-v4-hooks): Security checklist
+- [https://v4hooks.com/learn/openzeppelin-hooks](https://v4hooks.com/learn/openzeppelin-hooks): OpenZeppelin library guide
+- [https://v4hooks.com/advertise](https://v4hooks.com/advertise): USDC bid board
 - [https://v4hooks.com/categories/compliance](https://v4hooks.com/categories/compliance)
 - [https://v4hooks.com/categories/creator-economy](https://v4hooks.com/categories/creator-economy)
 - [https://v4hooks.com/categories/dynamic-fees](https://v4hooks.com/categories/dynamic-fees)
@@ -28,7 +31,8 @@ Contribute: https://github.com/CryptoGnome/v4hooks (see CONTRIBUTING.md)
 - [https://v4hooks.com/chains/ethereum](https://v4hooks.com/chains/ethereum)
 
 ## Hooks
-- [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, override only the callbacks you actually implement.
+- [AntiSandwichHook](https://v4hooks.com/hooks/anti-sandwich) (pattern): Checkpoint top-of-block pool state and cap one swap direction to that price.
+- [BaseHook](https://v4hooks.com/hooks/base-hook) (pattern): Inherit this, declare permissions, gate callbacks with onlyPoolManager.
 - [Clanker](https://v4hooks.com/hooks/clanker) (product): Dynamic-fee launch hook: beforeSwap sets fee, claims, runs an MEV module, then takes protocol delta.
 - [EulerSwap](https://v4hooks.com/hooks/eulerswap) (product): Custom curve via beforeSwapReturnDelta: take input to Euler vaults, pay output, skip CLAMM math.
 - [Flaunch](https://v4hooks.com/hooks/flaunch) (product): PositionManager hook: beforeSwap runs the internal swap pool; afterSwap distributes creator fees.

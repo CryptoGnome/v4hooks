@@ -1,18 +1,48 @@
 {
-  "generated": "2026-08-27T11:52:47.596Z",
+  "generated": "2026-08-27T12:03:12.985Z",
   "hooks": [
+    {
+      "slug": "anti-sandwich",
+      "name": "AntiSandwichHook",
+      "kind": "pattern",
+      "tagline": "Checkpoint top-of-block pool state and cap one swap direction to that price.",
+      "description": "OpenZeppelin’s AntiSandwichHook (MIT) saves Slot0 and tick liquidity at the first swap\nof a block. Later swaps in the protected direction cannot fill better than that\nbeginning-of-block price; the other direction still follows xy=k. Permissions need\nbeforeSwap, afterSwap, and afterSwapReturnDelta. Inherit it and implement\n_handleCollectedFees. Large tick walks can OOG on small tickSpacing — read the file\nwarnings. Experimental library code, not an audit. Prefer this over inventing MEV\nprotection from scratch.\n",
+      "source": {
+        "repo": "https://github.com/OpenZeppelin/uniswap-hooks",
+        "path": "src/general/AntiSandwichHook.sol",
+        "url": "https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/general/AntiSandwichHook.sol"
+      },
+      "solidity": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url\nfunction getHookPermissions() public pure virtual override returns (Hooks.Permissions memory permissions) {\n    return Hooks.Permissions({\n        beforeInitialize: false,\n        afterInitialize: false,\n        beforeAddLiquidity: false,\n        afterAddLiquidity: false,\n        beforeRemoveLiquidity: false,\n        afterRemoveLiquidity: false,\n        beforeSwap: true,\n        afterSwap: true,\n        beforeDonate: false,\n        afterDonate: false,\n        beforeSwapReturnDelta: false,\n        afterSwapReturnDelta: true,\n        afterAddLiquidityReturnDelta: false,\n        afterRemoveLiquidityReturnDelta: false\n    });\n}\n\n// First swap in a block: checkpoint Slot0 + ticks.\n// Later !zeroForOne swaps: _getTargetUnspecified simulates against that checkpoint\n// and afterSwap enforces the target via afterSwapReturnDelta.\n",
+      "categories": [
+        "mev-protection"
+      ],
+      "chains": [
+        "ethereum"
+      ],
+      "license": "MIT",
+      "flags": [
+        "beforeSwap",
+        "afterSwap",
+        "afterSwapReturnDelta"
+      ],
+      "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
+      "website": "https://v4hooks.com/learn/openzeppelin-hooks",
+      "status": "experimental",
+      "added": "2026-08-27",
+      "updated": "2026-08-27"
+    },
     {
       "slug": "base-hook",
       "name": "BaseHook",
       "kind": "pattern",
-      "tagline": "Inherit this, declare permissions, override only the callbacks you actually implement.",
-      "description": "Every custom Uniswap v4 hook should start from BaseHook. PoolManager only calls the\nfunctions whose bits are set in the hook address. BaseHook stores the PoolManager,\nchecks msg.sender, and routes each IHooks entrypoint to an internal _callback that\nreverts with HookNotImplemented until you override it. getHookPermissions must match\nthose overrides or the constructor’s validateHookAddress fails. Copy this pattern,\nflip the permission bits you need, and implement the matching _beforeSwap (or other)\nfunction. This is the Uniswap v4-hooks-public MIT file, not a full AMM. Listing is\nnot an audit. Confirm the import path against the v4-periphery version you compile.\n",
+      "tagline": "Inherit this, declare permissions, gate callbacks with onlyPoolManager.",
+      "description": "Start every custom Uniswap v4 hook from OpenZeppelin’s BaseHook (MIT). PoolManager\nonly calls functions whose bits are set in the hook address. BaseHook stores the\nPoolManager, reverts NotPoolManager unless msg.sender is that singleton, and routes\neach IHooks entrypoint to an internal _callback that reverts HookNotImplemented until\nyou override it. getHookPermissions must match those overrides or constructor\nvalidation fails. Flip the bits you need, implement the matching _beforeSwap (or other)\nfunction, and keep return-delta flags in sync. Listing is not an audit. The library is\nexperimental — still run the secure-hooks checklist before you ship.\n",
       "source": {
-        "repo": "https://github.com/Uniswap/v4-hooks-public",
+        "repo": "https://github.com/OpenZeppelin/uniswap-hooks",
         "path": "src/base/BaseHook.sol",
-        "url": "https://github.com/Uniswap/v4-hooks-public/blob/main/src/base/BaseHook.sol"
+        "url": "https://github.com/OpenZeppelin/uniswap-hooks/blob/master/src/base/BaseHook.sol"
       },
-      "solidity": "// SPDX-License-Identifier: MIT\n// Excerpt: constructor + swap dispatch. Full file: source.url\nabstract contract BaseHook is IHooks, ImmutableState {\n    error HookNotImplemented();\n\n    constructor(IPoolManager _manager) ImmutableState(_manager) {\n        validateHookAddress(this);\n    }\n\n    function getHookPermissions() public pure virtual returns (Hooks.Permissions memory);\n\n    function validateHookAddress(BaseHook _this) internal pure virtual {\n        Hooks.validateHookPermissions(_this, getHookPermissions());\n    }\n\n    function beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)\n        external\n        onlyPoolManager\n        returns (bytes4, BeforeSwapDelta, uint24)\n    {\n        return _beforeSwap(sender, key, params, hookData);\n    }\n\n    function _beforeSwap(address, PoolKey calldata, SwapParams calldata, bytes calldata)\n        internal\n        virtual\n        returns (bytes4, BeforeSwapDelta, uint24)\n    {\n        revert HookNotImplemented();\n    }\n}\n",
+      "solidity": "// SPDX-License-Identifier: MIT\n// OpenZeppelin Uniswap Hooks — excerpt. Full file: source.url\nabstract contract BaseHook is IHooks {\n    IPoolManager public immutable poolManager;\n    error HookNotImplemented();\n    error NotPoolManager();\n\n    constructor(IPoolManager _poolManager) {\n        poolManager = _poolManager;\n        _validateHookAddress(this);\n    }\n\n    modifier onlyPoolManager() {\n        if (msg.sender != address(poolManager)) revert NotPoolManager();\n        _;\n    }\n\n    function getHookPermissions() public pure virtual returns (Hooks.Permissions memory permissions);\n\n    function beforeSwap(address sender, PoolKey calldata key, SwapParams calldata params, bytes calldata hookData)\n        external\n        onlyPoolManager\n        returns (bytes4, BeforeSwapDelta, uint24)\n    {\n        return _beforeSwap(sender, key, params, hookData);\n    }\n\n    function _beforeSwap(address, PoolKey calldata, SwapParams calldata, bytes calldata)\n        internal\n        virtual\n        returns (bytes4, BeforeSwapDelta, uint24)\n    {\n        revert HookNotImplemented();\n    }\n}\n",
       "categories": [
         "wrappers"
       ],
@@ -23,7 +53,8 @@
       "flags": [
         "beforeSwap"
       ],
-      "docs": "https://docs.uniswap.org/contracts/v4/concepts/hooks",
+      "docs": "https://github.com/OpenZeppelin/uniswap-hooks",
+      "website": "https://v4hooks.com/learn/openzeppelin-hooks",
       "status": "experimental",
       "added": "2026-08-27",
       "updated": "2026-08-27"

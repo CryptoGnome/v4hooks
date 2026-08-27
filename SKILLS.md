@@ -5,14 +5,15 @@ description: Find Uniswap v4 hook example contracts and Solidity snippets by job
 
 # Find a Uniswap v4 hook to build
 
-v4hooks.com is example contracts + Solidity excerpts. Uniswap/hooklist is the address registry. Do not mix them up.
+v4hooks.com is example contracts + Solidity excerpts for builders and agents.
 
 ## Quick start
 
 1. Fetch https://v4hooks.com/llms.txt for the index.
 2. Fetch https://v4hooks.com/hooks.json for machine data (includes `solidity` and `source`).
 3. For a full dump with code, fetch https://v4hooks.com/llm-full.txt.
-4. Open https://v4hooks.com/hooks/{slug} for the human page.
+4. Read https://v4hooks.com/learn/secure-v4-hooks and https://v4hooks.com/learn/openzeppelin-hooks before shipping.
+5. Open https://v4hooks.com/hooks/{slug} for the human page.
 
 ## Match the job
 

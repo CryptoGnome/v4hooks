@@ -42,6 +42,12 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <script
+      is:inline
+      defer
+      src="https://cloud.umami.is/script.js"
+      data-website-id="274a9ebe-9109-4317-a3f7-745792cdae93"
+    ></script>
   </head>
   <body>
     <div class="wrap">
@@ -53,7 +59,7 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
         <div class="mast-end">
           <nav>
             <a href="/" aria-current={path === "/" ? "page" : undefined}>Index</a>
-            <a href="/learn/what-is-a-uniswap-v4-hook" aria-current={path.startsWith("/learn") ? "page" : undefined}>Learn</a>
+            <a href="/learn" aria-current={path.startsWith("/learn") ? "page" : undefined}>Learn</a>
             <a href="/advertise" aria-current={path === "/advertise" ? "page" : undefined}>Advertise</a>
             <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a>
           </nav>
@@ -62,7 +68,8 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
       </header>
       <slot />
       <footer class="foot">
-        Listing is not an audit. Excerpts are not the full contract. Address truth lives on Uniswap hooklist. ·
+        Listing is not an audit. Excerpts are not the full contract. ·
+        <a href="/learn">Learn</a> ·
         <a href="/llms.txt">llms.txt</a> ·
         <a href="/hooks.json">hooks.json</a>
       </footer>

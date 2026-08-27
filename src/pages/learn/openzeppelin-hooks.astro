@@ -1,0 +1,113 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import SponsorBoard from "../../components/SponsorBoard.astro";
+import { SITE } from "../../lib/meta";
+
+const modules = [
+  { path: "src/base/", job: "BaseHook, BaseCustomAccounting, BaseCustomCurve, BaseAsyncSwap" },
+  { path: "src/fee/", job: "Dynamic fee / after-fee building blocks" },
+  { path: "src/general/", job: "AntiSandwichHook, LimitOrderHook, LiquidityPenaltyHook, ReHypothecationHook" },
+  { path: "src/oracles/", job: "Oracle-oriented hooks" },
+  { path: "src/utils/", job: "CurrencySettler and helpers" },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: "Build Uniswap v4 hooks with OpenZeppelin",
+  description:
+    "How agents and builders install OpenZeppelin uniswap-hooks, inherit BaseHook, and use modular fee and general hook contracts.",
+  url: `${SITE.url}/learn/openzeppelin-hooks`,
+  author: { "@type": "Organization", name: "v4hooks" },
+  about: {
+    "@type": "SoftwareSourceCode",
+    name: "OpenZeppelin Uniswap Hooks",
+    codeRepository: "https://github.com/OpenZeppelin/uniswap-hooks",
+    programmingLanguage: "Solidity",
+  },
+};
+---
+<Layout
+  title="Build with OpenZeppelin Uniswap hooks"
+  description="Install OpenZeppelin’s uniswap-hooks library, inherit BaseHook with onlyPoolManager, and start from AntiSandwich, LimitOrder, and other modular contracts."
+  jsonLd={jsonLd}
+>
+  <div class="layout">
+    <article class="prose">
+      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27</p>
+      <h1>Build with OpenZeppelin hooks</h1>
+      <p class="answer">
+        <a href="https://github.com/OpenZeppelin/uniswap-hooks">OpenZeppelin/uniswap-hooks</a> is an MIT Solidity library for secure, modular Uniswap v4 hooks. Prefer it (or Uniswap’s BaseHook) over a blank contract so caller checks and permission validation are already there.
+      </p>
+      <p>
+        The library is experimental and not a substitute for an audit. Use it as the correct starting shape — then read <a href="/learn/secure-v4-hooks">secure v4 hooks</a> before you ship.
+      </p>
+
+      <h2>Install (Foundry)</h2>
+      <pre class="sol"><code>{`forge install OpenZeppelin/uniswap-hooks
+
+# remappings.txt
+@openzeppelin/uniswap-hooks/=lib/uniswap-hooks/src/`}</code></pre>
+      <p>
+        Hardhat is not currently supported upstream because v4 core/periphery are not published as npm packages.
+      </p>
+
+      <h2>What to inherit</h2>
+      <table>
+        <thead>
+          <tr><th>Path</th><th>Use for</th></tr>
+        </thead>
+        <tbody>
+          {modules.map((m) => (
+            <tr>
+              <td><code>{m.path}</code></td>
+              <td>{m.job}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>Minimal BaseHook pattern</h2>
+      <p>
+        External callbacks are gated with <code>onlyPoolManager</code>. You implement <code>getHookPermissions</code> and the matching <code>_beforeSwap</code> / <code>_afterSwap</code> internals. Full excerpt on the <a href="/hooks/base-hook">BaseHook cut sheet</a>.
+      </p>
+      <pre class="sol"><code>{`modifier onlyPoolManager() {
+    if (msg.sender != address(poolManager)) revert NotPoolManager();
+    _;
+}
+
+function beforeSwap(...) external onlyPoolManager returns (bytes4, BeforeSwapDelta, uint24) {
+    return _beforeSwap(...);
+}`}</code></pre>
+
+      <h2>Ready-made patterns in the library</h2>
+      <ul>
+        <li>
+          <a href="/hooks/anti-sandwich">AntiSandwichHook</a> — top-of-block price checkpoint; resists sandwiching on one swap direction.
+        </li>
+        <li>
+          <code>LimitOrderHook</code> — production-shaped limit orders (see the OZ repo; compare with Uniswap’s example <a href="/hooks/limit-order">limit-order</a>).
+        </li>
+        <li>
+          <code>LiquidityPenaltyHook</code>, <code>ReHypothecationHook</code>, <code>BaseCustomCurve</code> — study before inventing LP or NoOp-swap accounting.
+        </li>
+      </ul>
+
+      <h2>Agent workflow</h2>
+      <ol>
+        <li>Match the job on <a href="/">v4hooks</a> and open the cut sheet.</li>
+        <li>If the pattern is “start from a base,” use OpenZeppelin BaseHook, not a blank IHooks.</li>
+        <li>Copy the full file from the listing’s <code>source.url</code>, not only the excerpt.</li>
+        <li>Run the <a href="/learn/secure-v4-hooks">security checklist</a> before deploy.</li>
+      </ol>
+
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://github.com/OpenZeppelin/uniswap-hooks">github.com/OpenZeppelin/uniswap-hooks</a></li>
+        <li><a href="https://docs.uniswap.org/contracts/v4/concepts/hooks">Uniswap hooks docs</a></li>
+        <li><a href="https://blog.trailofbits.com/2026/07/30/building-secure-uniswap-v4-hooks/">Trail of Bits secure hooks</a></li>
+      </ul>
+    </article>
+    <SponsorBoard />
+  </div>
+</Layout>

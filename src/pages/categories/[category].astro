@@ -22,7 +22,7 @@ const hooks = hooksForCategory(category.slug);
     <main>
       <section class="lede">
         <h1>{category.name} Uniswap v4 hooks</h1>
-        <p class="answer">{category.blurb} These are example contracts and snippets, not Uniswap’s hooklist.</p>
+        <p class="answer">{category.blurb} Licensed Solidity excerpts with a link to the full source file.</p>
       </section>
       {hooks.map((hook) => <CutSheet hook={hook} />)}
     </main>
