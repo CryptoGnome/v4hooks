@@ -46,8 +46,8 @@
       "additionalProperties": false,
       "required": ["url", "repo"],
       "properties": {
-        "url": { "type": "string", "format": "uri", "description": "Permalink to the Solidity file." },
-        "repo": { "type": "string", "format": "uri" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https://", "description": "Permalink to the Solidity file." },
+        "repo": { "type": "string", "format": "uri", "pattern": "^https://" },
         "path": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
@@ -101,9 +101,9 @@
         }
       }
     },
-    "docs": { "type": "string", "format": "uri" },
-    "website": { "type": "string", "format": "uri" },
-    "audit_url": { "type": "string", "format": "uri" },
+    "docs": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "website": { "type": "string", "format": "uri", "pattern": "^https://" },
+    "audit_url": { "type": "string", "format": "uri", "pattern": "^https://" },
     "license": { "type": "string", "minLength": 1, "maxLength": 40 },
     "flags": {
       "type": "array",
