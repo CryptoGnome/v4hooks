@@ -1,5 +1,6 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import SolidityExcerpt from "../../components/SolidityExcerpt.astro";
 import SponsorBoard from "../../components/SponsorBoard.astro";
 import { SITE } from "../../lib/meta";
 
@@ -45,10 +46,10 @@ const jsonLd = {
       </p>
 
       <h2>Install (Foundry)</h2>
-      <pre class="sol"><code>{`forge install OpenZeppelin/uniswap-hooks
+      <SolidityExcerpt lang="bash" code={`forge install OpenZeppelin/uniswap-hooks
 
 # remappings.txt
-@openzeppelin/uniswap-hooks/=lib/uniswap-hooks/src/`}</code></pre>
+@openzeppelin/uniswap-hooks/=lib/uniswap-hooks/src/`} />
       <p>
         Hardhat is not currently supported upstream because v4 core/periphery are not published as npm packages.
       </p>
@@ -72,14 +73,14 @@ const jsonLd = {
       <p>
         External callbacks are gated with <code>onlyPoolManager</code>. You implement <code>getHookPermissions</code> and the matching <code>_beforeSwap</code> / <code>_afterSwap</code> internals. Full excerpt on the <a href="/hooks/base-hook">BaseHook cut sheet</a>.
       </p>
-      <pre class="sol"><code>{`modifier onlyPoolManager() {
+      <SolidityExcerpt code={`modifier onlyPoolManager() {
     if (msg.sender != address(poolManager)) revert NotPoolManager();
     _;
 }
 
 function beforeSwap(...) external onlyPoolManager returns (bytes4, BeforeSwapDelta, uint24) {
     return _beforeSwap(...);
-}`}</code></pre>
+}`} />
 
       <h2>Ready-made patterns in the library</h2>
       <ul>

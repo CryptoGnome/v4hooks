@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { SITE } from "../lib/meta";
+import { usedCategories } from "../lib/catalog";
 
 type Props = {
   title: string;
@@ -14,6 +15,7 @@ const url = canonical ?? new URL(Astro.url.pathname === "/" ? "/" : Astro.url.pa
 const fullTitle = title.includes("v4hooks") ? title : `${title} · v4hooks`;
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
 const og = `${SITE.url}/og.png`;
+const footCategories = usedCategories();
 ---
 <!doctype html>
 <html lang="en">
@@ -45,7 +47,7 @@ const og = `${SITE.url}/og.png`;
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
     <script
       is:inline
@@ -76,11 +78,34 @@ const og = `${SITE.url}/og.png`;
         <slot />
       </div>
       <footer class="foot">
-        Listing is not an audit. Excerpts are not the full contract. ·
-        <a href="https://github.com/CryptoGnome/v4hooks/blob/main/CONTRIBUTING.md">Contribute</a> ·
-        <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a> ·
-        <a href="/advertise">Advertise</a> ·
-        <a href="/llms.txt">llms.txt</a>
+        <div>
+          <a class="foot-brand" href="/">V4HOOKS</a>
+          <p>Listing is not an audit. Excerpts are not the full contract.</p>
+          <p>
+            <a href="https://github.com/CryptoGnome/v4hooks/blob/main/CONTRIBUTING.md">Contribute</a> ·
+            <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a>
+          </p>
+        </div>
+        <nav aria-label="Browse by category">
+          <p class="foot-h">Browse</p>
+          <ul class="foot-cats">
+            {footCategories.map((c) => (
+              <li><a href={`/categories/${c.slug}`}>{c.name}</a></li>
+            ))}
+          </ul>
+        </nav>
+        <nav aria-label="Site">
+          <p class="foot-h">Site</p>
+          <ul>
+            <li><a href="/learn/what-is-a-uniswap-v4-hook">What is a hook</a></li>
+            <li><a href="/learn/secure-v4-hooks">Secure hooks</a></li>
+            <li><a href="/learn/openzeppelin-hooks">OpenZeppelin hooks</a></li>
+            <li><a href="/learn/resources">Resources</a></li>
+            <li><a href="/advertise">Advertise</a></li>
+            <li><a href="/llms.txt">llms.txt</a></li>
+            <li><a href="/hooks.json">hooks.json</a></li>
+          </ul>
+        </nav>
       </footer>
     </div>
     <script>

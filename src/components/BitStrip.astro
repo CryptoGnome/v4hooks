@@ -12,11 +12,20 @@ const on = new Set(active);
 function cap(flag: string) {
   return flag.startsWith("before") ? "b" : "a";
 }
+
+const lit = FLAG_ORDER.filter((f) => on.has(f));
+const stripLabel = lit.length
+  ? `Permission bits: ${lit.join(", ")}`
+  : "No permission bits set";
 ---
 {variant === "strip" ? (
-  <div class="bits" title="Hook permission bits">
-    {FLAG_ORDER.map((flag) => (
-      <span class:list={["bit", on.has(flag) && "on"]} title={flag}></span>
+  <div class="bits grouped" role="img" aria-label={stripLabel}>
+    {BIT_GROUPS.map((group) => (
+      <span class="bit-run">
+        {group.flags.map((flag) => (
+          <span class:list={["bit", on.has(flag) && "on"]} title={flag}></span>
+        ))}
+      </span>
     ))}
   </div>
 ) : (

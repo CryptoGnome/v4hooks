@@ -6,7 +6,12 @@ import { CATEGORIES, CHAINS, PROPERTIES } from "./meta";
 
 const DIR = path.join(process.cwd(), "hooks");
 
+// Every page renders the footer, which needs the catalog; without this the whole
+// hooks/ directory is re-read from disk on each of the ~32 static routes.
+let cache: Hook[] | null = null;
+
 export function loadHooks(): Hook[] {
+  if (cache) return cache;
   if (!fs.existsSync(DIR)) return [];
   const files = fs.readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f) && !f.startsWith("_"));
   const hooks = files.map((file) => {
@@ -15,7 +20,8 @@ export function loadHooks(): Hook[] {
     if (!data?.slug) throw new Error(`${file} is missing slug`);
     return data;
   });
-  return hooks.sort((a, b) => a.name.localeCompare(b.name));
+  cache = hooks.sort((a, b) => a.name.localeCompare(b.name));
+  return cache;
 }
 
 export function getHook(slug: string) {

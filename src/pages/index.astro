@@ -82,6 +82,7 @@ const jsonLd = {
           </select>
         </label>
       </div>
+      <div class="chips" id="chips"></div>
       <BitLegend />
       <section class="kind-block" data-kind="pattern">
         <h2 class="kind-head">Patterns</h2>
@@ -118,6 +119,7 @@ const jsonLd = {
   const rows = [...document.querySelectorAll(".row")];
   const empty = document.getElementById("empty");
   const shown = document.getElementById("shown");
+  const chips = document.getElementById("chips");
   const blocks = [...document.querySelectorAll(".kind-block")];
 
   const params = new URLSearchParams(location.search);
@@ -156,7 +158,44 @@ const jsonLd = {
     for (const block of blocks) {
       block.hidden = ![...block.querySelectorAll(".row")].some((r) => !r.hidden);
     }
+    renderChips();
     syncUrl();
+  }
+
+  function selectedLabel(el) {
+    return el.selectedOptions[0]?.textContent?.trim() ?? el.value;
+  }
+
+  function renderChips() {
+    if (!chips) return;
+    chips.textContent = "";
+    const active = [];
+    if (q.value.trim()) active.push(["Search", q.value.trim(), () => { q.value = ""; }]);
+    if (chain.value) active.push(["Chain", selectedLabel(chain), () => { chain.value = ""; }]);
+    if (cat.value) active.push(["Category", selectedLabel(cat), () => { cat.value = ""; }]);
+    if (prop.value) active.push(["Property", selectedLabel(prop), () => { prop.value = ""; }]);
+
+    for (const [label, value, clear] of active) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chip";
+      chip.textContent = `${label}: ${value}`;
+      chip.setAttribute("aria-label", `Clear ${label.toLowerCase()} filter`);
+      chip.addEventListener("click", () => { clear(); apply(); });
+      chips.append(chip);
+    }
+
+    if (active.length > 1) {
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "chip clear";
+      all.textContent = "Clear all";
+      all.addEventListener("click", () => {
+        for (const [, , clear] of active) clear();
+        apply();
+      });
+      chips.append(all);
+    }
   }
 
   q.addEventListener("input", apply);

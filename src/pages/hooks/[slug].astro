@@ -73,15 +73,15 @@ const jsonLd = {
       </p>
       <SolidityExcerpt code={hook.solidity.trim()} />
       <h2>Spec</h2>
-      <table>
+      <table class="spec">
         <tbody>
           <tr><th>Kind</th><td>{hook.kind}</td></tr>
           <tr><th>Status</th><td>{hook.status}</td></tr>
           <tr><th>License</th><td>{hook.license}</td></tr>
           <tr><th>Source</th><td><a href={hook.source.url}>{hook.source.repo}</a></td></tr>
-          <tr><th>Categories</th><td>{hook.categories.map((c) => <a href={`/categories/${c}`}>{categoryBySlug(c)?.name}</a>)}</td></tr>
-          <tr><th>Properties</th><td>{hook.properties.map((p) => <a href={`/properties/${p}`}>{propertyBySlug(p)?.name}</a>)}</td></tr>
-          <tr><th>Chains</th><td>{hook.chains.map((c) => <a href={`/chains/${c}`}>{chainBySlug(c)?.name}</a>)}</td></tr>
+          <tr><th>Categories</th><td><span class="stamps">{hook.categories.map((c) => <a class="stamp quiet" href={`/categories/${c}`}>{categoryBySlug(c)?.name}</a>)}</span></td></tr>
+          <tr><th>Properties</th><td><span class="stamps">{hook.properties.map((p) => <a class="stamp quiet" href={`/properties/${p}`}>{propertyBySlug(p)?.name}</a>)}</span></td></tr>
+          <tr><th>Chains</th><td><span class="stamps">{hook.chains.map((c) => <a class="stamp quiet" href={`/chains/${c}`}>{chainBySlug(c)?.name}</a>)}</span></td></tr>
           {hook.website && <tr><th>Website</th><td><a href={hook.website}>{hook.website}</a></td></tr>}
           {hook.docs && <tr><th>Docs</th><td><a href={hook.docs}>{hook.docs}</a></td></tr>}
           {hook.audit_url && <tr><th>Audit</th><td><a href={hook.audit_url}>{hook.audit_url}</a></td></tr>}

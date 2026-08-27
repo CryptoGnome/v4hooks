@@ -1,11 +1,22 @@
 ---
 import { type Hook } from "../lib/meta";
-import { categoryBySlug, propertyBySlug } from "../lib/meta";
+import { categoryBySlug, chainBySlug, propertyBySlug } from "../lib/meta";
 import BitStrip from "./BitStrip.astro";
 
 type Props = { hook: Hook; heading?: "h2" | "h3" };
 const { hook, heading = "h2" } = Astro.props;
 const Tag = heading;
+
+const STATUS_CLASS: Record<string, string> = {
+  production: "live",
+  experimental: "prov",
+  deprecated: "warn",
+};
+
+// vanilla-swap is the default on 19 of 20 listings — it is not information here.
+// Every property still shows on the detail page spec table.
+const notableProperties = (hook.properties ?? []).filter((p) => p !== "vanilla-swap");
+const chainNames = hook.chains.map((c) => chainBySlug(c)?.name ?? c);
 ---
 <a class="sheet" href={`/hooks/${hook.slug}`}>
   <div class="sheet-top">
@@ -14,17 +25,20 @@ const Tag = heading;
       <p class="tagline">{hook.tagline}</p>
       <div class="stamps">
         <span class="stamp kind">{hook.kind}</span>
-        <span class:list={["stamp", "status", hook.status === "production" && "live", hook.status === "deprecated" && "warn"]}>
-          {hook.status}
-        </span>
+        <span class:list={["stamp", STATUS_CLASS[hook.status]]}>{hook.status}</span>
         {hook.categories.map((c) => (
           <span class="stamp quiet">{categoryBySlug(c)?.name ?? c}</span>
         ))}
-        {hook.properties?.map((p) => (
+        {notableProperties.map((p) => (
           <span class="stamp quiet">{propertyBySlug(p)?.name ?? p}</span>
         ))}
       </div>
     </div>
     <BitStrip active={hook.flags} />
+  </div>
+  <div class="sheet-foot">
+    <span>{hook.license}</span>
+    <span>{chainNames.join(" · ")}</span>
+    <span>Upd {hook.updated}</span>
   </div>
 </a>

@@ -1,12 +1,12 @@
 ---
 import { Code } from "astro:components";
 
-type Props = { code: string };
-const { code } = Astro.props;
+type Props = { code: string; lang?: "solidity" | "bash" };
+const { code, lang = "solidity" } = Astro.props;
 ---
 <div class="sol-wrap">
   <button type="button" class="copy">Copy</button>
-  <Code code={code} lang="solidity" theme="css-variables" />
+  <Code code={code} lang={lang} theme="css-variables" />
 </div>
 <script>
   document.querySelectorAll(".sol-wrap").forEach((el) => {
