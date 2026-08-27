@@ -85,7 +85,10 @@ const jsonLd = {
       <div class="chips" id="chips"></div>
       <BitLegend />
       <div class="tabs" role="tablist" aria-label="Listing kind">
-        <button type="button" class="tab" role="tab" id="tab-pattern" aria-controls="panel-pattern" aria-selected="true" data-kind="pattern">
+        <button type="button" class="tab" role="tab" id="tab-all" aria-controls="panel-pattern panel-product" aria-selected="true" data-kind="all">
+          All <span class="tab-count" data-count="all">{hooks.length}</span>
+        </button>
+        <button type="button" class="tab" role="tab" id="tab-pattern" aria-controls="panel-pattern" aria-selected="false" tabindex="-1" data-kind="pattern">
           Patterns <span class="tab-count" data-count="pattern">{patterns.length}</span>
         </button>
         <button type="button" class="tab" role="tab" id="tab-product" aria-controls="panel-product" aria-selected="false" tabindex="-1" data-kind="product">
@@ -93,7 +96,7 @@ const jsonLd = {
         </button>
       </div>
       <section class="kind-block" id="panel-pattern" role="tabpanel" aria-labelledby="tab-pattern" data-kind="pattern">
-        <h2 class="sr-only">Patterns</h2>
+        <h2 class="kind-label">Patterns</h2>
         <p class="kind-note">Copy the full source file to implement these.</p>
         <div class="index-list">
           {patterns.map((hook) => (
@@ -103,8 +106,8 @@ const jsonLd = {
           ))}
         </div>
       </section>
-      <section class="kind-block" id="panel-product" role="tabpanel" aria-labelledby="tab-product" data-kind="product" hidden>
-        <h2 class="sr-only">Products</h2>
+      <section class="kind-block" id="panel-product" role="tabpanel" aria-labelledby="tab-product" data-kind="product">
+        <h2 class="kind-label">Products</h2>
         <p class="kind-note">Study the callbacks. Do not paste the factory.</p>
         <div class="index-list">
           {products.map((hook) => (
@@ -137,7 +140,9 @@ const jsonLd = {
   chain.value = params.get("chain") ?? "";
   cat.value = params.get("cat") ?? "";
   prop.value = params.get("prop") ?? "";
-  let kind = params.get("kind") === "product" ? "product" : "pattern";
+  const KINDS = ["all", "pattern", "product"];
+  let kind = KINDS.includes(params.get("kind")) ? params.get("kind") : "all";
+  const labels = new Map([...document.querySelectorAll(".kind-label")].map((el) => [el.closest(".kind-block").dataset.kind, el]));
 
   function syncUrl() {
     const p = new URLSearchParams();
@@ -145,7 +150,7 @@ const jsonLd = {
     if (chain.value) p.set("chain", chain.value);
     if (cat.value) p.set("cat", cat.value);
     if (prop.value) p.set("prop", prop.value);
-    if (kind !== "pattern") p.set("kind", kind);
+    if (kind !== "all") p.set("kind", kind);
     const qs = p.toString();
     history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
   }
@@ -168,6 +173,7 @@ const jsonLd = {
 
     // Counts sit on the tabs so a filter that only matches the other kind is visible
     // rather than looking like zero results.
+    perKind.all = perKind.pattern + perKind.product;
     for (const [k, el] of counts) {
       el.textContent = String(perKind[k]);
       el.dataset.empty = perKind[k] === 0 ? "true" : "false";
@@ -177,7 +183,15 @@ const jsonLd = {
       tab.setAttribute("aria-selected", on ? "true" : "false");
       tab.tabIndex = on ? 0 : -1;
     }
-    for (const [k, panel] of panels) panel.hidden = k !== kind;
+    for (const [k, panel] of panels) {
+      // A panel with no matches would render as a heading and a note over an empty
+      // list, so drop it and let #empty speak instead.
+      const visible = (kind === "all" || k === kind) && perKind[k] > 0;
+      panel.hidden = !visible;
+      // In All the two lists stack, so each needs its own visible heading. On a single
+      // kind the tab already names it, so the heading drops to screen readers only.
+      labels.get(k)?.classList.toggle("sr-only", kind !== "all");
+    }
 
     empty.hidden = perKind[kind] !== 0;
     if (shown) shown.textContent = String(perKind[kind]);
