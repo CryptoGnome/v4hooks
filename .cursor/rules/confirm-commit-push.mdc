@@ -7,6 +7,7 @@ alwaysApply: true
 
 After finishing any task that changes files (features, fixes, copy, config, etc.):
 
+0. Sync user-facing docs if the diff could affect them (see `sync-user-facing-docs`).
 1. **Stop.** Do not run `git commit` or `git push` yet.
 2. **Ask with the `AskQuestion` tool** (clickable Cursor buttons). One single-select question:
    - **Commit & push** — stage relevant files, commit, push to remote

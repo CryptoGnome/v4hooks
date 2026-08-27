@@ -1,0 +1,11 @@
+---
+import { BIT_GROUPS } from "../lib/meta";
+---
+<p class="bits-legend">
+  <span class="bits" aria-hidden="true">
+    <span class="bit on"></span>
+    <span class="bit"></span>
+  </span>
+  Each tick is a PoolManager permission bit encoded in the hook address. Lit means that callback runs.
+  <span class="bits-groups">{BIT_GROUPS.map((g) => g.label).join(" · ")}</span>
+</p>

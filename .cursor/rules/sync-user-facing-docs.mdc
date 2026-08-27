@@ -1,0 +1,24 @@
+---
+description: Before commit, sync README, AGENTS.md, skills, and generated llms dumps
+alwaysApply: true
+---
+
+# Keep user-facing docs current
+
+Before asking commit vs push, and before `git commit`:
+
+1. Read the diff. If behavior, routes, catalog fields, commands, copy, or agent files changed, update matching docs **in the same commit**.
+2. Check these (skip a file only when the diff cannot affect it):
+   - `README.md`, `CONTRIBUTING.md`, `AGENTS.md`, `SKILLS.md`, `SECURITY.md`
+   - `.github/PULL_REQUEST_TEMPLATE.md`
+   - `public/skills.md` (keep aligned with `SKILLS.md`)
+   - Generated: `node scripts/generate-agent-files.mjs` (or `npm run build`) → `public/llms.txt`, `public/llm-full.txt`, `public/hooks.json`
+3. If you add a `src/pages` route agents should see, also edit `scripts/generate-agent-files.mjs`, then regenerate.
+4. Site SEO copy lives in `src/pages`. Keep JSON-LD in that same edit.
+5. Do not invent Solidity, addresses, or “audited” claims while updating docs.
+
+Examples:
+
+- New `hooks/{slug}.yml` → validate, rebuild agent files so `llms.txt` / `hooks.json` list it.
+- CSS-only restyle → no doc update.
+- New filter or command in README’s Develop section → update README (and AGENTS.md if agents run it).

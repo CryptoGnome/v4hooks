@@ -27,12 +27,15 @@ const jsonLd = {
   <div class="layout">
     <main>
       <section class="lede">
+        <p class="crumbs"><a href="/">Index</a> / {chain.name}</p>
         <h1>Uniswap v4 hooks on {chain.name}</h1>
         <p class="answer">
           These listings are example hook contracts that mention {chain.name} (chain id {chain.id}). Read the Solidity on each page, then verify any live address yourself before you route.
         </p>
       </section>
-      {hooks.map((hook) => <CutSheet hook={hook} />)}
+      <div class="index-list">
+        {hooks.map((hook) => <CutSheet hook={hook} />)}
+      </div>
     </main>
     <SponsorBoard />
   </div>

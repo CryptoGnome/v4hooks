@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0c0c0e"/>
+  <path d="M48 48h28M48 48v28M1152 48h-28M1152 48v28M48 582h28M48 582v-28M1152 582h-28M1152 582v-28" stroke="#3a3d46" stroke-width="2" fill="none"/>
+  <text x="80" y="130" fill="#ececef" font-family="ui-monospace, Consolas, monospace" font-size="18" font-weight="600" letter-spacing="6">V4HOOKS</text>
+  <text x="80" y="158" fill="#a8adb8" font-family="ui-monospace, Consolas, monospace" font-size="14" letter-spacing="3">CUT SHEET DIRECTORY</text>
+  <text x="80" y="300" fill="#ececef" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="600">Uniswap v4 hooks</text>
+  <text x="80" y="372" fill="#ececef" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="600">you can build</text>
+  <rect x="80" y="420" width="120" height="2" fill="#ff007a"/>
+  <g transform="translate(80, 500)">
+    <rect x="0" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="20" y="0" width="14" height="36" fill="#ececef"/>
+    <rect x="40" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="60" y="0" width="14" height="36" fill="#ececef"/>
+    <rect x="80" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="100" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="120" y="0" width="14" height="36" fill="#ececef"/>
+    <rect x="140" y="0" width="14" height="36" fill="#ececef"/>
+    <rect x="160" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="180" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="200" y="0" width="14" height="36" fill="#ececef"/>
+    <rect x="220" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="240" y="0" width="14" height="36" fill="#2a2d35"/>
+    <rect x="260" y="0" width="14" height="36" fill="#ececef"/>
+  </g>
+</svg>

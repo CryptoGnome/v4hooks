@@ -21,10 +21,13 @@ const hooks = hooksForProperty(property.slug);
   <div class="layout">
     <main>
       <section class="lede">
+        <p class="crumbs"><a href="/">Index</a> / {property.name}</p>
         <h1>{property.name} Uniswap v4 hooks</h1>
         <p class="answer">{property.blurb}</p>
       </section>
-      {hooks.map((hook) => <CutSheet hook={hook} />)}
+      <div class="index-list">
+        {hooks.map((hook) => <CutSheet hook={hook} />)}
+      </div>
     </main>
     <SponsorBoard />
   </div>

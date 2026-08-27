@@ -1,8 +1,9 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import SponsorBoard from "../../components/SponsorBoard.astro";
+import BitStrip from "../../components/BitStrip.astro";
+import { FLAG_ORDER, SITE } from "../../lib/meta";
 import { loadHooks } from "../../lib/catalog";
-import { SITE } from "../../lib/meta";
 
 const count = loadHooks().length;
 const jsonLd = {
@@ -35,7 +36,8 @@ const jsonLd = {
 >
   <div class="layout">
     <article class="prose">
-      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27 · {count} listings</p>
+      <p class="crumbs"><a href="/learn">Learn</a> / What is a hook</p>
+      <p class="note">last updated 2026-08-27 · {count} listings</p>
       <h1>What is a Uniswap v4 hook?</h1>
       <p class="answer">
         A Uniswap v4 hook is an external smart contract attached to a liquidity pool. It can run custom logic before or after pool actions — initialize, swap, add or remove liquidity, and donate — so a pool can charge dynamic fees, fill limit orders, or launch a token without forking the AMM.
@@ -45,8 +47,9 @@ const jsonLd = {
       </p>
       <h2>The 14 permission bits</h2>
       <p>
-        before/after initialize, add liquidity, remove liquidity, swap, donate, plus return-delta variants on swap and liquidity. If the bit is off, PoolManager skips that callback. Always verify the deployed address matches the flags you think you are calling.
+        before/after initialize, add liquidity, remove liquidity, swap, donate, plus return-delta variants on swap and liquidity. If the bit is off, PoolManager skips that callback. Always verify the deployed address matches the flags you think you are calling. <code>b</code> is before, <code>a</code> is after.
       </p>
+      <BitStrip variant="diagram" active={FLAG_ORDER} />
       <h2>How to pick a pattern</h2>
       <ol>
         <li>Match the job (TWAMM, limit order, oracle, launchpad, MEV).</li>
@@ -65,6 +68,6 @@ const jsonLd = {
         Start at <a href="/llms.txt">/llms.txt</a>, dump <a href="/llm-full.txt">/llm-full.txt</a>, or fetch <a href="/hooks.json">/hooks.json</a>. Contribute with a YAML file and a pull request.
       </p>
     </article>
-    <SponsorBoard />
+    <SponsorBoard compact />
   </div>
 </Layout>

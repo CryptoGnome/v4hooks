@@ -34,7 +34,8 @@ const jsonLd = {
 >
   <div class="layout">
     <article class="prose">
-      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27</p>
+      <p class="crumbs"><a href="/learn">Learn</a> / OpenZeppelin</p>
+      <p class="note">last updated 2026-08-27</p>
       <h1>Build with OpenZeppelin hooks</h1>
       <p class="answer">
         <a href="https://github.com/OpenZeppelin/uniswap-hooks">OpenZeppelin/uniswap-hooks</a> is an MIT Solidity library for secure, modular Uniswap v4 hooks. Prefer it (or Uniswap’s BaseHook) over a blank contract so caller checks and permission validation are already there.
@@ -108,6 +109,6 @@ function beforeSwap(...) external onlyPoolManager returns (bytes4, BeforeSwapDel
         <li><a href="https://blog.trailofbits.com/2026/07/30/building-secure-uniswap-v4-hooks/">Trail of Bits secure hooks</a></li>
       </ul>
     </article>
-    <SponsorBoard />
+    <SponsorBoard compact />
   </div>
 </Layout>

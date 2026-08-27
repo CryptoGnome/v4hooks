@@ -1,6 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import SponsorBoard from "../../components/SponsorBoard.astro";
+import BitStrip from "../../components/BitStrip.astro";
+import SolidityExcerpt from "../../components/SolidityExcerpt.astro";
 import { getHook, loadHooks, paragraph } from "../../lib/catalog";
 import { FLAG_ORDER, SITE } from "../../lib/meta";
 import { categoryBySlug, chainBySlug, propertyBySlug } from "../../lib/meta";
@@ -13,6 +15,7 @@ const { slug } = Astro.params;
 const hook = getHook(slug!);
 if (!hook) throw new Error("missing hook");
 const desc = paragraph(hook.description).slice(0, 158);
+const onFlags = FLAG_ORDER.filter((f) => hook.flags.includes(f));
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
@@ -53,22 +56,22 @@ const jsonLd = {
 <Layout title={`${hook.name} — Uniswap v4 hook`} description={desc} jsonLd={jsonLd}>
   <div class="layout">
     <article class="prose">
+      <p class="crumbs"><a href="/">Index</a> / {hook.name}</p>
       <p class="note">{hook.kind} · {hook.license} · last updated {hook.updated}</p>
       <h1>{hook.name}</h1>
       <p class="answer">{hook.tagline}</p>
       {hook.description.split(/\n\n+/).map((p) => <p>{p.trim()}</p>)}
+      <h2>Permission bits</h2>
+      <p>These bits must match the deployed address. Confirm on-chain before you route.</p>
+      <BitStrip variant="diagram" active={hook.flags} />
+      <p class="note flags-on">{onFlags.map((f) => <code>{f}</code>)}</p>
       <h2>Solidity</h2>
       <p class="note">
         Excerpt from <a href={hook.source.url}>{hook.source.path ?? hook.source.url}</a>.
-        {hook.kind === "pattern" ? " Copy the full file to implement this." : " Production hook — study the callbacks, do not paste it as your factory."}
+        {hook.kind === "pattern" ? " Copy the full file to implement this. " : " Production hook. Study the callbacks, do not paste it as your factory. "}
         Not an audit.
       </p>
-      <pre class="sol"><code>{hook.solidity.trim()}</code></pre>
-      <h2>Permission bits</h2>
-      <p>These bits must match the deployed address. Confirm on-chain before you route.</p>
-      <ul>
-        {FLAG_ORDER.filter((f) => hook.flags.includes(f)).map((f) => <li><code>{f}</code></li>)}
-      </ul>
+      <SolidityExcerpt code={hook.solidity.trim()} />
       <h2>Spec</h2>
       <table>
         <tbody>

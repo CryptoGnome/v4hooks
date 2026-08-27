@@ -17,6 +17,10 @@ You are helping with **v4hooks**, a directory of Uniswap v4 hook example contrac
 - `README.md`, `CONTRIBUTING.md`, `schema/hook.schema.json`
 - Generated at build: `public/llms.txt`, `public/llm-full.txt`, `public/hooks.json`
 
+## Keep user-facing docs current
+
+If a change affects how humans or agents use the site, update docs **in the same commit**: `README.md`, `CONTRIBUTING.md`, this file, `SKILLS.md`, `public/skills.md`, `SECURITY.md`. Add a page agents should see → edit `scripts/generate-agent-files.mjs`, then `npm run build` so `public/llms.txt`, `public/llm-full.txt`, and `public/hooks.json` match. CSS-only restyles do not need a doc pass.
+
 ## Tasks
 
 - Add a hook: copy `hooks/_template.yml` to `hooks/{slug}.yml`, then `npm run validate`. Files starting with `_` are not listings.

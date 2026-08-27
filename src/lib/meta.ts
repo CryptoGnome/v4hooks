@@ -25,6 +25,27 @@ export const FLAG_ORDER = [
 
 export type Flag = (typeof FLAG_ORDER)[number];
 
+export const BIT_GROUPS: { id: string; label: string; flags: Flag[] }[] = [
+  { id: "init", label: "Initialize", flags: ["beforeInitialize", "afterInitialize"] },
+  {
+    id: "liq",
+    label: "Liquidity",
+    flags: ["beforeAddLiquidity", "afterAddLiquidity", "beforeRemoveLiquidity", "afterRemoveLiquidity"],
+  },
+  { id: "swap", label: "Swap", flags: ["beforeSwap", "afterSwap"] },
+  { id: "donate", label: "Donate", flags: ["beforeDonate", "afterDonate"] },
+  {
+    id: "delta",
+    label: "Return delta",
+    flags: [
+      "beforeSwapReturnDelta",
+      "afterSwapReturnDelta",
+      "afterAddLiquidityReturnDelta",
+      "afterRemoveLiquidityReturnDelta",
+    ],
+  },
+];
+
 export const PROPERTIES = [
   { slug: "dynamic-fee", name: "Dynamic fee", blurb: "Pool fee can change via the hook (OVERRIDE_FEE / dynamic fee flag)." },
   { slug: "upgradeable", name: "Upgradeable", blurb: "Hook logic sits behind a proxy or otherwise upgradeable deployment." },

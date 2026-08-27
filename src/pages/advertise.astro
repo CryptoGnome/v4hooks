@@ -31,7 +31,7 @@ import SponsorBoard from "../components/SponsorBoard.astro";
           <input id="bid" name="bid" type="number" min="5" step="1" value="5" required />
         </div>
         <button type="submit">Lock in checkout</button>
-        <p class="note" id="status"></p>
+        <p class="note status" id="status" aria-live="polite"></p>
       </form>
       <div id="pay" hidden></div>
     </main>
@@ -45,6 +45,7 @@ import SponsorBoard from "../components/SponsorBoard.astro";
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     status.textContent = "Opening intent…";
+    delete status.dataset.err;
     pay.hidden = true;
     const body = {
       name: form.name.value,
@@ -60,8 +61,10 @@ import SponsorBoard from "../components/SponsorBoard.astro";
     const data = await res.json();
     if (!res.ok) {
       status.textContent = data.error || "Could not create bid";
+      status.dataset.err = "";
       return;
     }
+    delete status.dataset.err;
     status.textContent = data.would_be_first
       ? `That bid would take #1. Charge ${data.charge_usdc} USDC.`
       : `Charge ${data.charge_usdc} USDC for this rank.`;

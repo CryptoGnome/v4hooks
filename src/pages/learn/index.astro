@@ -43,12 +43,13 @@ const jsonLd = {
   <div class="layout">
     <main>
       <section class="lede">
+        <p class="crumbs"><a href="/">Index</a> / Learn</p>
         <h1>Learn</h1>
         <p class="answer">
           Short docs so agents and people can implement hooks correctly — not just find a name. Read these before you paste an excerpt into a Foundry project.
         </p>
       </section>
-      <div id="index">
+      <div class="index-list">
         {pages.map((p) => (
           <a class="sheet" href={p.href}>
             <h2>{p.title}</h2>
@@ -61,6 +62,6 @@ const jsonLd = {
         catalog: <a href="/hooks.json">hooks.json</a>
       </p>
     </main>
-    <SponsorBoard />
+    <SponsorBoard compact />
   </div>
 </Layout>

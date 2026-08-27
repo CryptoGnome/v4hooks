@@ -1,23 +1,34 @@
 ---
+type Props = { compact?: boolean };
+const { compact = false } = Astro.props;
 ---
-<aside class="board" id="sponsor-board">
-  <h2>Sponsor rail</h2>
-  <p class="hint">Highest USDC bid sits on top. Rank is the bid — nothing else.</p>
-  <ol id="sponsor-list">
-    <li class="note">Loading live bids…</li>
-  </ol>
-  <a class="claim" href="/advertise">Place a bid</a>
-</aside>
+<details class:list={["rail", compact && "compact"]} open>
+  <summary>Sponsor rail</summary>
+  <aside class="board" id="sponsor-board">
+    <h2>Sponsor rail</h2>
+    <p class="hint">
+      {compact
+        ? "Highest USDC bid sits on top."
+        : "Highest USDC bid sits on top. Rank is the bid, nothing else."}
+    </p>
+    <ol id="sponsor-list">
+      <li class="note">Loading live bids…</li>
+    </ol>
+    <a class="claim" href="/advertise">Place a bid</a>
+  </aside>
+</details>
 <script>
   async function load() {
     const list = document.getElementById("sponsor-list");
+    const rail = list?.closest(".rail");
     if (!list) return;
     try {
       const res = await fetch("/api/ads");
       const data = await res.json();
       const rows = data.listings ?? [];
+      rail?.classList.toggle("empty", rows.length === 0);
       if (!rows.length) {
-        list.innerHTML = "<li class=\"note\">No live bids yet. First slot is 5 USDC.</li>";
+        list.innerHTML = "<li class=\"note\">No live bids. First slot is 5 USDC.</li>";
         return;
       }
       list.innerHTML = rows
@@ -30,8 +41,23 @@
         )
         .join("");
     } catch {
+      rail?.classList.add("empty");
       list.innerHTML = "<li class=\"note\">Bid board wakes once the Worker API is deployed.</li>";
     }
   }
   load();
+  const mq = matchMedia("(min-width: 861px)");
+  function syncRail() {
+    document.querySelectorAll("details.rail").forEach((d) => {
+      if (mq.matches) d.open = true;
+      else if (!d.dataset.touched) d.open = false;
+    });
+  }
+  document.querySelectorAll("details.rail").forEach((d) => {
+    d.querySelector("summary")?.addEventListener("click", () => {
+      d.dataset.touched = "1";
+    });
+  });
+  mq.addEventListener("change", syncRail);
+  syncRail();
 </script>

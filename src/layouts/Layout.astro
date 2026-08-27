@@ -13,6 +13,7 @@ const { title, description, canonical, jsonLd } = Astro.props;
 const url = canonical ?? new URL(Astro.url.pathname === "/" ? "/" : Astro.url.pathname.replace(/\/$/, ""), SITE.url).toString();
 const fullTitle = title.includes("v4hooks") ? title : `${title} · v4hooks`;
 const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const og = `${SITE.url}/og.png`;
 ---
 <!doctype html>
 <html lang="en">
@@ -22,12 +23,16 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={url} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={url} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="v4hooks" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={og} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={og} />
     <script is:inline>
       try {
         const stored = localStorage.getItem("v4hooks-theme");
@@ -50,6 +55,7 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
     ></script>
   </head>
   <body>
+    <a class="skip" href="#content">Skip to content</a>
     <div class="wrap">
       <header class="mast">
         <a class="brand" href="/">
@@ -66,12 +72,15 @@ const path = Astro.url.pathname.replace(/\/$/, "") || "/";
           <button class="theme" id="theme-toggle" type="button">Light</button>
         </div>
       </header>
-      <slot />
+      <div id="content">
+        <slot />
+      </div>
       <footer class="foot">
         Listing is not an audit. Excerpts are not the full contract. ·
-        <a href="/learn">Learn</a> ·
-        <a href="/llms.txt">llms.txt</a> ·
-        <a href="/hooks.json">hooks.json</a>
+        <a href="https://github.com/CryptoGnome/v4hooks/blob/main/CONTRIBUTING.md">Contribute</a> ·
+        <a href="https://github.com/CryptoGnome/v4hooks">GitHub</a> ·
+        <a href="/advertise">Advertise</a> ·
+        <a href="/llms.txt">llms.txt</a>
       </footer>
     </div>
     <script>

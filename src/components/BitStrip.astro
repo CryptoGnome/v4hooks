@@ -1,0 +1,38 @@
+---
+import { BIT_GROUPS, FLAG_ORDER } from "../lib/meta";
+
+type Props = {
+  active?: readonly string[];
+  variant?: "strip" | "diagram";
+};
+
+const { active = [], variant = "strip" } = Astro.props;
+const on = new Set(active);
+
+function cap(flag: string) {
+  return flag.startsWith("before") ? "b" : "a";
+}
+---
+{variant === "strip" ? (
+  <div class="bits" title="Hook permission bits">
+    {FLAG_ORDER.map((flag) => (
+      <span class:list={["bit", on.has(flag) && "on"]} title={flag}></span>
+    ))}
+  </div>
+) : (
+  <div class="bit-diagram" role="group" aria-label="PoolManager permission bits">
+    {BIT_GROUPS.map((group) => (
+      <div class="bit-group">
+        <span class="bit-group-label">{group.label}</span>
+        <div class="bits">
+          {group.flags.map((flag) => (
+            <span class="bit-cell">
+              <span class:list={["bit", on.has(flag) && "on"]} title={flag}></span>
+              <span class="bit-cap">{cap(flag)}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+)}

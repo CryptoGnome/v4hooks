@@ -1,0 +1,27 @@
+---
+import { Code } from "astro:components";
+
+type Props = { code: string };
+const { code } = Astro.props;
+---
+<div class="sol-wrap">
+  <button type="button" class="copy">Copy</button>
+  <Code code={code} lang="solidity" theme="css-variables" />
+</div>
+<script>
+  document.querySelectorAll(".sol-wrap").forEach((el) => {
+    const btn = el.querySelector(".copy");
+    const src = el.querySelector("code")?.textContent ?? "";
+    btn?.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(src);
+        btn.textContent = "Copied";
+      } catch {
+        btn.textContent = "Copy failed";
+      }
+      setTimeout(() => {
+        btn.textContent = "Copy";
+      }, 1200);
+    });
+  });
+</script>

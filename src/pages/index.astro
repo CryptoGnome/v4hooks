@@ -1,11 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import CutSheet from "../components/CutSheet.astro";
+import BitLegend from "../components/BitLegend.astro";
 import SponsorBoard from "../components/SponsorBoard.astro";
 import { loadHooks, latestUpdate, usedCategories, usedChains, usedProperties } from "../lib/catalog";
 import { SITE } from "../lib/meta";
 
 const hooks = loadHooks();
+const patterns = hooks.filter((h) => h.kind === "pattern");
+const products = hooks.filter((h) => h.kind === "product");
 const updated = latestUpdate(hooks);
 const chains = usedChains(hooks);
 const categories = usedCategories(hooks);
@@ -46,34 +49,62 @@ const jsonLd = {
           Each listing is a licensed excerpt plus a permalink to the full file. <em>pattern</em> means copy it. <em>product</em> means study how a live protocol wired the bits. Listing is not an audit.
         </p>
         <div class="meta-row">
-          <span><b>{hooks.length}</b> listings</span>
+          <span><b id="shown">{hooks.length}</b> listings</span>
           <span>Updated <b>{updated}</b></span>
           <span><a href="/learn">Learn</a></span>
           <span><a href="/learn/secure-v4-hooks">Secure hooks</a></span>
         </div>
       </section>
       <div class="filters">
-        <input id="q" type="search" placeholder="Search name or job" />
-        <select id="chain">
-          <option value="">All chains</option>
-          {chains.map((c) => <option value={c.slug}>{c.name}</option>)}
-        </select>
-        <select id="cat">
-          <option value="">All categories</option>
-          {categories.map((c) => <option value={c.slug}>{c.name}</option>)}
-        </select>
-        <select id="prop">
-          <option value="">All properties</option>
-          {properties.map((p) => <option value={p.slug}>{p.name}</option>)}
-        </select>
+        <label class="filter search">
+          <span>Search</span>
+          <input id="q" type="search" placeholder="Name or job" />
+        </label>
+        <label class="filter">
+          <span>Chain</span>
+          <select id="chain">
+            <option value="">All chains</option>
+            {chains.map((c) => <option value={c.slug}>{c.name}</option>)}
+          </select>
+        </label>
+        <label class="filter">
+          <span>Category</span>
+          <select id="cat">
+            <option value="">All categories</option>
+            {categories.map((c) => <option value={c.slug}>{c.name}</option>)}
+          </select>
+        </label>
+        <label class="filter">
+          <span>Property</span>
+          <select id="prop">
+            <option value="">All properties</option>
+            {properties.map((p) => <option value={p.slug}>{p.name}</option>)}
+          </select>
+        </label>
       </div>
-      <div id="index">
-        {hooks.map((hook) => (
-          <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
-            <CutSheet hook={hook} />
-          </div>
-        ))}
-      </div>
+      <BitLegend />
+      <section class="kind-block" data-kind="pattern">
+        <h2 class="kind-head">Patterns</h2>
+        <p class="kind-note">Copy the full source file to implement these.</p>
+        <div class="index-list">
+          {patterns.map((hook) => (
+            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
+              <CutSheet hook={hook} heading="h3" />
+            </div>
+          ))}
+        </div>
+      </section>
+      <section class="kind-block" data-kind="product">
+        <h2 class="kind-head">Products</h2>
+        <p class="kind-note">Study the callbacks. Do not paste the factory.</p>
+        <div class="index-list">
+          {products.map((hook) => (
+            <div class="row" data-name={hook.name.toLowerCase()} data-tagline={hook.tagline.toLowerCase()} data-chains={hook.chains.join(" ")} data-cats={hook.categories.join(" ")} data-props={hook.properties.join(" ")}>
+              <CutSheet hook={hook} heading="h3" />
+            </div>
+          ))}
+        </div>
+      </section>
       <p class="note" id="empty" hidden>No listings match those filters.</p>
     </main>
     <SponsorBoard />
@@ -86,12 +117,31 @@ const jsonLd = {
   const prop = document.getElementById("prop");
   const rows = [...document.querySelectorAll(".row")];
   const empty = document.getElementById("empty");
+  const shown = document.getElementById("shown");
+  const blocks = [...document.querySelectorAll(".kind-block")];
+
+  const params = new URLSearchParams(location.search);
+  q.value = params.get("q") ?? "";
+  chain.value = params.get("chain") ?? "";
+  cat.value = params.get("cat") ?? "";
+  prop.value = params.get("prop") ?? "";
+
+  function syncUrl() {
+    const p = new URLSearchParams();
+    if (q.value.trim()) p.set("q", q.value.trim());
+    if (chain.value) p.set("chain", chain.value);
+    if (cat.value) p.set("cat", cat.value);
+    if (prop.value) p.set("prop", prop.value);
+    const qs = p.toString();
+    history.replaceState(null, "", qs ? `?${qs}` : location.pathname);
+  }
+
   function apply() {
     const query = q.value.toLowerCase().trim();
     const ch = chain.value;
     const category = cat.value;
     const property = prop.value;
-    let shown = 0;
+    let n = 0;
     for (const row of rows) {
       const okQ = !query || row.dataset.name.includes(query) || row.dataset.tagline.includes(query);
       const okC = !ch || row.dataset.chains.split(" ").includes(ch);
@@ -99,12 +149,19 @@ const jsonLd = {
       const okP = !property || row.dataset.props.split(" ").includes(property);
       const on = okQ && okC && okK && okP;
       row.hidden = !on;
-      if (on) shown += 1;
+      if (on) n += 1;
     }
-    empty.hidden = shown !== 0;
+    empty.hidden = n !== 0;
+    if (shown) shown.textContent = String(n);
+    for (const block of blocks) {
+      block.hidden = ![...block.querySelectorAll(".row")].some((r) => !r.hidden);
+    }
+    syncUrl();
   }
+
   q.addEventListener("input", apply);
   chain.addEventListener("change", apply);
   cat.addEventListener("change", apply);
   prop.addEventListener("change", apply);
+  apply();
 </script>

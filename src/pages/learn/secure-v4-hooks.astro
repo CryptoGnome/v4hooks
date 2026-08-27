@@ -69,7 +69,8 @@ const jsonLd = {
 >
   <div class="layout">
     <article class="prose">
-      <p class="note"><a href="/learn">Learn</a> · last updated 2026-08-27</p>
+      <p class="crumbs"><a href="/learn">Learn</a> / Secure hooks</p>
+      <p class="note">last updated 2026-08-27</p>
       <h1>Secure Uniswap v4 hooks</h1>
       <p class="answer">
         PoolManager enforces pool math and end-of-session settlement. Your hook owns authorization, which pools are legitimate, how deltas and fees are accounted for, and whether external calls can brick swaps or exits.
@@ -123,6 +124,6 @@ const jsonLd = {
         v4hooks is not an auditor. A listing here is not a security review. For the full catalog see <a href={SITE.url}>{SITE.url}</a>.
       </p>
     </article>
-    <SponsorBoard />
+    <SponsorBoard compact />
   </div>
 </Layout>
